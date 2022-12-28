@@ -89,12 +89,12 @@ android {
     compileSdkVersion 32
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 32
-        versionCode 42050
-        versionName "2.12.2"
+        versionCode 1
+        versionName "3.0.0-alpha"
         archivesBaseName += "-$versionName"
-        applicationId "eu.siacs.conversations"
+        applicationId "im.conversations.android"
         resValue "string", "applicationId", applicationId
         def appName = "Conversations"
         resValue "string", "app_name", appName
@@ -117,8 +117,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     flavorDimensions("mode", "distribution")
