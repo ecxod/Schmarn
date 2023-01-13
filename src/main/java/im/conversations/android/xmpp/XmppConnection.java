@@ -16,7 +16,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
-import com.google.common.io.ByteSource;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.XmppDomainVerifier;
@@ -27,7 +26,6 @@ import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.MemorizingTrustManager;
 import eu.siacs.conversations.services.MessageArchiveService;
 import eu.siacs.conversations.services.NotificationService;
-import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.Patterns;
 import eu.siacs.conversations.utils.PhoneHelper;
 import eu.siacs.conversations.utils.Resolver;
@@ -56,6 +54,7 @@ import eu.siacs.conversations.xmpp.stanzas.streammgmt.AckPacket;
 import eu.siacs.conversations.xmpp.stanzas.streammgmt.EnablePacket;
 import eu.siacs.conversations.xmpp.stanzas.streammgmt.RequestPacket;
 import eu.siacs.conversations.xmpp.stanzas.streammgmt.ResumePacket;
+import im.conversations.android.IDs;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.CredentialStore;
 import im.conversations.android.database.model.Account;
@@ -1713,6 +1712,7 @@ public class XmppConnection implements Runnable {
 
     private void sendBindRequest() {
         clearIqCallbacks();
+        // TODO if we never store a 'broken' resource we don’t need to fix it
         final String recentResource =
                 fixResource(
                         ConversationsDatabase.getInstance(context)
@@ -1722,7 +1722,7 @@ public class XmppConnection implements Runnable {
         if (recentResource != null) {
             resource = recentResource;
         } else {
-            resource = this.createNewResource(account.randomSeed);
+            resource = this.createNewResource(IDs.tiny(account.randomSeed));
         }
         final IqPacket iq = new IqPacket(IqPacket.TYPE.SET);
         iq.addChild("bind", Namespace.BIND).addChild("resource").setContent(resource);
@@ -1783,8 +1783,7 @@ public class XmppConnection implements Runnable {
                     if (packet.getType() == IqPacket.TYPE.ERROR
                             && error != null
                             && error.hasChild("conflict")) {
-                        final String alternativeResource =
-                                createNewResource(SECURE_RANDOM.generateSeed(3));
+                        final String alternativeResource = createNewResource(IDs.tiny());
                         ConversationsDatabase.getInstance(context)
                                 .accountDao()
                                 .setResource(account.id, alternativeResource);
@@ -2132,7 +2131,7 @@ public class XmppConnection implements Runnable {
             return;
         }
         if (streamError.hasChild("conflict")) {
-            final String alternativeResource = createNewResource(SECURE_RANDOM.generateSeed(3));
+            final String alternativeResource = createNewResource(IDs.tiny());
             ConversationsDatabase.getInstance(context)
                     .accountDao()
                     .setResource(account.id, alternativeResource);
@@ -2224,31 +2223,8 @@ public class XmppConnection implements Runnable {
         tagWriter.writeTag(stream, flush);
     }
 
-    private String createNewResource(final byte[] random) {
-        return String.format(
-                "%s.%s",
-                context.getString(R.string.app_name),
-                Base64.encodeToString(
-                        slice(random), Base64.NO_PADDING | Base64.NO_WRAP | Base64.URL_SAFE));
-    }
-
-    private static byte[] slice(final byte[] input) {
-        if (input == null || input.length < 3) {
-            return new byte[3];
-        }
-        try {
-            return ByteSource.wrap(input).slice(0, 3).read();
-        } catch (final IOException e) {
-            return new byte[3];
-        }
-    }
-
-    private String nextRandomId() {
-        return nextRandomId(false);
-    }
-
-    private String nextRandomId(final boolean s) {
-        return CryptoHelper.random(s ? 3 : 9);
+    private String createNewResource(final String postfixId) {
+        return String.format("%s.%s", context.getString(R.string.app_name), postfixId);
     }
 
     public String sendIqPacket(final IqPacket packet, final Consumer<IqPacket> callback) {
@@ -2258,8 +2234,8 @@ public class XmppConnection implements Runnable {
 
     public synchronized String sendUnmodifiedIqPacket(
             final IqPacket packet, final Consumer<IqPacket> callback, boolean force) {
-        if (packet.getId() == null) {
-            packet.setAttribute("id", nextRandomId());
+        if (Strings.isNullOrEmpty(packet.getId())) {
+            packet.setAttribute("id", IDs.medium());
         }
         if (callback != null) {
             synchronized (this.packetCallbacks) {

@@ -6,7 +6,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteSource;
 import eu.siacs.conversations.xmpp.Jid;
-import im.conversations.android.Uuids;
+import im.conversations.android.IDs;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -48,7 +48,7 @@ public class Account {
 
     public UUID getPublicDeviceId() {
         try {
-            return Uuids.getUuid(
+            return IDs.uuid(
                     ByteSource.wrap(randomSeed).slice(0, 16).hash(Hashing.sha256()).asBytes());
         } catch (final IOException e) {
             return UUID.randomUUID();
