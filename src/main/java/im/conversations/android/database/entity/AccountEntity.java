@@ -26,6 +26,15 @@ public class AccountEntity {
 
     public boolean enabled;
 
+    public boolean quickStartAvailable = false;
+    public boolean pendingRegistration = false;
+
+    // TODO this is only used during setup; depending on how the setup procedure will look in the
+    // future we might get rid of this property
+    public boolean loggedInSuccessfully = false;
+
+    public boolean showErrorNotification = true;
+
     public String rosterVersion;
 
     @Embedded public Connection connection;

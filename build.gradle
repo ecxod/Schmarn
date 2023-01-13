@@ -53,6 +53,8 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:$room_version"
     implementation "androidx.room:room-guava:$room_version"
 
+    implementation "androidx.security:security-crypto:1.0.0"
+
 
 
     // legacy dependencies. Ideally everything below should be carefully reviewed and eventually moved up

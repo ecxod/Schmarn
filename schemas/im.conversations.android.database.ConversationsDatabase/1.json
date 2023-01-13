@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c78cb993428558b863fd91c46b608926",
+    "identityHash": "4a70ff0733436f5a2a08e7abb8e6cc95",
     "entities": [
       {
         "tableName": "account",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `address` TEXT NOT NULL, `resource` TEXT, `randomSeed` BLOB, `enabled` INTEGER NOT NULL, `rosterVersion` TEXT, `hostname` TEXT, `port` INTEGER, `directTls` INTEGER, `proxytype` TEXT, `proxyhostname` TEXT, `proxyport` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `address` TEXT NOT NULL, `resource` TEXT, `randomSeed` BLOB, `enabled` INTEGER NOT NULL, `quickStartAvailable` INTEGER NOT NULL, `pendingRegistration` INTEGER NOT NULL, `loggedInSuccessfully` INTEGER NOT NULL, `showErrorNotification` INTEGER NOT NULL, `rosterVersion` TEXT, `hostname` TEXT, `port` INTEGER, `directTls` INTEGER, `proxytype` TEXT, `proxyhostname` TEXT, `proxyport` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -35,6 +35,30 @@
           {
             "fieldPath": "enabled",
             "columnName": "enabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quickStartAvailable",
+            "columnName": "quickStartAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pendingRegistration",
+            "columnName": "pendingRegistration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "loggedInSuccessfully",
+            "columnName": "loggedInSuccessfully",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showErrorNotification",
+            "columnName": "showErrorNotification",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -830,7 +854,7 @@
       },
       {
         "tableName": "presence",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `address` TEXT NOT NULL, `resource` TEXT, `type` TEXT, `show` TEXT, `status` TEXT, `vCardPhoto` TEXT, `occupantId` TEXT, `mucUserAffiliation` TEXT, `mucUserRole` TEXT, `mucUserJid` TEXT, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `address` TEXT NOT NULL, `resource` TEXT, `type` TEXT, `show` TEXT, `status` TEXT, `vCardPhoto` TEXT, `occupantId` TEXT, `mucUserAffiliation` TEXT, `mucUserRole` TEXT, `mucUserJid` TEXT, `mucUserSelf` INTEGER NOT NULL, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -903,6 +927,12 @@
             "columnName": "mucUserJid",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "mucUserSelf",
+            "columnName": "mucUserSelf",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -1159,7 +1189,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c78cb993428558b863fd91c46b608926')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4a70ff0733436f5a2a08e7abb8e6cc95')"
     ]
   }
 }

@@ -74,6 +74,7 @@
 
 
     <application
+        android:name="im.conversations.android.Conversations"
         android:allowBackup="true"
         android:appCategory="social"
         android:fullBackupContent="@xml/backup_content"

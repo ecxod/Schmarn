@@ -1,12 +1,11 @@
 package eu.siacs.conversations.xml;
 
-import org.jetbrains.annotations.NotNull;
-
+import eu.siacs.conversations.utils.XmlHelper;
+import eu.siacs.conversations.xmpp.Jid;
 import java.util.Hashtable;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import eu.siacs.conversations.utils.XmlHelper;
+import org.jetbrains.annotations.NotNull;
 
 public class Tag {
     public static final int NO = -1;
@@ -49,6 +48,13 @@ public class Tag {
 
     public Tag setAttribute(final String attrName, final String attrValue) {
         this.attributes.put(attrName, attrValue);
+        return this;
+    }
+
+    public Tag setAttribute(final String attrName, final Jid attrValue) {
+        if (attrValue != null) {
+            this.attributes.put(attrName, attrValue.toEscapedString());
+        }
         return this;
     }
 

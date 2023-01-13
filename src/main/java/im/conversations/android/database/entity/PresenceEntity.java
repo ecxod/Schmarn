@@ -50,4 +50,7 @@ public class PresenceEntity {
     @Nullable public MucOptions.Role mucUserRole;
 
     @Nullable public Jid mucUserJid;
+
+    // set to true if presence has status code 110 (this means we are online)
+    public boolean mucUserSelf;
 }
