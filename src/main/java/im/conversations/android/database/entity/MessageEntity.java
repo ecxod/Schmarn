@@ -35,4 +35,6 @@ public class MessageEntity {
 
     public String messageId;
     public String stanzaId;
+
+    public boolean acknowledged = false;
 }

@@ -10,7 +10,7 @@ import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 import im.conversations.android.xmpp.XmppConnection;
 import java.util.function.Consumer;
 
-public class BindProcessor extends BaseProcessor implements Consumer<Jid> {
+public class BindProcessor extends AbstractBaseProcessor implements Consumer<Jid> {
 
     public BindProcessor(final Context context, final XmppConnection connection) {
         super(context, connection);

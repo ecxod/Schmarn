@@ -5,12 +5,12 @@ import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.XmppConnection;
 
-abstract class BaseProcessor {
+abstract class AbstractBaseProcessor {
 
     protected final Context context;
     protected final XmppConnection connection;
 
-    BaseProcessor(final Context context, final XmppConnection connection) {
+    AbstractBaseProcessor(final Context context, final XmppConnection connection) {
         this.context = context;
         this.connection = connection;
     }

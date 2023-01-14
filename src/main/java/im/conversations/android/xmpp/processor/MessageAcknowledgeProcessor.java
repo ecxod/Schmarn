@@ -5,12 +5,16 @@ import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.XmppConnection;
 import java.util.function.BiFunction;
 
-public class MessageAcknowledgeProcessor implements BiFunction<Jid, String, Boolean> {
+public class MessageAcknowledgeProcessor extends AbstractBaseProcessor
+        implements BiFunction<Jid, String, Boolean> {
 
-    public MessageAcknowledgeProcessor(final Context context, final XmppConnection connection) {}
+    public MessageAcknowledgeProcessor(final Context context, final XmppConnection connection) {
+        super(context, connection);
+    }
 
     @Override
     public Boolean apply(final Jid to, final String id) {
-        return null;
+        final var account = getAccount();
+        return getDatabase().messageDao().acknowledge(account, id, to);
     }
 }

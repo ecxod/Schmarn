@@ -6,6 +6,7 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 import im.conversations.android.database.dao.AccountDao;
+import im.conversations.android.database.dao.MessageDao;
 import im.conversations.android.database.dao.PresenceDao;
 import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.entity.BlockedItemEntity;
@@ -68,4 +69,6 @@ public abstract class ConversationsDatabase extends RoomDatabase {
     public abstract AccountDao accountDao();
 
     public abstract PresenceDao presenceDao();
+
+    public abstract MessageDao messageDao();
 }
