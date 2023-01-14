@@ -1,6 +1,7 @@
 package eu.siacs.conversations.xml;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
@@ -177,14 +178,14 @@ public class Element {
 
     public Jid getAttributeAsJid(String name) {
         final String jid = this.getAttribute(name);
-        if (jid != null && !jid.isEmpty()) {
-            try {
-                return Jid.ofEscaped(jid);
-            } catch (final IllegalArgumentException e) {
-                return InvalidJid.of(jid, this instanceof MessagePacket);
-            }
+        if (Strings.isNullOrEmpty(jid)) {
+            return null;
         }
-        return null;
+        try {
+            return Jid.ofEscaped(jid);
+        } catch (final IllegalArgumentException e) {
+            return InvalidJid.of(jid, this instanceof MessagePacket);
+        }
     }
 
     public Hashtable<String, String> getAttributes() {
@@ -215,6 +216,7 @@ public class Element {
         return elementOutput.toString();
     }
 
+    // TODO should ultimately be removed once everything is an extension
     public final String getName() {
         return name;
     }

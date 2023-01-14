@@ -14,4 +14,8 @@ public class Query extends Extension {
     public void setVersion(final String rosterVersion) {
         this.setAttribute("ver", rosterVersion);
     }
+
+    public String getVersion() {
+        return this.getAttribute("ver");
+    }
 }
