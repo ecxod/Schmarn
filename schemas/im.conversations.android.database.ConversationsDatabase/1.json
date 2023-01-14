@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "4a70ff0733436f5a2a08e7abb8e6cc95",
+    "identityHash": "d16845c3eb73e5fdbc9902903b74428a",
     "entities": [
       {
         "tableName": "account",
@@ -590,7 +590,7 @@
       },
       {
         "tableName": "message",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `chatId` INTEGER NOT NULL, `receivedAt` INTEGER, `sentAt` INTEGER, `bareTo` TEXT, `toResource` TEXT, `bareFrom` TEXT, `fromResource` TEXT, `occupantId` TEXT, `messageId` TEXT, `stanzaId` TEXT, FOREIGN KEY(`chatId`) REFERENCES `chat`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `chatId` INTEGER NOT NULL, `receivedAt` INTEGER, `sentAt` INTEGER, `bareTo` TEXT, `toResource` TEXT, `bareFrom` TEXT, `fromResource` TEXT, `occupantId` TEXT, `messageId` TEXT, `stanzaId` TEXT, `acknowledged` INTEGER NOT NULL, FOREIGN KEY(`chatId`) REFERENCES `chat`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -657,6 +657,12 @@
             "columnName": "stanzaId",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "acknowledged",
+            "columnName": "acknowledged",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -1189,7 +1195,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4a70ff0733436f5a2a08e7abb8e6cc95')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd16845c3eb73e5fdbc9902903b74428a')"
     ]
   }
 }

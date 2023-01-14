@@ -4,10 +4,11 @@ import android.content.Context;
 import android.util.Log;
 import com.google.common.base.Strings;
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 import im.conversations.android.xmpp.XmppConnection;
+import im.conversations.android.xmpp.model.roster.Item;
+import im.conversations.android.xmpp.model.roster.Query;
 import java.util.function.Consumer;
 
 public class BindProcessor extends AbstractBaseProcessor implements Consumer<Jid> {
@@ -43,12 +44,27 @@ public class BindProcessor extends AbstractBaseProcessor implements Consumer<Jid
         final var database = getDatabase();
         final String rosterVersion = database.accountDao().getRosterVersion(account.id);
         final IqPacket iqPacket = new IqPacket(IqPacket.TYPE.GET);
+        final Query rosterQuery = new Query();
+        iqPacket.addChild(rosterQuery);
         if (Strings.isNullOrEmpty(rosterVersion)) {
             Log.d(Config.LOGTAG, account.address + ": fetching roster");
         } else {
             Log.d(Config.LOGTAG, account.address + ": fetching roster version " + rosterVersion);
+            rosterQuery.setVersion(rosterVersion);
         }
-        iqPacket.query(Namespace.ROSTER).setAttribute("ver", rosterVersion);
-        connection.sendIqPacket(iqPacket, result -> {});
+        connection.sendIqPacket(
+                iqPacket,
+                result -> {
+                    if (result.getType() != IqPacket.TYPE.RESULT) {
+                        return;
+                    }
+                    final Query query = result.getExtension(Query.class);
+                    if (query == null) {
+                        // No query in result means further modifications are sent via pushes
+                        return;
+                    }
+                    // TODO delete entire roster
+                    for (final Item item : query.getExtensions(Item.class)) {}
+                });
     }
 }
