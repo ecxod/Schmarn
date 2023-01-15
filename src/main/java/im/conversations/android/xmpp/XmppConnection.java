@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.collect.ClassToInstanceMap;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.XmppDomainVerifier;
@@ -60,6 +61,7 @@ import im.conversations.android.database.CredentialStore;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.database.model.Credential;
+import im.conversations.android.xmpp.manager.AbstractManager;
 import im.conversations.android.xmpp.processor.BindProcessor;
 import im.conversations.android.xmpp.processor.IqProcessor;
 import im.conversations.android.xmpp.processor.JingleProcessor;
@@ -155,6 +157,7 @@ public class XmppConnection implements Runnable {
     private final Consumer<MessagePacket> messagePacketConsumer;
     private final BiFunction<Jid, String, Boolean> messageAcknowledgeProcessor;
     private final Consumer<Jid> bindConsumer;
+    private final ClassToInstanceMap<AbstractManager> managers;
     private Consumer<XmppConnection> statusListener = null;
     private SaslMechanism saslMechanism;
     private HashedToken.Mechanism hashTokenRequest;
@@ -178,10 +181,15 @@ public class XmppConnection implements Runnable {
         this.jinglePacketConsumer = new JingleProcessor(context, this);
         this.messageAcknowledgeProcessor = new MessageAcknowledgeProcessor(context, this);
         this.bindConsumer = new BindProcessor(context, this);
+        this.managers = Managers.initialize(context, this);
     }
 
     public Account getAccount() {
         return account;
+    }
+
+    public <T extends AbstractManager> T getManager(Class<T> type) {
+        return this.managers.getInstance(type);
     }
 
     private String fixResource(final String resource) {
@@ -2776,6 +2784,29 @@ public class XmppConnection implements Runnable {
         public boolean externalServiceDiscovery() {
             return hasDiscoFeature(
                     account.address.getDomain(), Namespace.EXTERNAL_SERVICE_DISCOVERY);
+        }
+    }
+
+    public abstract static class Delegate {
+
+        protected final Context context;
+        protected final XmppConnection connection;
+
+        protected Delegate(final Context context, final XmppConnection connection) {
+            this.context = context;
+            this.connection = connection;
+        }
+
+        protected Account getAccount() {
+            return connection.getAccount();
+        }
+
+        protected ConversationsDatabase getDatabase() {
+            return ConversationsDatabase.getInstance(context);
+        }
+
+        public <T extends AbstractManager> T getManager(Class<T> type) {
+            return connection.managers.getInstance(type);
         }
     }
 }

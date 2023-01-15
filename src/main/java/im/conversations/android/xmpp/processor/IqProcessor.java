@@ -4,11 +4,15 @@ import android.content.Context;
 import com.google.common.base.Preconditions;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 import im.conversations.android.xmpp.XmppConnection;
+import im.conversations.android.xmpp.manager.BlockingManager;
+import im.conversations.android.xmpp.manager.RosterManager;
+import im.conversations.android.xmpp.model.blocking.Block;
+import im.conversations.android.xmpp.model.blocking.Unblock;
 import im.conversations.android.xmpp.model.roster.Query;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-public class IqProcessor extends AbstractBaseProcessor implements Consumer<IqPacket> {
+public class IqProcessor extends XmppConnection.Delegate implements Consumer<IqPacket> {
 
     public IqProcessor(final Context context, final XmppConnection connection) {
         super(context, connection);
@@ -22,11 +26,21 @@ public class IqProcessor extends AbstractBaseProcessor implements Consumer<IqPac
         if (type == IqPacket.TYPE.SET
                 && connection.fromAccount(packet)
                 && packet.hasExtension(Query.class)) {
-            handleRosterPush(packet.getExtension(Query.class));
+            getManager(RosterManager.class).handlePush(packet.getExtension(Query.class));
+            return;
         }
-    }
-
-    private void handleRosterPush(final Query query) {
-        final String version = query.getVersion();
+        if (type == IqPacket.TYPE.SET
+                && connection.fromAccount(packet)
+                && packet.hasExtension(Block.class)) {
+            getManager(BlockingManager.class).handlePush(packet.getExtension(Block.class));
+            return;
+        }
+        if (type == IqPacket.TYPE.SET
+                && connection.fromAccount(packet)
+                && packet.hasExtension(Unblock.class)) {
+            getManager(BlockingManager.class).handlePush(packet.getExtension(Unblock.class));
+            return;
+        }
+        // TODO return feature not implemented
     }
 }
