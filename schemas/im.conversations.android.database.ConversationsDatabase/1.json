@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d16845c3eb73e5fdbc9902903b74428a",
+    "identityHash": "aa5e73a1cf9ba959e118f66b89b9d227",
     "entities": [
       {
         "tableName": "account",
@@ -1066,7 +1066,7 @@
       },
       {
         "tableName": "roster",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `address` TEXT NOT NULL, `subscription` TEXT, `ask` INTEGER NOT NULL, `name` TEXT, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `address` TEXT NOT NULL, `subscription` TEXT, `isPendingOut` INTEGER NOT NULL, `name` TEXT, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1093,8 +1093,8 @@
             "notNull": false
           },
           {
-            "fieldPath": "ask",
-            "columnName": "ask",
+            "fieldPath": "isPendingOut",
+            "columnName": "isPendingOut",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -1195,7 +1195,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd16845c3eb73e5fdbc9902903b74428a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'aa5e73a1cf9ba959e118f66b89b9d227')"
     ]
   }
 }

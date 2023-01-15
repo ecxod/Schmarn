@@ -6,6 +6,7 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 import im.conversations.android.database.dao.AccountDao;
+import im.conversations.android.database.dao.BlockingDao;
 import im.conversations.android.database.dao.MessageDao;
 import im.conversations.android.database.dao.PresenceDao;
 import im.conversations.android.database.dao.RosterDao;
@@ -74,4 +75,6 @@ public abstract class ConversationsDatabase extends RoomDatabase {
     public abstract MessageDao messageDao();
 
     public abstract RosterDao rosterDao();
+
+    public abstract BlockingDao blockingDao();
 }

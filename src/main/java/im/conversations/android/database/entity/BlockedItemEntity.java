@@ -5,6 +5,8 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
+import eu.siacs.conversations.xmpp.Jid;
+import im.conversations.android.xmpp.model.blocking.Item;
 
 @Entity(
         tableName = "blocked",
@@ -26,5 +28,12 @@ public class BlockedItemEntity {
 
     @NonNull public Long accountId;
 
-    @NonNull public String address;
+    @NonNull public Jid address;
+
+    public static BlockedItemEntity of(final long accountId, final Item item) {
+        final var entity = new BlockedItemEntity();
+        entity.accountId = accountId;
+        entity.address = item.getJid();
+        return entity;
+    }
 }

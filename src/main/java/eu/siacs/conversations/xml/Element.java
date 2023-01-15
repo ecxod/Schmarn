@@ -67,6 +67,10 @@ public class Element {
         return null;
     }
 
+    public <E extends Extension> boolean hasExtension(final Class<E> clazz) {
+        return Iterables.any(this.children, clazz::isInstance);
+    }
+
     public <E extends Extension> E getExtension(final Class<E> clazz) {
         final var extension = Iterables.find(this.children, clazz::isInstance);
         if (extension == null) {

@@ -7,10 +7,11 @@ import com.google.common.collect.Collections2;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
-import im.conversations.android.database.entity.RosterItemEntity;
 import im.conversations.android.xmpp.XmppConnection;
+import im.conversations.android.xmpp.model.blocking.Blocklist;
 import im.conversations.android.xmpp.model.roster.Item;
 import im.conversations.android.xmpp.model.roster.Query;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class BindProcessor extends AbstractBaseProcessor implements Consumer<Jid> {
@@ -35,6 +36,9 @@ public class BindProcessor extends AbstractBaseProcessor implements Consumer<Jid
         database.presenceDao().deletePresences(account.id);
 
         fetchRoster();
+
+        // TODO check feature
+        fetchBlocklist();
 
         // TODO fetch bookmarks
 
@@ -61,7 +65,7 @@ public class BindProcessor extends AbstractBaseProcessor implements Consumer<Jid
         if (result.getType() != IqPacket.TYPE.RESULT) {
             return;
         }
-        final Query query = result.getExtension(Query.class);
+        final var query = result.getExtension(Query.class);
         if (query == null) {
             // No query in result means further modifications are sent via pushes
             return;
@@ -75,8 +79,30 @@ public class BindProcessor extends AbstractBaseProcessor implements Consumer<Jid
         final var validItems =
                 Collections2.filter(
                         items,
-                        i -> i != null && Item.RESULT_SUBSCRIPTIONS.contains(i.getSubscription()));
-        final var entities = RosterItemEntity.of(account.id, validItems);
-        database.rosterDao().setRoster(account, version, entities);
+                        i ->
+                                Item.RESULT_SUBSCRIPTIONS.contains(i.getSubscription())
+                                        && Objects.nonNull(i.getJid()));
+        database.rosterDao().set(account, version, validItems);
+    }
+
+    private void fetchBlocklist() {
+        final IqPacket iqPacket = new IqPacket(IqPacket.TYPE.GET);
+        iqPacket.addChild(new Blocklist());
+        connection.sendIqPacket(iqPacket, this::handleFetchBlocklistResult);
+    }
+
+    private void handleFetchBlocklistResult(final IqPacket result) {
+        if (result.getType() != IqPacket.TYPE.RESULT) {
+            return;
+        }
+        final var blocklist = result.getExtension(Blocklist.class);
+        if (blocklist == null) {
+            return;
+        }
+        final var account = getAccount();
+        final var items =
+                blocklist.getExtensions(im.conversations.android.xmpp.model.blocking.Item.class);
+        final var filteredItems = Collections2.filter(items, i -> Objects.nonNull(i.getJid()));
+        getDatabase().blockingDao().setBlocklist(account, filteredItems);
     }
 }

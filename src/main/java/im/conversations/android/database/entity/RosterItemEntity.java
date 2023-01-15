@@ -5,10 +5,8 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import com.google.common.collect.Collections2;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.model.roster.Item;
-import java.util.Collection;
 
 @Entity(
         tableName = "roster",
@@ -46,10 +44,5 @@ public class RosterItemEntity {
         entity.isPendingOut = item.isPendingOut();
         entity.name = item.getItemName();
         return entity;
-    }
-
-    public static Collection<RosterItemEntity> of(
-            final long accountId, final Collection<Item> items) {
-        return Collections2.transform(items, i -> of(accountId, i));
     }
 }
