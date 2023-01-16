@@ -17,6 +17,8 @@ import androidx.annotation.Nullable;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.ClassToInstanceMap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.XmppDomainVerifier;
@@ -97,6 +99,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
@@ -2233,6 +2236,24 @@ public class XmppConnection implements Runnable {
 
     private String createNewResource(final String postfixId) {
         return String.format("%s.%s", context.getString(R.string.app_name), postfixId);
+    }
+
+    public ListenableFuture<IqPacket> sendIqPacket(final IqPacket packet) {
+        final SettableFuture<IqPacket> future = SettableFuture.create();
+        sendIqPacket(
+                packet,
+                result -> {
+                    final var type = result.getType();
+                    if (type == IqPacket.TYPE.RESULT) {
+                        future.set(result);
+                    } else if (type == IqPacket.TYPE.TIMEOUT) {
+                        future.setException(new TimeoutException());
+                    } else {
+                        // TODO some sort of IqErrorException
+                        future.setException(new IOException());
+                    }
+                });
+        return future;
     }
 
     public String sendIqPacket(final IqPacket packet, final Consumer<IqPacket> callback) {

@@ -1,6 +1,5 @@
 package im.conversations.android.xmpp.model.roster;
 
-import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.xmpp.model.Extension;
@@ -15,7 +14,7 @@ public class Item extends Extension {
             Arrays.asList(Subscription.NONE, Subscription.TO, Subscription.FROM, Subscription.BOTH);
 
     public Item() {
-        super("item", Namespace.ROSTER);
+        super(Item.class);
     }
 
     public Jid getJid() {

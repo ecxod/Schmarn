@@ -8,7 +8,7 @@ import im.conversations.android.xmpp.model.Extension;
 public class Query extends Extension {
 
     public Query() {
-        super("query", Namespace.ROSTER);
+        super(Query.class);
     }
 
     public void setVersion(final String rosterVersion) {

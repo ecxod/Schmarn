@@ -20,8 +20,9 @@ public class DiscoEntity {
     @PrimaryKey(autoGenerate = true)
     public Long id;
 
+    @NonNull Long accountId;
+
     public byte[] capsHash;
     public byte[] caps2Hash;
     public String caps2Algorithm;
-    @NonNull Long accountId;
 }
