@@ -24,11 +24,12 @@ import eu.siacs.conversations.xmpp.Jid;
         },
         indices = {
             @Index(
-                    value = {"accountId", "address"},
+                    value = {"accountId", "address", "node"},
                     unique = true),
             @Index(
                     value = {"accountId", "parent"},
-                    unique = false)
+                    unique = false),
+            @Index(value = {"discoId"})
         })
 public class DiscoItemEntity {
 
@@ -38,6 +39,8 @@ public class DiscoItemEntity {
     @NonNull Long accountId;
 
     @NonNull Jid address;
+
+    @Nullable public String node;
 
     @Nullable public Jid parent;
 

@@ -1,6 +1,7 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
+import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -11,6 +12,7 @@ import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import im.conversations.android.xmpp.model.disco.items.ItemsQuery;
 import java.util.Collection;
+import java.util.Objects;
 
 public class DiscoManager extends AbstractManager {
 
@@ -48,9 +50,11 @@ public class DiscoManager extends AbstractManager {
                     if (itemsQuery == null) {
                         throw new IllegalStateException();
                     }
-                    // TODO store items
                     final var items = itemsQuery.getExtensions(Item.class);
-                    return items;
+                    final var validItems =
+                            Collections2.filter(items, i -> Objects.nonNull(i.getJid()));
+                    getDatabase().discoDao().setDiscoItems(getAccount(), entity, validItems);
+                    return validItems;
                 },
                 MoreExecutors.directExecutor());
     }
