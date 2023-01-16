@@ -25,6 +25,7 @@ public final class Extensions {
                     im.conversations.android.xmpp.model.blocking.Unblock.class,
                     im.conversations.android.xmpp.model.data.Data.class,
                     im.conversations.android.xmpp.model.data.Field.class,
+                    im.conversations.android.xmpp.model.data.Value.class,
                     im.conversations.android.xmpp.model.disco.info.Feature.class,
                     im.conversations.android.xmpp.model.disco.info.Identity.class,
                     im.conversations.android.xmpp.model.disco.info.InfoQuery.class,

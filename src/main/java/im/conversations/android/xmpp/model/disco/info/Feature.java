@@ -8,4 +8,8 @@ public class Feature extends Extension {
     public Feature() {
         super(Feature.class);
     }
+
+    public String getVar() {
+        return this.getAttribute("var");
+    }
 }
