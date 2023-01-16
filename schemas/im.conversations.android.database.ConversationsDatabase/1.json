@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "afc5b1df44123031e340e1a3db15396d",
+    "identityHash": "adc70f7066828bb6cf1fc32aa3a24b2f",
     "entities": [
       {
         "tableName": "account",
@@ -248,7 +248,7 @@
       },
       {
         "tableName": "disco",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `capsHash` BLOB, `caps2Hash` BLOB, `caps2Algorithm` TEXT, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `capsHash` BLOB, `caps2HashSha256` BLOB, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -269,15 +269,9 @@
             "notNull": false
           },
           {
-            "fieldPath": "caps2Hash",
-            "columnName": "caps2Hash",
+            "fieldPath": "caps2HashSha256",
+            "columnName": "caps2HashSha256",
             "affinity": "BLOB",
-            "notNull": false
-          },
-          {
-            "fieldPath": "caps2Algorithm",
-            "columnName": "caps2Algorithm",
-            "affinity": "TEXT",
             "notNull": false
           }
         ],
@@ -289,13 +283,24 @@
         },
         "indices": [
           {
-            "name": "index_disco_accountId",
+            "name": "index_disco_accountId_capsHash",
             "unique": false,
             "columnNames": [
-              "accountId"
+              "accountId",
+              "capsHash"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_disco_accountId` ON `${TABLE_NAME}` (`accountId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_disco_accountId_capsHash` ON `${TABLE_NAME}` (`accountId`, `capsHash`)"
+          },
+          {
+            "name": "index_disco_accountId_caps2HashSha256",
+            "unique": true,
+            "columnNames": [
+              "accountId",
+              "caps2HashSha256"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_disco_accountId_caps2HashSha256` ON `${TABLE_NAME}` (`accountId`, `caps2HashSha256`)"
           }
         ],
         "foreignKeys": [
@@ -1299,7 +1304,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'afc5b1df44123031e340e1a3db15396d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'adc70f7066828bb6cf1fc32aa3a24b2f')"
     ]
   }
 }

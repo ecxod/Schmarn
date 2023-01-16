@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Ordering;
+import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.Bytes;
 import im.conversations.android.xmpp.model.data.Data;
@@ -25,8 +26,12 @@ public class EntityCapabilities2 {
     private static final char FILE_SEPARATOR = 0x1c;
 
     public static byte[] hash(final InfoQuery info) {
+        return hash(Hashing.sha256(), info);
+    }
+
+    public static byte[] hash(HashFunction hashFunction, final InfoQuery info) {
         final String algo = algorithm(info);
-        return Hashing.sha256().hashString(algo, StandardCharsets.UTF_8).asBytes();
+        return hashFunction.hashString(algo, StandardCharsets.UTF_8).asBytes();
     }
 
     private static String asHex(final String message) {

@@ -21,4 +21,10 @@ public class DiscoExtensionEntity {
     public Long id;
 
     @NonNull public Long discoId;
+
+    public static DiscoExtensionEntity of(long discoId) {
+        final var entity = new DiscoExtensionEntity();
+        entity.discoId = discoId;
+        return entity;
+    }
 }

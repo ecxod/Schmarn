@@ -9,4 +9,12 @@ public class InfoQuery extends Extension {
     public InfoQuery() {
         super(InfoQuery.class);
     }
+
+    public void setNode(final String node) {
+        this.setAttribute("node", node);
+    }
+
+    public String getNode() {
+        return this.getAttribute("node");
+    }
 }

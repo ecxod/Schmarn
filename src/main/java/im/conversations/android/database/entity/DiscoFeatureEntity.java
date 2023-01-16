@@ -23,4 +23,11 @@ public class DiscoFeatureEntity {
     @NonNull public Long discoId;
 
     @NonNull public String feature;
+
+    public static DiscoFeatureEntity of(final long discoId, final String feature) {
+        final var entity = new DiscoFeatureEntity();
+        entity.discoId = discoId;
+        entity.feature = feature;
+        return entity;
+    }
 }

@@ -23,4 +23,11 @@ public class DiscoExtensionFieldEntity {
     @NonNull public Long extensionId;
 
     public String field;
+
+    public static DiscoExtensionFieldEntity of(final long extensionId, final String fieldName) {
+        final var entity = new DiscoExtensionFieldEntity();
+        entity.extensionId = extensionId;
+        entity.field = fieldName;
+        return entity;
+    }
 }

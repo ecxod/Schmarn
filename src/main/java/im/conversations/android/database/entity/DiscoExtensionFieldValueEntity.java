@@ -23,4 +23,8 @@ public class DiscoExtensionFieldValueEntity {
     @NonNull public Long fieldId;
 
     public String value;
+
+    public static DiscoExtensionFieldValueEntity of(long fieldId, final String value) {
+        return null;
+    }
 }
