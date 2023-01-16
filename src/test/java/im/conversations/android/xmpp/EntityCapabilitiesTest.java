@@ -77,4 +77,110 @@ public class EntityCapabilitiesTest {
         final String var = BaseEncoding.base64().encode(EntityCapabilities.hash(info));
         Assert.assertEquals("q07IKJEyjvHSyhy//CH0CxmKi8w=", var);
     }
+
+    @Test
+    public void caps2() throws IOException {
+        final String xml =
+                "<query xmlns=\"http://jabber.org/protocol/disco#info\">\n"
+                    + "  <identity category=\"client\" name=\"BombusMod\" type=\"mobile\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/si\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/bytestreams\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/chatstates\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/disco#info\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/disco#items\"/>\n"
+                    + "  <feature var=\"urn:xmpp:ping\"/>\n"
+                    + "  <feature var=\"jabber:iq:time\"/>\n"
+                    + "  <feature var=\"jabber:iq:privacy\"/>\n"
+                    + "  <feature var=\"jabber:iq:version\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/rosterx\"/>\n"
+                    + "  <feature var=\"urn:xmpp:time\"/>\n"
+                    + "  <feature var=\"jabber:x:oob\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/ibb\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>\n"
+                    + "  <feature var=\"urn:xmpp:receipts\"/>\n"
+                    + "  <feature var=\"jabber:iq:roster\"/>\n"
+                    + "  <feature var=\"jabber:iq:last\"/>\n"
+                    + "</query>";
+        final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
+        assertThat(element, instanceOf(InfoQuery.class));
+        final InfoQuery info = (InfoQuery) element;
+        final String var = BaseEncoding.base64().encode(EntityCapabilities2.hash(info));
+        Assert.assertEquals("kzBZbkqJ3ADrj7v08reD1qcWUwNGHaidNUgD7nHpiw8=", var);
+    }
+
+    @Test
+    public void caps2complex() throws IOException {
+        final String xml =
+                "<query xmlns=\"http://jabber.org/protocol/disco#info\">\n"
+                    + "  <identity category=\"client\" name=\"Tkabber\" type=\"pc\""
+                    + " xml:lang=\"en\"/>\n"
+                    + "  <identity category=\"client\" name=\"Ткаббер\" type=\"pc\""
+                    + " xml:lang=\"ru\"/>\n"
+                    + "  <feature var=\"games:board\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/activity\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/activity+notify\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/bytestreams\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/chatstates\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/commands\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/disco#info\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/disco#items\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/evil\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/feature-neg\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/geoloc\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/geoloc+notify\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/ibb\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/iqibb\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/mood\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/mood+notify\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/rosterx\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/si\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>\n"
+                    + "  <feature var=\"http://jabber.org/protocol/tune\"/>\n"
+                    + "  <feature var=\"http://www.facebook.com/xmpp/messages\"/>\n"
+                    + "  <feature"
+                    + " var=\"http://www.xmpp.org/extensions/xep-0084.html#ns-metadata+notify\"/>\n"
+                    + "  <feature var=\"jabber:iq:avatar\"/>\n"
+                    + "  <feature var=\"jabber:iq:browse\"/>\n"
+                    + "  <feature var=\"jabber:iq:dtcp\"/>\n"
+                    + "  <feature var=\"jabber:iq:filexfer\"/>\n"
+                    + "  <feature var=\"jabber:iq:ibb\"/>\n"
+                    + "  <feature var=\"jabber:iq:inband\"/>\n"
+                    + "  <feature var=\"jabber:iq:jidlink\"/>\n"
+                    + "  <feature var=\"jabber:iq:last\"/>\n"
+                    + "  <feature var=\"jabber:iq:oob\"/>\n"
+                    + "  <feature var=\"jabber:iq:privacy\"/>\n"
+                    + "  <feature var=\"jabber:iq:roster\"/>\n"
+                    + "  <feature var=\"jabber:iq:time\"/>\n"
+                    + "  <feature var=\"jabber:iq:version\"/>\n"
+                    + "  <feature var=\"jabber:x:data\"/>\n"
+                    + "  <feature var=\"jabber:x:event\"/>\n"
+                    + "  <feature var=\"jabber:x:oob\"/>\n"
+                    + "  <feature var=\"urn:xmpp:avatar:metadata+notify\"/>\n"
+                    + "  <feature var=\"urn:xmpp:ping\"/>\n"
+                    + "  <feature var=\"urn:xmpp:receipts\"/>\n"
+                    + "  <feature var=\"urn:xmpp:time\"/>\n"
+                    + "  <x xmlns=\"jabber:x:data\" type=\"result\">\n"
+                    + "    <field type=\"hidden\" var=\"FORM_TYPE\">\n"
+                    + "      <value>urn:xmpp:dataforms:softwareinfo</value>\n"
+                    + "    </field>\n"
+                    + "    <field var=\"software\">\n"
+                    + "      <value>Tkabber</value>\n"
+                    + "    </field>\n"
+                    + "    <field var=\"software_version\">\n"
+                    + "      <value>0.11.1-svn-20111216-mod (Tcl/Tk 8.6b2)</value>\n"
+                    + "    </field>\n"
+                    + "    <field var=\"os\">\n"
+                    + "      <value>Windows</value>\n"
+                    + "    </field>\n"
+                    + "    <field var=\"os_version\">\n"
+                    + "      <value>XP</value>\n"
+                    + "    </field>\n"
+                    + "  </x>\n"
+                    + "</query>";
+        final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
+        assertThat(element, instanceOf(InfoQuery.class));
+        final InfoQuery info = (InfoQuery) element;
+        final String var = BaseEncoding.base64().encode(EntityCapabilities2.hash(info));
+        Assert.assertEquals("u79ZroNJbdSWhdSp311mddz44oHHPsEBntQ5b1jqBSY=", var);
+    }
 }
