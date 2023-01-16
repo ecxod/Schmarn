@@ -45,7 +45,7 @@ dependencies {
 
     // Conversations 3.0 dependencies
 
-    def room_version = "2.4.3"
+    def room_version = "2.5.0"
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.8'
 
@@ -117,11 +117,11 @@ ext {
 
 android {
     namespace 'eu.siacs.conversations'
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 23
-        targetSdkVersion 32
+        targetSdkVersion 33
         versionCode 1
         versionName "3.0.0-alpha"
         archivesBaseName += "-$versionName"

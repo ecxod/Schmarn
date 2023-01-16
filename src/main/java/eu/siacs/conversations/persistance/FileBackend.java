@@ -26,16 +26,26 @@ import android.util.Base64OutputStream;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.LruCache;
-
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
-
+import eu.siacs.conversations.Config;
+import eu.siacs.conversations.R;
+import eu.siacs.conversations.entities.DownloadableFile;
+import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.services.AttachFileToConversationRunnable;
+import eu.siacs.conversations.services.XmppConnectionService;
+import eu.siacs.conversations.ui.adapter.MediaAdapter;
+import eu.siacs.conversations.ui.util.Attachment;
+import eu.siacs.conversations.utils.CryptoHelper;
+import eu.siacs.conversations.utils.FileUtils;
+import eu.siacs.conversations.utils.FileWriterException;
+import eu.siacs.conversations.utils.MimeUtils;
+import eu.siacs.conversations.xmpp.pep.Avatar;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -57,20 +67,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
-
-import eu.siacs.conversations.Config;
-import eu.siacs.conversations.R;
-import eu.siacs.conversations.entities.DownloadableFile;
-import eu.siacs.conversations.entities.Message;
-import eu.siacs.conversations.services.AttachFileToConversationRunnable;
-import eu.siacs.conversations.services.XmppConnectionService;
-import eu.siacs.conversations.ui.adapter.MediaAdapter;
-import eu.siacs.conversations.ui.util.Attachment;
-import eu.siacs.conversations.utils.CryptoHelper;
-import eu.siacs.conversations.utils.FileUtils;
-import eu.siacs.conversations.utils.FileWriterException;
-import eu.siacs.conversations.utils.MimeUtils;
-import eu.siacs.conversations.xmpp.pep.Avatar;
 
 public class FileBackend {
 
@@ -140,7 +136,8 @@ public class FileBackend {
                     if (dimensions.getMin() > 720) {
                         Log.d(
                                 Config.LOGTAG,
-                                "do not consider video file with min width larger than 720 for size check");
+                                "do not consider video file with min width larger than 720 for"
+                                        + " size check");
                         continue;
                     }
                 } catch (NotAVideoFile notAVideoFile) {
@@ -269,13 +266,12 @@ public class FileBackend {
     }
 
     private static Dimensions getVideoDimensions(Context context, Uri uri) throws NotAVideoFile {
-        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-        try {
+        try (final MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever()) {
             mediaMetadataRetriever.setDataSource(context, uri);
-        } catch (RuntimeException e) {
+            return getVideoDimensions(mediaMetadataRetriever);
+        } catch (IOException | RuntimeException e) {
             throw new NotAVideoFile(e);
         }
-        return getVideoDimensions(mediaMetadataRetriever);
     }
 
     private static Dimensions getVideoDimensionsOfFrame(
@@ -324,7 +320,7 @@ public class FileBackend {
         } catch (Exception e) {
             width = -1;
         }
-        metadataRetriever.release();
+        // metadataRetriever.release();
         Log.d(Config.LOGTAG, "extracted video dims " + width + "x" + height);
         return rotated ? new Dimensions(width, height) : new Dimensions(height, width);
     }
@@ -1593,13 +1589,12 @@ public class FileBackend {
     }
 
     private Dimensions getVideoDimensions(File file) throws NotAVideoFile {
-        MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
-        try {
+        try (final MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever()) {
             metadataRetriever.setDataSource(file.getAbsolutePath());
-        } catch (RuntimeException e) {
+            return getVideoDimensions(metadataRetriever);
+        } catch (IOException | RuntimeException e) {
             throw new NotAVideoFile(e);
         }
-        return getVideoDimensions(metadataRetriever);
     }
 
     private Dimensions getPdfDocumentDimensions(final File file) {
