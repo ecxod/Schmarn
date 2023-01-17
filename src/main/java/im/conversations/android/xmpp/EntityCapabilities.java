@@ -106,5 +106,9 @@ public final class EntityCapabilities {
         protected EntityCapsHash(byte[] hash) {
             super(hash);
         }
+
+        public static EntityCapsHash of(final String encoded) {
+            return new EntityCapsHash(BaseEncoding.base64().decode(encoded));
+        }
     }
 }

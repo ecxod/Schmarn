@@ -5,6 +5,13 @@ public final class Namespace {
     public static final String DISCO_ITEMS = "http://jabber.org/protocol/disco#items";
     public static final String DISCO_INFO = "http://jabber.org/protocol/disco#info";
     public static final String EXTERNAL_SERVICE_DISCOVERY = "urn:xmpp:extdisco:2";
+
+    public static final String ENTITY_CAPABILITIES = "http://jabber.org/protocol/caps";
+
+    public static final String ENTITY_CAPABILITIES_2 = "urn:xmpp:caps";
+
+    public static final String HASHES = "urn:xmpp:hashes:2";
+
     public static final String BLOCKING = "urn:xmpp:blocking";
     public static final String ROSTER = "jabber:iq:roster";
     public static final String REGISTER = "jabber:iq:register";
@@ -26,7 +33,8 @@ public final class Namespace {
     public static final String PUBSUB_ERROR = PUBSUB + "#errors";
     public static final String PUBSUB_OWNER = PUBSUB + "#owner";
     public static final String NICK = "http://jabber.org/protocol/nick";
-    public static final String FLEXIBLE_OFFLINE_MESSAGE_RETRIEVAL = "http://jabber.org/protocol/offline";
+    public static final String FLEXIBLE_OFFLINE_MESSAGE_RETRIEVAL =
+            "http://jabber.org/protocol/offline";
     public static final String BIND = "urn:ietf:params:xml:ns:xmpp-bind";
     public static final String BIND2 = "urn:xmpp:bind:0";
     public static final String STREAM_MANAGEMENT = "urn:xmpp:sm:3";
@@ -36,7 +44,7 @@ public final class Namespace {
     public static final String BOOKMARKS = "storage:bookmarks";
     public static final String SYNCHRONIZATION = "im.quicksy.synchronization:0";
     public static final String AVATAR_DATA = "urn:xmpp:avatar:data";
-    public static final String AVATAR_METADATA =  "urn:xmpp:avatar:metadata";
+    public static final String AVATAR_METADATA = "urn:xmpp:avatar:metadata";
     public static final String AVATAR_CONVERSION = "urn:xmpp:pep-vcard-conversion:0";
     public static final String JINGLE = "urn:xmpp:jingle:1";
     public static final String JINGLE_ERRORS = "urn:xmpp:jingle:errors:1";
@@ -51,9 +59,12 @@ public final class Namespace {
     public static final String JINGLE_APPS_GROUPING = "urn:xmpp:jingle:apps:grouping:0";
     public static final String JINGLE_FEATURE_AUDIO = "urn:xmpp:jingle:apps:rtp:audio";
     public static final String JINGLE_FEATURE_VIDEO = "urn:xmpp:jingle:apps:rtp:video";
-    public static final String JINGLE_RTP_HEADER_EXTENSIONS = "urn:xmpp:jingle:apps:rtp:rtp-hdrext:0";
-    public static final String JINGLE_RTP_FEEDBACK_NEGOTIATION = "urn:xmpp:jingle:apps:rtp:rtcp-fb:0";
-    public static final String JINGLE_RTP_SOURCE_SPECIFIC_MEDIA_ATTRIBUTES = "urn:xmpp:jingle:apps:rtp:ssma:0";
+    public static final String JINGLE_RTP_HEADER_EXTENSIONS =
+            "urn:xmpp:jingle:apps:rtp:rtp-hdrext:0";
+    public static final String JINGLE_RTP_FEEDBACK_NEGOTIATION =
+            "urn:xmpp:jingle:apps:rtp:rtcp-fb:0";
+    public static final String JINGLE_RTP_SOURCE_SPECIFIC_MEDIA_ATTRIBUTES =
+            "urn:xmpp:jingle:apps:rtp:ssma:0";
     public static final String IBB = "http://jabber.org/protocol/ibb";
     public static final String PING = "urn:xmpp:ping";
     public static final String PUSH = "urn:xmpp:push:0";
@@ -64,6 +75,7 @@ public final class Namespace {
     public static final String INVITE = "urn:xmpp:invite";
     public static final String PARS = "urn:xmpp:pars:0";
     public static final String EASY_ONBOARDING_INVITE = "urn:xmpp:invite#invite";
-    public static final String OMEMO_DTLS_SRTP_VERIFICATION = "http://gultsch.de/xmpp/drafts/omemo/dlts-srtp-verification";
+    public static final String OMEMO_DTLS_SRTP_VERIFICATION =
+            "http://gultsch.de/xmpp/drafts/omemo/dlts-srtp-verification";
     public static final String UNIFIED_PUSH = "http://gultsch.de/xmpp/drafts/unified-push";
 }

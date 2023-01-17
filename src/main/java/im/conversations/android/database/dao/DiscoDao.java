@@ -15,6 +15,8 @@ import im.conversations.android.database.entity.DiscoFeatureEntity;
 import im.conversations.android.database.entity.DiscoIdentityEntity;
 import im.conversations.android.database.entity.DiscoItemEntity;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.xmpp.EntityCapabilities;
+import im.conversations.android.xmpp.EntityCapabilities2;
 import im.conversations.android.xmpp.model.data.Data;
 import im.conversations.android.xmpp.model.data.Field;
 import im.conversations.android.xmpp.model.data.Value;
@@ -60,6 +62,27 @@ public abstract class DiscoDao {
     }
 
     @Transaction
+    public boolean set(
+            final Account account,
+            final Jid address,
+            final String node,
+            final EntityCapabilities.Hash capsHash) {
+        final Long existingDiscoId;
+        if (capsHash instanceof EntityCapabilities2.EntityCaps2Hash) {
+            existingDiscoId = getDiscoId(account.id, capsHash.hash);
+        } else if (capsHash instanceof EntityCapabilities.EntityCapsHash) {
+            existingDiscoId = getDiscoIdByCapsHash(account.id, capsHash.hash);
+        } else {
+            existingDiscoId = null;
+        }
+        if (existingDiscoId == null) {
+            return false;
+        }
+        insert(DiscoItemWithDiscoId.of(account.id, address, node, existingDiscoId));
+        return true;
+    }
+
+    @Transaction
     public void set(
             final Account account,
             final Jid address,
@@ -99,6 +122,9 @@ public abstract class DiscoDao {
 
     @Query("SELECT id FROM disco WHERE accountId=:accountId AND caps2HashSha256=:caps2HashSha256")
     protected abstract Long getDiscoId(final long accountId, final byte[] caps2HashSha256);
+
+    @Query("SELECT id FROM disco WHERE accountId=:accountId AND capsHash=:capsHash")
+    protected abstract Long getDiscoIdByCapsHash(final long accountId, final byte[] capsHash);
 
     public static class DiscoItemWithParent {
         public long accountId;

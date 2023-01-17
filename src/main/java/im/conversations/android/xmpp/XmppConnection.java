@@ -2826,7 +2826,7 @@ public class XmppConnection implements Runnable {
             return ConversationsDatabase.getInstance(context);
         }
 
-        public <T extends AbstractManager> T getManager(Class<T> type) {
+        protected <T extends AbstractManager> T getManager(Class<T> type) {
             return connection.managers.getInstance(type);
         }
     }

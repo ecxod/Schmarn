@@ -23,6 +23,8 @@ public final class Extensions {
                     im.conversations.android.xmpp.model.blocking.Block.class,
                     im.conversations.android.xmpp.model.blocking.Blocklist.class,
                     im.conversations.android.xmpp.model.blocking.Unblock.class,
+                    im.conversations.android.xmpp.model.capabilties.LegacyCapabilities.class,
+                    im.conversations.android.xmpp.model.capabilties.Capabilities.class,
                     im.conversations.android.xmpp.model.data.Data.class,
                     im.conversations.android.xmpp.model.data.Field.class,
                     im.conversations.android.xmpp.model.data.Value.class,
@@ -32,7 +34,8 @@ public final class Extensions {
                     im.conversations.android.xmpp.model.disco.items.Item.class,
                     im.conversations.android.xmpp.model.disco.items.ItemsQuery.class,
                     im.conversations.android.xmpp.model.roster.Query.class,
-                    im.conversations.android.xmpp.model.roster.Item.class);
+                    im.conversations.android.xmpp.model.roster.Item.class,
+                    im.conversations.android.xmpp.model.Hash.class);
 
     private static final BiMap<Id, Class<? extends Extension>> EXTENSION_CLASS_MAP;
 

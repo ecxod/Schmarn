@@ -1,6 +1,7 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
+import androidx.annotation.Nullable;
 import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -24,6 +25,15 @@ public class DiscoManager extends AbstractManager {
 
     public ListenableFuture<InfoQuery> info(final Jid entity) {
         return info(entity, null);
+    }
+
+    public ListenableFuture<Void> info(
+            final Jid entity, @Nullable final String node, final EntityCapabilities.Hash hash) {
+        // TODO construct node with appended hash
+        if (getDatabase().discoDao().set(getAccount(), entity, node, hash)) {
+            return Futures.immediateFuture(null);
+        }
+        return Futures.transform(info(entity, node), f -> null, MoreExecutors.directExecutor());
     }
 
     public ListenableFuture<InfoQuery> info(final Jid entity, final String node) {
