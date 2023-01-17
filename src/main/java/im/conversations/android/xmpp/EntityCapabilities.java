@@ -99,12 +99,19 @@ public final class EntityCapabilities {
         public String encoded() {
             return BaseEncoding.base64().encode(hash);
         }
+
+        public abstract String capabilityNode(final String node);
     }
 
     public static class EntityCapsHash extends Hash {
 
         protected EntityCapsHash(byte[] hash) {
             super(hash);
+        }
+
+        @Override
+        public String capabilityNode(String node) {
+            return String.format("%s#%s", node, encoded());
         }
 
         public static EntityCapsHash of(final String encoded) {

@@ -15,6 +15,7 @@ import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import im.conversations.android.xmpp.model.disco.items.ItemsQuery;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 public class DiscoManager extends AbstractManager {
@@ -29,11 +30,12 @@ public class DiscoManager extends AbstractManager {
 
     public ListenableFuture<Void> info(
             final Jid entity, @Nullable final String node, final EntityCapabilities.Hash hash) {
-        // TODO construct node with appended hash
-        if (getDatabase().discoDao().set(getAccount(), entity, node, hash)) {
+        final String capabilityNode = hash.capabilityNode(node);
+        if (getDatabase().discoDao().set(getAccount(), entity, capabilityNode, hash)) {
             return Futures.immediateFuture(null);
         }
-        return Futures.transform(info(entity, node), f -> null, MoreExecutors.directExecutor());
+        return Futures.transform(
+                info(entity, capabilityNode), f -> null, MoreExecutors.directExecutor());
     }
 
     public ListenableFuture<InfoQuery> info(final Jid entity, final String node) {
@@ -85,5 +87,14 @@ public class DiscoManager extends AbstractManager {
                     return validItems;
                 },
                 MoreExecutors.directExecutor());
+    }
+
+    public ListenableFuture<List<InfoQuery>> itemsWithInfo(final Jid entity) {
+        final var itemsFutures = items(entity);
+        return Futures.transformAsync(itemsFutures, items -> {
+            // TODO filter out items with empty jid
+            Collection<ListenableFuture<InfoQuery>> infoFutures = Collections2.transform(items, i -> info(i.getJid(), i.getNode()));
+            return Futures.allAsList(infoFutures);
+        }, MoreExecutors.directExecutor());
     }
 }

@@ -8,6 +8,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Bytes;
+import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.xmpp.model.Hash;
 import im.conversations.android.xmpp.model.data.Data;
 import im.conversations.android.xmpp.model.data.Field;
@@ -157,6 +158,12 @@ public class EntityCapabilities2 {
 
         public static EntityCaps2Hash of(final Hash.Algorithm algorithm, final String encoded) {
             return new EntityCaps2Hash(algorithm, BaseEncoding.base64().decode(encoded));
+        }
+
+        @Override
+        public String capabilityNode(String node) {
+            return String.format(
+                    "%s#%s.%s", Namespace.ENTITY_CAPABILITIES_2, algorithm.toString(), encoded());
         }
     }
 }
