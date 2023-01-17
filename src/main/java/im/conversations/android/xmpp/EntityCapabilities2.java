@@ -1,5 +1,8 @@
 package im.conversations.android.xmpp;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
@@ -25,13 +28,28 @@ public class EntityCapabilities2 {
 
     private static final char FILE_SEPARATOR = 0x1c;
 
-    public static byte[] hash(final InfoQuery info) {
-        return hash(Hashing.sha256(), info);
+    public static EntityCaps2Hash hash(final InfoQuery info) {
+        return hash(Algorithm.SHA_256, info);
     }
 
-    public static byte[] hash(HashFunction hashFunction, final InfoQuery info) {
-        final String algo = algorithm(info);
-        return hashFunction.hashString(algo, StandardCharsets.UTF_8).asBytes();
+    public static EntityCaps2Hash hash(final Algorithm algorithm, final InfoQuery info) {
+        final String result = algorithm(info);
+        final var hashFunction = toHashFunction(algorithm);
+        return new EntityCaps2Hash(
+                algorithm, hashFunction.hashString(result, StandardCharsets.UTF_8).asBytes());
+    }
+
+    private static HashFunction toHashFunction(final Algorithm algorithm) {
+        switch (algorithm) {
+            case SHA_1:
+                return Hashing.sha1();
+            case SHA_256:
+                return Hashing.sha256();
+            case SHA_512:
+                return Hashing.sha512();
+            default:
+                throw new IllegalArgumentException("Unknown hash algorithm");
+        }
     }
 
     private static String asHex(final String message) {
@@ -127,5 +145,37 @@ public class EntityCapabilities2 {
                                                         extensions,
                                                         EntityCapabilities2::extension)))
                 + FILE_SEPARATOR;
+    }
+
+    public static class EntityCaps2Hash extends EntityCapabilities.Hash {
+
+        public final Algorithm algorithm;
+
+        protected EntityCaps2Hash(final Algorithm algorithm, byte[] hash) {
+            super(hash);
+            this.algorithm = algorithm;
+        }
+    }
+
+    public enum Algorithm {
+        SHA_1,
+        SHA_256,
+        SHA_512;
+
+        public static Algorithm tryParse(@Nullable final String name) {
+            try {
+                return valueOf(
+                        CaseFormat.LOWER_HYPHEN.to(
+                                CaseFormat.UPPER_UNDERSCORE, Strings.nullToEmpty(name)));
+            } catch (final IllegalArgumentException e) {
+                return null;
+            }
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_HYPHEN, super.toString());
+        }
     }
 }

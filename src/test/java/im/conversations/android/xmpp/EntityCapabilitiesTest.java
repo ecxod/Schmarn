@@ -3,7 +3,6 @@ package im.conversations.android.xmpp;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import com.google.common.io.BaseEncoding;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.XmlElementReader;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
@@ -34,7 +33,7 @@ public class EntityCapabilitiesTest {
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
         assertThat(element, instanceOf(InfoQuery.class));
         final InfoQuery info = (InfoQuery) element;
-        final String var = BaseEncoding.base64().encode(EntityCapabilities.hash(info));
+        final String var = EntityCapabilities.hash(info).encoded();
         Assert.assertEquals("QgayPKawpkPSDYmwT/WM94uAlu0=", var);
     }
 
@@ -74,7 +73,7 @@ public class EntityCapabilitiesTest {
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
         assertThat(element, instanceOf(InfoQuery.class));
         final InfoQuery info = (InfoQuery) element;
-        final String var = BaseEncoding.base64().encode(EntityCapabilities.hash(info));
+        final String var = EntityCapabilities.hash(info).encoded();
         Assert.assertEquals("q07IKJEyjvHSyhy//CH0CxmKi8w=", var);
     }
 
@@ -104,7 +103,7 @@ public class EntityCapabilitiesTest {
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
         assertThat(element, instanceOf(InfoQuery.class));
         final InfoQuery info = (InfoQuery) element;
-        final String var = BaseEncoding.base64().encode(EntityCapabilities2.hash(info));
+        final String var = EntityCapabilities2.hash(info).encoded();
         Assert.assertEquals("kzBZbkqJ3ADrj7v08reD1qcWUwNGHaidNUgD7nHpiw8=", var);
     }
 
@@ -180,7 +179,7 @@ public class EntityCapabilitiesTest {
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
         assertThat(element, instanceOf(InfoQuery.class));
         final InfoQuery info = (InfoQuery) element;
-        final String var = BaseEncoding.base64().encode(EntityCapabilities2.hash(info));
+        final String var = EntityCapabilities2.hash(info).encoded();
         Assert.assertEquals("u79ZroNJbdSWhdSp311mddz44oHHPsEBntQ5b1jqBSY=", var);
     }
 }

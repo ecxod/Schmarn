@@ -46,8 +46,8 @@ public class DiscoManager extends AbstractManager {
                         throw new IllegalStateException(
                                 "Node in response did not match node in request");
                     }
-                    final byte[] caps = EntityCapabilities.hash(infoQuery);
-                    final byte[] caps2 = EntityCapabilities2.hash(infoQuery);
+                    final byte[] caps = EntityCapabilities.hash(infoQuery).hash;
+                    final byte[] caps2 = EntityCapabilities2.hash(infoQuery).hash;
                     getDatabase()
                             .discoDao()
                             .set(getAccount(), entity, node, caps, caps2, infoQuery);

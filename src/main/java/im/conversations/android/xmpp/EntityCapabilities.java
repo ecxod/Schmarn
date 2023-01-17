@@ -5,6 +5,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
 import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
 import im.conversations.android.xmpp.model.data.Data;
 import im.conversations.android.xmpp.model.data.Field;
 import im.conversations.android.xmpp.model.disco.info.Feature;
@@ -15,7 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class EntityCapabilities {
-    public static byte[] hash(final InfoQuery info) {
+    public static EntityCapsHash hash(final InfoQuery info) {
         final StringBuilder s = new StringBuilder();
         final List<Identity> orderedIdentities =
                 Ordering.from(
@@ -76,7 +77,8 @@ public final class EntityCapabilities {
                 }
             }
         }
-        return Hashing.sha1().hashString(s.toString(), StandardCharsets.UTF_8).asBytes();
+        return new EntityCapsHash(
+                Hashing.sha1().hashString(s.toString(), StandardCharsets.UTF_8).asBytes());
     }
 
     private static String clean(String s) {
@@ -85,5 +87,24 @@ public final class EntityCapabilities {
 
     private static String blankNull(String s) {
         return s == null ? "" : clean(s);
+    }
+
+    public abstract static class Hash {
+        public final byte[] hash;
+
+        protected Hash(byte[] hash) {
+            this.hash = hash;
+        }
+
+        public String encoded() {
+            return BaseEncoding.base64().encode(hash);
+        }
+    }
+
+    public static class EntityCapsHash extends Hash {
+
+        protected EntityCapsHash(byte[] hash) {
+            super(hash);
+        }
     }
 }
