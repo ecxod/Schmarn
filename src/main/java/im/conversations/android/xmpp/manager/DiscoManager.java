@@ -91,10 +91,18 @@ public class DiscoManager extends AbstractManager {
 
     public ListenableFuture<List<InfoQuery>> itemsWithInfo(final Jid entity) {
         final var itemsFutures = items(entity);
-        return Futures.transformAsync(itemsFutures, items -> {
-            // TODO filter out items with empty jid
-            Collection<ListenableFuture<InfoQuery>> infoFutures = Collections2.transform(items, i -> info(i.getJid(), i.getNode()));
-            return Futures.allAsList(infoFutures);
-        }, MoreExecutors.directExecutor());
+        return Futures.transformAsync(
+                itemsFutures,
+                items -> {
+                    // TODO filter out items with empty jid
+                    Collection<ListenableFuture<InfoQuery>> infoFutures =
+                            Collections2.transform(items, i -> info(i.getJid(), i.getNode()));
+                    return Futures.allAsList(infoFutures);
+                },
+                MoreExecutors.directExecutor());
+    }
+
+    public boolean isFeature(final Jid entity, final String feature) {
+        return true;
     }
 }

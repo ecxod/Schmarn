@@ -35,6 +35,7 @@ public final class Extensions {
                     im.conversations.android.xmpp.model.disco.items.ItemsQuery.class,
                     im.conversations.android.xmpp.model.roster.Query.class,
                     im.conversations.android.xmpp.model.roster.Item.class,
+                    im.conversations.android.xmpp.model.streams.Features.class,
                     im.conversations.android.xmpp.model.Hash.class);
 
     private static final BiMap<Id, Class<? extends Extension>> EXTENSION_CLASS_MAP;

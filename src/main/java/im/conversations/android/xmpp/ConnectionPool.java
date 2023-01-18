@@ -36,7 +36,7 @@ public class ConnectionPool {
     private final Context context;
 
     private final Executor reconfigurationExecutor = Executors.newSingleThreadExecutor();
-    private final ScheduledExecutorService reconnectExecutor =
+    public static final ScheduledExecutorService CONNECTION_SCHEDULER =
             Executors.newSingleThreadScheduledExecutor();
 
     private final List<XmppConnection> connections = new ArrayList<>();
@@ -106,7 +106,7 @@ public class ConnectionPool {
             ConversationsDatabase.getInstance(context)
                     .accountDao()
                     .setShowErrorNotification(account.id, true);
-            if (connection.getFeatures().csi()) {
+            if (connection.supportsClientStateIndication()) {
                 // TODO send correct CSI state (connection.sendActive or connection.sendInactive)
             }
             scheduleWakeUpCall(Config.PING_MAX_INTERVAL);
@@ -163,7 +163,7 @@ public class ConnectionPool {
     }
 
     public void scheduleWakeUpCall(final int seconds) {
-        reconnectExecutor.schedule(
+        CONNECTION_SCHEDULER.schedule(
                 () -> {
                     manageConnectionStates();
                 },
@@ -272,9 +272,6 @@ public class ConnectionPool {
             } else if (connection.getStatus() == ConnectionState.CONNECTING) {
                 long secondsSinceLastConnect =
                         (SystemClock.elapsedRealtime() - connection.getLastConnect()) / 1000;
-                long secondsSinceLastDisco =
-                        (SystemClock.elapsedRealtime() - connection.getLastDiscoStarted()) / 1000;
-                long discoTimeout = Config.CONNECT_DISCO_TIMEOUT - secondsSinceLastDisco;
                 long timeout = Config.CONNECT_TIMEOUT - secondsSinceLastConnect;
                 if (timeout < 0) {
                     Log.d(
@@ -286,11 +283,6 @@ public class ConnectionPool {
                                     + ")");
                     connection.resetAttemptCount(false);
                     reconnectAccount(connection);
-                } else if (discoTimeout < 0) {
-                    connection.sendDiscoTimeout();
-                    scheduleWakeUpCall(Ints.saturatedCast(discoTimeout));
-                } else {
-                    scheduleWakeUpCall(Ints.saturatedCast(Math.min(timeout, discoTimeout)));
                 }
             } else {
                 if (connection.getTimeToNextAttempt() <= 0) {

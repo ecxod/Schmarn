@@ -17,13 +17,14 @@ import androidx.annotation.Nullable;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.ClassToInstanceMap;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.XmppDomainVerifier;
-import eu.siacs.conversations.crypto.axolotl.AxolotlService;
-import eu.siacs.conversations.entities.ServiceDiscoveryResult;
 import eu.siacs.conversations.http.HttpConnectionManager;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.MemorizingTrustManager;
@@ -41,7 +42,6 @@ import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xml.Tag;
 import eu.siacs.conversations.xml.TagWriter;
 import eu.siacs.conversations.xml.XmlReader;
-import eu.siacs.conversations.xmpp.InvalidJid;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.bind.Bind2;
 import eu.siacs.conversations.xmpp.forms.Data;
@@ -64,6 +64,8 @@ import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.database.model.Credential;
 import im.conversations.android.xmpp.manager.AbstractManager;
+import im.conversations.android.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.model.streams.Features;
 import im.conversations.android.xmpp.processor.BindProcessor;
 import im.conversations.android.xmpp.processor.IqProcessor;
 import im.conversations.android.xmpp.processor.JingleProcessor;
@@ -90,13 +92,10 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -121,8 +120,6 @@ public class XmppConnection implements Runnable {
     private static final int PACKET_MESSAGE = 1;
     private static final int PACKET_PRESENCE = 2;
     protected final Account account;
-    private final Features features = new Features(this);
-    private final HashMap<Jid, ServiceDiscoveryResult> disco = new HashMap<>();
     private final HashMap<String, Jid> commands = new HashMap<>();
     private final SparseArray<AbstractAcknowledgeableStanza> mStanzaQueue = new SparseArray<>();
     private final Hashtable<String, Pair<IqPacket, Consumer<IqPacket>>> packetCallbacks =
@@ -131,11 +128,15 @@ public class XmppConnection implements Runnable {
     private Socket socket;
     private XmlReader tagReader;
     private TagWriter tagWriter = new TagWriter();
+
+    private boolean encryptionEnabled = false;
+
+    private boolean carbonsEnabled = false;
     private boolean shouldAuthenticate = true;
     private boolean inSmacksSession = false;
     private boolean quickStartInProgress = false;
     private boolean isBound = false;
-    private Element streamFeatures;
+    private Features streamFeatures;
     private String streamId = null;
     private Jid connectionAddress;
     private ConnectionState connectionState = ConnectionState.OFFLINE;
@@ -147,10 +148,7 @@ public class XmppConnection implements Runnable {
     private long lastPingSent = 0;
     private long lastConnect = 0;
     private long lastSessionStarted = 0;
-    private long lastDiscoStarted = 0;
     private boolean isMamPreferenceAlways = false;
-    private final AtomicInteger mPendingServiceDiscoveries = new AtomicInteger(0);
-    private final AtomicBoolean mWaitForDisco = new AtomicBoolean(true);
     private final AtomicBoolean mWaitingForSmCatchup = new AtomicBoolean(false);
     private final AtomicInteger mSmCatchupMessageCounter = new AtomicInteger(0);
     private int attempt = 0;
@@ -261,7 +259,6 @@ public class XmppConnection implements Runnable {
     public void prepareNewConnection() {
         this.lastConnect = SystemClock.elapsedRealtime();
         this.lastPingSent = SystemClock.elapsedRealtime();
-        this.lastDiscoStarted = Long.MAX_VALUE;
         this.mWaitingForSmCatchup.set(false);
         this.changeStatus(ConnectionState.CONNECTING);
     }
@@ -280,7 +277,7 @@ public class XmppConnection implements Runnable {
                         .accountDao()
                         .getConnectionSettings(account.id);
         Log.d(Config.LOGTAG, account.address + ": connecting");
-        features.encryptionEnabled = false;
+        this.encryptionEnabled = false;
         this.inSmacksSession = false;
         this.quickStartInProgress = false;
         this.isBound = false;
@@ -323,7 +320,7 @@ public class XmppConnection implements Runnable {
 
                 if (directTls) {
                     localSocket = upgradeSocketToTls(localSocket);
-                    features.encryptionEnabled = true;
+                    this.encryptionEnabled = true;
                 }
 
                 try {
@@ -377,7 +374,7 @@ public class XmppConnection implements Runnable {
                     }
                     try {
                         // if tls is true, encryption is implied and must not be started
-                        features.encryptionEnabled = result.isDirectTls();
+                        this.encryptionEnabled = result.isDirectTls();
                         verifiedHostname =
                                 result.isAuthenticated() ? result.getHostname().toString() : null;
                         Log.d(Config.LOGTAG, "verified hostname " + verifiedHostname);
@@ -395,7 +392,7 @@ public class XmppConnection implements Runnable {
                                             + ":"
                                             + result.getPort()
                                             + " tls: "
-                                            + features.encryptionEnabled);
+                                            + this.encryptionEnabled);
                         } else {
                             addr =
                                     new InetSocketAddress(
@@ -409,13 +406,13 @@ public class XmppConnection implements Runnable {
                                             + ":"
                                             + result.getPort()
                                             + " tls: "
-                                            + features.encryptionEnabled);
+                                            + this.encryptionEnabled);
                         }
 
                         localSocket = new Socket();
                         localSocket.connect(addr, Config.SOCKET_TIMEOUT * 1000);
 
-                        if (features.encryptionEnabled) {
+                        if (this.encryptionEnabled) {
                             localSocket = upgradeSocketToTls(localSocket);
                         }
 
@@ -776,20 +773,18 @@ public class XmppConnection implements Runnable {
                 final Element streamManagementEnabled =
                         bound.findChild("enabled", Namespace.STREAM_MANAGEMENT);
                 final Element carbonsEnabled = bound.findChild("enabled", Namespace.CARBONS);
-                final boolean waitForDisco;
                 if (streamManagementEnabled != null) {
                     resetOutboundStanzaQueue();
                     processEnabled(streamManagementEnabled);
-                    waitForDisco = true;
                 } else {
                     // if we did not enable stream management in bind do it now
-                    waitForDisco = enableStreamManagement();
+                    enableStreamManagement();
                 }
                 if (carbonsEnabled != null) {
                     Log.d(Config.LOGTAG, account.address + ": successfully enabled carbons");
-                    features.carbonsEnabled = true;
+                    this.carbonsEnabled = true;
                 }
-                sendPostBindInitialization(waitForDisco, carbonsEnabled != null);
+                sendPostBindInitialization(carbonsEnabled != null);
                 processNopStreamFeatures = true;
             } else {
                 processNopStreamFeatures = false;
@@ -874,7 +869,7 @@ public class XmppConnection implements Runnable {
     private void processNopStreamFeatures() throws IOException {
         final Tag tag = tagReader.readTag();
         if (tag != null && tag.isStart("features", Namespace.STREAMS)) {
-            this.streamFeatures = tagReader.readElement(tag);
+            this.streamFeatures = tagReader.readElement(tag, Features.class);
             Log.d(
                     Config.LOGTAG,
                     account.address
@@ -1103,7 +1098,7 @@ public class XmppConnection implements Runnable {
         }
         if (inSmacksSession) {
             ++stanzasReceived;
-        } else if (features.sm()) {
+        } else if (this.streamFeatures.streamManagement()) {
             Log.d(
                     Config.LOGTAG,
                     account.address
@@ -1229,7 +1224,7 @@ public class XmppConnection implements Runnable {
         if (quickStart) {
             this.quickStartInProgress = true;
         }
-        features.encryptionEnabled = true;
+        this.encryptionEnabled = true;
         final Tag tag = tagReader.readTag();
         if (tag != null && tag.isStart("stream", Namespace.STREAMS)) {
             SSLSockets.log(account.address, sslSocket);
@@ -1280,7 +1275,7 @@ public class XmppConnection implements Runnable {
                 ConversationsDatabase.getInstance(context)
                         .accountDao()
                         .pendingRegistration(account.id);
-        this.streamFeatures = tagReader.readElement(currentTag);
+        this.streamFeatures = tagReader.readElement(currentTag, Features.class);
         final boolean isSecure = isSecure();
         final boolean needsBinding = !isBound && !pendingRegistration;
         if (this.quickStartInProgress) {
@@ -1312,8 +1307,7 @@ public class XmppConnection implements Runnable {
                     .setQuickStartAvailable(account.id, false);
             throw new StateChangingException(ConnectionState.INCOMPATIBLE_SERVER);
         }
-        if (this.streamFeatures.hasChild("starttls", Namespace.TLS)
-                && !features.encryptionEnabled) {
+        if (this.streamFeatures.hasChild("starttls", Namespace.TLS) && !this.encryptionEnabled) {
             sendStartTLS();
         } else if (this.streamFeatures.hasChild("register", Namespace.REGISTER_STREAM_FEATURE)
                 && pendingRegistration) {
@@ -1338,9 +1332,7 @@ public class XmppConnection implements Runnable {
                 && shouldAuthenticate
                 && isSecure) {
             authenticate(SaslMechanism.Version.SASL);
-        } else if (this.streamFeatures.hasChild("sm", Namespace.STREAM_MANAGEMENT)
-                && streamId != null
-                && !inSmacksSession) {
+        } else if (this.streamFeatures.streamManagement() && streamId != null && !inSmacksSession) {
             if (Config.EXTENDED_SM_LOGGING) {
                 Log.d(
                         Config.LOGTAG,
@@ -1382,7 +1374,7 @@ public class XmppConnection implements Runnable {
     }
 
     private boolean isSecure() {
-        return features.encryptionEnabled || Config.ALLOW_NON_TLS_CONNECTIONS || account.isOnion();
+        return this.encryptionEnabled || Config.ALLOW_NON_TLS_CONNECTIONS || account.isOnion();
     }
 
     private void authenticate(final SaslMechanism.Version version) throws IOException {
@@ -1555,7 +1547,7 @@ public class XmppConnection implements Runnable {
     private void register() {
         final Credential credential = CredentialStore.getInstance(context).get(account);
         final String preAuth = credential.preAuthRegistrationToken;
-        if (Strings.isNullOrEmpty(preAuth) || !features.invite()) {
+        if (Strings.isNullOrEmpty(preAuth) || !streamFeatures.invite()) {
             sendRegistryRequest();
             return;
         }
@@ -1712,9 +1704,6 @@ public class XmppConnection implements Runnable {
         this.stanzasSent = 0;
         mStanzaQueue.clear();
         this.redirectionUrl = null;
-        synchronized (this.disco) {
-            disco.clear();
-        }
         synchronized (this.commands) {
             this.commands.clear();
         }
@@ -1765,8 +1754,8 @@ public class XmppConnection implements Runnable {
                                                 .hasChild("optional")) {
                                     sendStartSession();
                                 } else {
-                                    final boolean waitForDisco = enableStreamManagement();
-                                    sendPostBindInitialization(waitForDisco, false);
+                                    enableStreamManagement();
+                                    sendPostBindInitialization(false);
                                 }
                                 return;
                             } catch (final IllegalArgumentException e) {
@@ -1856,13 +1845,6 @@ public class XmppConnection implements Runnable {
                         + " left");
     }
 
-    public void sendDiscoTimeout() {
-        if (mWaitForDisco.compareAndSet(true, false)) {
-            Log.d(Config.LOGTAG, account.address + ": finalizing bind after disco timeout");
-            finalizeBind();
-        }
-    }
-
     private void sendStartSession() {
         Log.d(Config.LOGTAG, account.address + ": sending legacy session to outdated server");
         final IqPacket startSession = new IqPacket(IqPacket.TYPE.SET);
@@ -1871,8 +1853,8 @@ public class XmppConnection implements Runnable {
                 startSession,
                 (packet) -> {
                     if (packet.getType() == IqPacket.TYPE.RESULT) {
-                        final boolean waitForDisco = enableStreamManagement();
-                        sendPostBindInitialization(waitForDisco, false);
+                        enableStreamManagement();
+                        sendPostBindInitialization(false);
                     } else if (packet.getType() != IqPacket.TYPE.TIMEOUT) {
                         throw new StateChangingError(ConnectionState.SESSION_FAILURE);
                     }
@@ -1880,9 +1862,9 @@ public class XmppConnection implements Runnable {
                 true);
     }
 
+    // TODO the return value is not used any more
     private boolean enableStreamManagement() {
-        final boolean streamManagement =
-                this.streamFeatures.hasChild("sm", Namespace.STREAM_MANAGEMENT);
+        final boolean streamManagement = this.streamFeatures.streamManagement();
         if (streamManagement) {
             synchronized (this.mStanzaQueue) {
                 final EnablePacket enable = new EnablePacket();
@@ -1896,115 +1878,51 @@ public class XmppConnection implements Runnable {
         }
     }
 
-    private void sendPostBindInitialization(
-            final boolean waitForDisco, final boolean carbonsEnabled) {
-        features.carbonsEnabled = carbonsEnabled;
-        features.blockListRequested = false;
-        synchronized (this.disco) {
-            this.disco.clear();
-        }
+    private void sendPostBindInitialization(final boolean carbonsEnabled) {
+        this.carbonsEnabled = carbonsEnabled;
         Log.d(Config.LOGTAG, account.address + ": starting service discovery");
-        mPendingServiceDiscoveries.set(0);
-        mWaitForDisco.set(waitForDisco);
-        lastDiscoStarted = SystemClock.elapsedRealtime();
-        // TODO bring back disco timeout
-        // context.scheduleWakeUpCall(Config.CONNECT_DISCO_TIMEOUT, account);
-        final Element caps = streamFeatures.findChild("c");
-        final String hash = caps == null ? null : caps.getAttribute("hash");
-        final String ver = caps == null ? null : caps.getAttribute("ver");
-        ServiceDiscoveryResult discoveryResult = null;
-        if (hash != null && ver != null) {
-            // Bring back disco result caching
-            discoveryResult =
-                    null; // context.getCachedServiceDiscoveryResult(new Pair<>(hash, ver));
-        }
-        // TODO from an older git commit "should make initial connect faster because code is not
-        // waiting for omemo code to run" - do we need to keep this?
-        final boolean requestDiscoItemsFirst =
-                !ConversationsDatabase.getInstance(context).accountDao().isInitialLogin(account.id);
+        final ArrayList<ListenableFuture<?>> discoFutures = new ArrayList<>();
+        final var discoManager = getManager(DiscoManager.class);
 
-        if (requestDiscoItemsFirst) {
-            sendServiceDiscoveryItems(account.address.getDomain());
-        }
-        if (discoveryResult == null) {
-            sendServiceDiscoveryInfo(account.address.getDomain());
+        final var nodeHash = this.streamFeatures.getCapabilities();
+        if (nodeHash != null) {
+            discoFutures.add(
+                    discoManager.info(account.address.getDomain(), nodeHash.node, nodeHash.hash));
         } else {
-            Log.d(Config.LOGTAG, account.address + ": server caps came from cache");
-            disco.put(account.address.getDomain(), discoveryResult);
+            discoFutures.add(discoManager.info(account.address.getDomain()));
         }
-        discoverMamPreferences();
-        sendServiceDiscoveryInfo(account.address);
-        if (!requestDiscoItemsFirst) {
-            sendServiceDiscoveryItems(account.address.getDomain());
-        }
+        discoFutures.add(discoManager.info(account.address));
+        discoFutures.add(discoManager.itemsWithInfo(account.address.getDomain()));
 
-        if (!mWaitForDisco.get()) {
-            finalizeBind();
-        }
+        final var discoFuture =
+                Futures.withTimeout(
+                        Futures.allAsList(discoFutures),
+                        Config.CONNECT_DISCO_TIMEOUT,
+                        TimeUnit.SECONDS,
+                        ConnectionPool.CONNECTION_SCHEDULER);
+
+        Futures.addCallback(
+                discoFuture,
+                new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(List<Object> result) {
+                        // TODO enable advanced stream features like carbons
+                        finalizeBind();
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Throwable t) {
+                        // TODO reset stream ID so we get a proper connect next time
+                        finalizeBind();
+                    }
+                },
+                MoreExecutors.directExecutor());
         this.lastSessionStarted = SystemClock.elapsedRealtime();
     }
 
     // TODO rename to getConnectionState
     public ConnectionState getStatus() {
         return this.connectionState;
-    }
-
-    private void sendServiceDiscoveryInfo(final Jid jid) {
-        mPendingServiceDiscoveries.incrementAndGet();
-        final IqPacket iq = new IqPacket(IqPacket.TYPE.GET);
-        iq.setTo(jid);
-        iq.query("http://jabber.org/protocol/disco#info");
-        this.sendIqPacket(
-                iq,
-                (packet) -> {
-                    if (packet.getType() == IqPacket.TYPE.RESULT) {
-                        boolean advancedStreamFeaturesLoaded;
-                        synchronized (XmppConnection.this.disco) {
-                            ServiceDiscoveryResult result = new ServiceDiscoveryResult(packet);
-                            if (jid.equals(account.address.getDomain())) {
-                                // context.databaseBackend.insertDiscoveryResult(result);
-                            }
-                            disco.put(jid, result);
-                            advancedStreamFeaturesLoaded =
-                                    disco.containsKey(account.address.getDomain())
-                                            && disco.containsKey(account.address);
-                        }
-                        if (advancedStreamFeaturesLoaded
-                                && (jid.equals(account.address.getDomain())
-                                        || jid.equals(account.address))) {
-                            enableAdvancedStreamFeatures();
-                        }
-                    } else if (packet.getType() == IqPacket.TYPE.ERROR) {
-                        Log.d(
-                                Config.LOGTAG,
-                                account.address
-                                        + ": could not query disco info for "
-                                        + jid.toString());
-                        final boolean serverOrAccount =
-                                jid.equals(account.address.getDomain())
-                                        || jid.equals(account.address);
-                        final boolean advancedStreamFeaturesLoaded;
-                        if (serverOrAccount) {
-                            synchronized (XmppConnection.this.disco) {
-                                disco.put(jid, ServiceDiscoveryResult.empty());
-                                advancedStreamFeaturesLoaded =
-                                        disco.containsKey(account.address.getDomain())
-                                                && disco.containsKey(account.address);
-                            }
-                        } else {
-                            advancedStreamFeaturesLoaded = false;
-                        }
-                        if (advancedStreamFeaturesLoaded) {
-                            enableAdvancedStreamFeatures();
-                        }
-                    }
-                    if (packet.getType() != IqPacket.TYPE.TIMEOUT) {
-                        if (mPendingServiceDiscoveries.decrementAndGet() == 0
-                                && mWaitForDisco.compareAndSet(true, false)) {
-                            finalizeBind();
-                        }
-                    }
-                });
     }
 
     private void discoverMamPreferences() {
@@ -2067,56 +1985,15 @@ public class XmppConnection implements Runnable {
     }
 
     private void enableAdvancedStreamFeatures() {
-        if (getFeatures().blocking() && !features.blockListRequested) {
-            Log.d(Config.LOGTAG, account.address + ": Requesting block list");
-            // TODO actually request block list
-            /*this.sendIqPacket(
-            getIqGenerator().generateGetBlockList(), context.getIqParser());*/
-        }
-        if (getFeatures().carbons() && !features.carbonsEnabled) {
+        if (getManager(DiscoManager.class)
+                        .isFeature(connectionAddress.getDomain(), Namespace.CARBONS)
+                && !this.carbonsEnabled) {
             sendEnableCarbons();
         }
-        if (getFeatures().commands()) {
+        // TODO discover commands
+        /*if (getFeatures().commands()) {
             discoverCommands();
-        }
-    }
-
-    private void sendServiceDiscoveryItems(final Jid server) {
-        mPendingServiceDiscoveries.incrementAndGet();
-        final IqPacket iq = new IqPacket(IqPacket.TYPE.GET);
-        iq.setTo(server.getDomain());
-        iq.query("http://jabber.org/protocol/disco#items");
-        this.sendIqPacket(
-                iq,
-                (packet) -> {
-                    if (packet.getType() == IqPacket.TYPE.RESULT) {
-                        final HashSet<Jid> items = new HashSet<>();
-                        final List<Element> elements = packet.query().getChildren();
-                        for (final Element element : elements) {
-                            if (element.getName().equals("item")) {
-                                final Jid jid =
-                                        InvalidJid.getNullForInvalid(
-                                                element.getAttributeAsJid("jid"));
-                                if (jid != null && !jid.equals(account.address.getDomain())) {
-                                    items.add(jid);
-                                }
-                            }
-                        }
-                        for (Jid jid : items) {
-                            sendServiceDiscoveryInfo(jid);
-                        }
-                    } else {
-                        Log.d(
-                                Config.LOGTAG,
-                                account.address + ": could not query disco items of " + server);
-                    }
-                    if (packet.getType() != IqPacket.TYPE.TIMEOUT) {
-                        if (mPendingServiceDiscoveries.decrementAndGet() == 0
-                                && mWaitForDisco.compareAndSet(true, false)) {
-                            finalizeBind();
-                        }
-                    }
-                });
+        }*/
     }
 
     private void sendEnableCarbons() {
@@ -2127,7 +2004,7 @@ public class XmppConnection implements Runnable {
                 (packet) -> {
                     if (packet.getType() == IqPacket.TYPE.RESULT) {
                         Log.d(Config.LOGTAG, account.address + ": successfully enabled carbons");
-                        features.carbonsEnabled = true;
+                        this.carbonsEnabled = true;
                     } else {
                         Log.d(
                                 Config.LOGTAG,
@@ -2412,60 +2289,13 @@ public class XmppConnection implements Runnable {
         this.streamId = null;
     }
 
-    private List<Entry<Jid, ServiceDiscoveryResult>> findDiscoItemsByFeature(final String feature) {
-        synchronized (this.disco) {
-            final List<Entry<Jid, ServiceDiscoveryResult>> items = new ArrayList<>();
-            for (final Entry<Jid, ServiceDiscoveryResult> cursor : this.disco.entrySet()) {
-                if (cursor.getValue().getFeatures().contains(feature)) {
-                    items.add(cursor);
-                }
-            }
-            return items;
-        }
-    }
-
-    public Jid findDiscoItemByFeature(final String feature) {
-        final List<Entry<Jid, ServiceDiscoveryResult>> items = findDiscoItemsByFeature(feature);
-        if (items.size() >= 1) {
-            return items.get(0).getKey();
-        }
-        return null;
-    }
-
     public boolean r() {
-        if (getFeatures().sm()) {
+        if (this.inSmacksSession) {
             this.tagWriter.writeStanzaAsync(new RequestPacket());
             return true;
         } else {
             return false;
         }
-    }
-
-    public List<String> getMucServersWithholdAccount() {
-        final List<String> servers = getMucServers();
-        servers.remove(account.address.getDomain().toEscapedString());
-        return servers;
-    }
-
-    public List<String> getMucServers() {
-        List<String> servers = new ArrayList<>();
-        synchronized (this.disco) {
-            for (final Entry<Jid, ServiceDiscoveryResult> cursor : disco.entrySet()) {
-                final ServiceDiscoveryResult value = cursor.getValue();
-                if (value.getFeatures().contains("http://jabber.org/protocol/muc")
-                        && value.hasIdentity("conference", "text")
-                        && !value.getFeatures().contains("jabber:iq:gateway")
-                        && !value.hasIdentity("conference", "irc")) {
-                    servers.add(cursor.getKey().toString());
-                }
-            }
-        }
-        return servers;
-    }
-
-    public String getMucServer() {
-        List<String> servers = getMucServers();
-        return servers.size() > 0 ? servers.get(0) : null;
     }
 
     public int getTimeToNextAttempt() {
@@ -2481,10 +2311,6 @@ public class XmppConnection implements Runnable {
         return this.attempt;
     }
 
-    public Features getFeatures() {
-        return this.features;
-    }
-
     public long getLastSessionEstablished() {
         final long diff = SystemClock.elapsedRealtime() - this.lastSessionStarted;
         return System.currentTimeMillis() - diff;
@@ -2496,10 +2322,6 @@ public class XmppConnection implements Runnable {
 
     public long getLastPingSent() {
         return this.lastPingSent;
-    }
-
-    public long getLastDiscoStarted() {
-        return this.lastDiscoStarted;
     }
 
     public long getLastPacketReceived() {
@@ -2540,6 +2362,10 @@ public class XmppConnection implements Runnable {
     public boolean fromAccount(final AbstractStanza stanza) {
         final Jid from = stanza.getFrom();
         return from != null && from.asBareJid().equals(connectionAddress.asBareJid());
+    }
+
+    public boolean supportsClientStateIndication() {
+        return this.streamFeatures != null && this.streamFeatures.clientStateIndication();
     }
 
     private static class MyKeyManager implements X509KeyManager {
@@ -2607,204 +2433,6 @@ public class XmppConnection implements Runnable {
 
         public StateChangingException(ConnectionState state) {
             this.state = state;
-        }
-    }
-
-    public class Features {
-        XmppConnection connection;
-        private boolean carbonsEnabled = false;
-        private boolean encryptionEnabled = false;
-        private boolean blockListRequested = false;
-
-        public Features(final XmppConnection connection) {
-            this.connection = connection;
-        }
-
-        private boolean hasDiscoFeature(final Jid server, final String feature) {
-            synchronized (XmppConnection.this.disco) {
-                final ServiceDiscoveryResult sdr = connection.disco.get(server);
-                return sdr != null && sdr.getFeatures().contains(feature);
-            }
-        }
-
-        public boolean carbons() {
-            return hasDiscoFeature(account.address.getDomain(), Namespace.CARBONS);
-        }
-
-        public boolean commands() {
-            return hasDiscoFeature(account.address.getDomain(), Namespace.COMMANDS);
-        }
-
-        public boolean easyOnboardingInvites() {
-            synchronized (commands) {
-                return commands.containsKey(Namespace.EASY_ONBOARDING_INVITE);
-            }
-        }
-
-        public boolean bookmarksConversion() {
-            return hasDiscoFeature(account.address, Namespace.BOOKMARKS_CONVERSION)
-                    && pepPublishOptions();
-        }
-
-        public boolean avatarConversion() {
-            return hasDiscoFeature(account.address, Namespace.AVATAR_CONVERSION)
-                    && pepPublishOptions();
-        }
-
-        public boolean blocking() {
-            return hasDiscoFeature(account.address.getDomain(), Namespace.BLOCKING);
-        }
-
-        public boolean spamReporting() {
-            return hasDiscoFeature(account.address.getDomain(), "urn:xmpp:reporting:reason:spam:0");
-        }
-
-        public boolean flexibleOfflineMessageRetrieval() {
-            return hasDiscoFeature(
-                    account.address.getDomain(), Namespace.FLEXIBLE_OFFLINE_MESSAGE_RETRIEVAL);
-        }
-
-        public boolean register() {
-            return hasDiscoFeature(account.address.getDomain(), Namespace.REGISTER);
-        }
-
-        public boolean invite() {
-            return connection.streamFeatures != null
-                    && connection.streamFeatures.hasChild("register", Namespace.INVITE);
-        }
-
-        public boolean sm() {
-            return streamId != null
-                    || (connection.streamFeatures != null
-                            && connection.streamFeatures.hasChild(
-                                    "sm", Namespace.STREAM_MANAGEMENT));
-        }
-
-        public boolean csi() {
-            return connection.streamFeatures != null
-                    && connection.streamFeatures.hasChild("csi", Namespace.CSI);
-        }
-
-        public boolean pep() {
-            synchronized (XmppConnection.this.disco) {
-                ServiceDiscoveryResult info = disco.get(account.address);
-                return info != null && info.hasIdentity("pubsub", "pep");
-            }
-        }
-
-        public boolean pepPersistent() {
-            synchronized (XmppConnection.this.disco) {
-                ServiceDiscoveryResult info = disco.get(account.address);
-                return info != null
-                        && info.getFeatures()
-                                .contains("http://jabber.org/protocol/pubsub#persistent-items");
-            }
-        }
-
-        public boolean pepPublishOptions() {
-            return hasDiscoFeature(account.address, Namespace.PUBSUB_PUBLISH_OPTIONS);
-        }
-
-        public boolean pepOmemoWhitelisted() {
-            return hasDiscoFeature(account.address, AxolotlService.PEP_OMEMO_WHITELISTED);
-        }
-
-        public boolean mam() {
-            return MessageArchiveService.Version.has(getAccountFeatures());
-        }
-
-        public List<String> getAccountFeatures() {
-            ServiceDiscoveryResult result = connection.disco.get(account.address);
-            return result == null ? Collections.emptyList() : result.getFeatures();
-        }
-
-        public boolean push() {
-            return hasDiscoFeature(account.address, Namespace.PUSH)
-                    || hasDiscoFeature(account.address.getDomain(), Namespace.PUSH);
-        }
-
-        public boolean rosterVersioning() {
-            return connection.streamFeatures != null && connection.streamFeatures.hasChild("ver");
-        }
-
-        public void setBlockListRequested(boolean value) {
-            this.blockListRequested = value;
-        }
-
-        public boolean httpUpload(long filesize) {
-            if (Config.DISABLE_HTTP_UPLOAD) {
-                return false;
-            } else {
-                for (String namespace :
-                        new String[] {Namespace.HTTP_UPLOAD, Namespace.HTTP_UPLOAD_LEGACY}) {
-                    List<Entry<Jid, ServiceDiscoveryResult>> items =
-                            findDiscoItemsByFeature(namespace);
-                    if (items.size() > 0) {
-                        try {
-                            long maxsize =
-                                    Long.parseLong(
-                                            items.get(0)
-                                                    .getValue()
-                                                    .getExtendedDiscoInformation(
-                                                            namespace, "max-file-size"));
-                            if (filesize <= maxsize) {
-                                return true;
-                            } else {
-                                Log.d(
-                                        Config.LOGTAG,
-                                        account.address
-                                                + ": http upload is not available for files with"
-                                                + " size "
-                                                + filesize
-                                                + " (max is "
-                                                + maxsize
-                                                + ")");
-                                return false;
-                            }
-                        } catch (Exception e) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-        }
-
-        public boolean useLegacyHttpUpload() {
-            return findDiscoItemByFeature(Namespace.HTTP_UPLOAD) == null
-                    && findDiscoItemByFeature(Namespace.HTTP_UPLOAD_LEGACY) != null;
-        }
-
-        public long getMaxHttpUploadSize() {
-            for (String namespace :
-                    new String[] {Namespace.HTTP_UPLOAD, Namespace.HTTP_UPLOAD_LEGACY}) {
-                List<Entry<Jid, ServiceDiscoveryResult>> items = findDiscoItemsByFeature(namespace);
-                if (items.size() > 0) {
-                    try {
-                        return Long.parseLong(
-                                items.get(0)
-                                        .getValue()
-                                        .getExtendedDiscoInformation(namespace, "max-file-size"));
-                    } catch (Exception e) {
-                        // ignored
-                    }
-                }
-            }
-            return -1;
-        }
-
-        public boolean stanzaIds() {
-            return hasDiscoFeature(account.address, Namespace.STANZA_IDS);
-        }
-
-        public boolean bookmarks2() {
-            return Config
-                    .USE_BOOKMARKS2 /* || hasDiscoFeature(account.address, Namespace.BOOKMARKS2_COMPAT)*/;
-        }
-
-        public boolean externalServiceDiscovery() {
-            return hasDiscoFeature(
-                    account.address.getDomain(), Namespace.EXTERNAL_SERVICE_DISCOVERY);
         }
     }
 
