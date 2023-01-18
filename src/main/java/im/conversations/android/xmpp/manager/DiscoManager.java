@@ -102,7 +102,7 @@ public class DiscoManager extends AbstractManager {
                 MoreExecutors.directExecutor());
     }
 
-    public boolean isFeature(final Jid entity, final String feature) {
-        return true;
+    public boolean hasFeature(final Jid entity, final String feature) {
+        return getDatabase().discoDao().hasFeature(getAccount().id, entity, feature);
     }
 }

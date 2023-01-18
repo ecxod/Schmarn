@@ -1,10 +1,12 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
+import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.BlockingManager;
 import im.conversations.android.xmpp.manager.BookmarkManager;
+import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.manager.RosterManager;
 import java.util.function.Consumer;
 
@@ -31,8 +33,10 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
 
         getManager(RosterManager.class).fetch();
 
-        // TODO check feature before fetching
-        getManager(BlockingManager.class).fetch();
+        if (getManager(DiscoManager.class)
+                .hasFeature(account.address.getDomain(), Namespace.BLOCKING)) {
+            getManager(BlockingManager.class).fetch();
+        }
 
         getManager(BookmarkManager.class).fetch();
 

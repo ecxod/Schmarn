@@ -126,6 +126,12 @@ public abstract class DiscoDao {
     @Query("SELECT id FROM disco WHERE accountId=:accountId AND capsHash=:capsHash")
     protected abstract Long getDiscoIdByCapsHash(final long accountId, final byte[] capsHash);
 
+    @Query(
+            "SELECT EXISTS (SELECT disco_item.id FROM disco_item JOIN disco_feature on"
+                    + " disco_item.discoId=disco_feature.discoId WHERE accountId=:account AND"
+                    + " address=:entity AND feature=:feature)")
+    public abstract boolean hasFeature(final long account, final Jid entity, final String feature);
+
     public static class DiscoItemWithParent {
         public long accountId;
         public Jid address;

@@ -1986,7 +1986,7 @@ public class XmppConnection implements Runnable {
 
     private void enableAdvancedStreamFeatures() {
         if (getManager(DiscoManager.class)
-                        .isFeature(connectionAddress.getDomain(), Namespace.CARBONS)
+                        .hasFeature(connectionAddress.getDomain(), Namespace.CARBONS)
                 && !this.carbonsEnabled) {
             sendEnableCarbons();
         }
