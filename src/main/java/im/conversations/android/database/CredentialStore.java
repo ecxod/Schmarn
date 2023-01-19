@@ -173,7 +173,7 @@ public class CredentialStore {
         final Map<String, Credential> store;
         try {
             store = load();
-        } catch (final GeneralSecurityException | IOException e) {
+        } catch (final Exception e) {
             return ImmutableMap.of();
         }
         return store == null ? ImmutableMap.of() : store;
@@ -188,19 +188,31 @@ public class CredentialStore {
 
     private void store(final Map<String, Credential> store)
             throws GeneralSecurityException, IOException {
-        final EncryptedFile encryptedFile = getEncryptedFile();
-        final FileOutputStream outputStream = encryptedFile.openFileOutput();
-        GSON.toJson(store, new OutputStreamWriter(outputStream));
+        final File file = getCredentialStoreFile();
+        file.delete();
+        final EncryptedFile encryptedFile = getEncryptedFile(file);
+        try (final FileOutputStream outputStream = encryptedFile.openFileOutput()) {
+            GSON.toJson(store, new OutputStreamWriter(outputStream));
+            outputStream.flush();
+        }
     }
 
     private EncryptedFile getEncryptedFile() throws GeneralSecurityException, IOException {
+        return getEncryptedFile(getCredentialStoreFile());
+    }
+
+    private EncryptedFile getEncryptedFile(final File file) throws GeneralSecurityException, IOException {
         final KeyGenParameterSpec keyGenParameterSpec = MasterKeys.AES256_GCM_SPEC;
         final String mainKeyAlias = MasterKeys.getOrCreate(keyGenParameterSpec);
         return new EncryptedFile.Builder(
-                        new File(context.getFilesDir(), FILENAME),
+                        file,
                         context,
                         mainKeyAlias,
                         EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB)
                 .build();
+    }
+
+    private File getCredentialStoreFile() {
+        return new File(context.getFilesDir(), FILENAME);
     }
 }
