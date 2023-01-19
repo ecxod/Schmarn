@@ -26,8 +26,8 @@ public class LegacyCapabilities extends Extension {
         if (Strings.isNullOrEmpty(ver) || Strings.isNullOrEmpty(hash)) {
             return null;
         }
-        if (HASH_ALGORITHM.equals(hash) && BaseEncoding.base64().canDecode(hash)) {
-            return EntityCapabilities.EntityCapsHash.of(hash);
+        if (HASH_ALGORITHM.equals(hash) && BaseEncoding.base64().canDecode(ver)) {
+            return EntityCapabilities.EntityCapsHash.of(ver);
         } else {
             return null;
         }
