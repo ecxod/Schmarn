@@ -65,4 +65,10 @@ public class IDs {
         lsb = (lsb & 0x3fffffffffffffffL) | 0x8000000000000000L; // set variant
         return new UUID(msb, lsb);
     }
+
+    public static byte[] seed() {
+        final var random = new byte[32];
+        Conversations.SECURE_RANDOM.nextBytes(random);
+        return random;
+    }
 }
