@@ -78,6 +78,7 @@ public class ConnectionPool {
         for (final Account account : added) {
             final XmppConnection connection = this.instantiate(context, account);
             connection.setOnStatusChangedListener(this::onStatusChanged);
+            reconnectAccount(connection);
         }
         for (final Account account : removed) {
             final Optional<XmppConnection> connectionOptional =
