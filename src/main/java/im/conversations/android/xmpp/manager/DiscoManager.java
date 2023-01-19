@@ -47,6 +47,8 @@ public class DiscoManager extends AbstractManager {
         }
         iqRequest.addChild(infoQueryRequest);
         final var future = connection.sendIqPacket(iqRequest);
+        // TODO we need to remove the disco info associated with $entity in case of failure
+        // this might happen in (rather unlikely) scenarios where an item no longer speaks disco
         return Futures.transform(
                 future,
                 iqResult -> {

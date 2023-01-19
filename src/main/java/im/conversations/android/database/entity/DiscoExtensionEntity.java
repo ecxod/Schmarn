@@ -1,6 +1,7 @@
 package im.conversations.android.database.entity;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
@@ -22,9 +23,12 @@ public class DiscoExtensionEntity {
 
     @NonNull public Long discoId;
 
-    public static DiscoExtensionEntity of(long discoId) {
+    @Nullable public String type;
+
+    public static DiscoExtensionEntity of(long discoId, final String type) {
         final var entity = new DiscoExtensionEntity();
         entity.discoId = discoId;
+        entity.type = type;
         return entity;
     }
 }

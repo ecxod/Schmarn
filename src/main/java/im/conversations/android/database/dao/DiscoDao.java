@@ -18,7 +18,6 @@ import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.EntityCapabilities2;
 import im.conversations.android.xmpp.model.data.Data;
-import im.conversations.android.xmpp.model.data.Field;
 import im.conversations.android.xmpp.model.data.Value;
 import im.conversations.android.xmpp.model.disco.info.Feature;
 import im.conversations.android.xmpp.model.disco.info.Identity;
@@ -37,6 +36,12 @@ public abstract class DiscoDao {
 
     @Insert
     protected abstract void insertDiscoFeatures(Collection<DiscoFeatureEntity> features);
+
+    @Query(
+            "DELETE FROM disco_item WHERE accountId=:account AND parent=:parent AND address NOT"
+                    + " IN(:existent)")
+    protected abstract void deleteNonExistentDiscoItems(
+            final long account, final Jid parent, final Collection<Jid> existent);
 
     @Insert
     protected abstract void insertDiscoFieldValues(
@@ -59,6 +64,8 @@ public abstract class DiscoDao {
         final var entities =
                 Collections2.transform(items, i -> DiscoItemWithParent.of(account.id, parent, i));
         insertDiscoItems(entities);
+        deleteNonExistentDiscoItems(
+                account.id, parent, Collections2.transform(items, Item::getJid));
     }
 
     @Transaction
@@ -108,8 +115,8 @@ public abstract class DiscoDao {
                         infoQuery.getExtensions(Feature.class),
                         f -> DiscoFeatureEntity.of(discoId, f.getVar())));
         for (final Data data : infoQuery.getExtensions(Data.class)) {
-            final var extensionId = insert(DiscoExtensionEntity.of(discoId));
-            for (final var field : data.getExtensions(Field.class)) {
+            final var extensionId = insert(DiscoExtensionEntity.of(discoId, data.getFormType()));
+            for (final var field : data.getFields()) {
                 final var fieldId =
                         insert(DiscoExtensionFieldEntity.of(extensionId, field.getFieldName()));
                 insertDiscoFieldValues(

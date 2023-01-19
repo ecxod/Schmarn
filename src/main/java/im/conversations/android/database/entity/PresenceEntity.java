@@ -31,7 +31,7 @@ public class PresenceEntity {
 
     @NonNull public Long accountId;
 
-    @NonNull public String address;
+    @NonNull public Jid address;
 
     @Nullable public String resource;
 
@@ -53,4 +53,21 @@ public class PresenceEntity {
 
     // set to true if presence has status code 110 (this means we are online)
     public boolean mucUserSelf;
+
+    public static PresenceEntity of(
+            long account,
+            Jid address,
+            String resource,
+            PresenceType type,
+            PresenceShow show,
+            String status) {
+        final var entity = new PresenceEntity();
+        entity.accountId = account;
+        entity.address = address;
+        entity.resource = resource;
+        entity.type = type;
+        entity.show = show;
+        entity.status = status;
+        return entity;
+    }
 }
