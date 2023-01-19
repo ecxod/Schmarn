@@ -1,5 +1,7 @@
 package im.conversations.android.xmpp.model.capabilties;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import im.conversations.android.xmpp.model.Extension;
 
 public interface EntityCapabilities {
@@ -20,7 +22,7 @@ public interface EntityCapabilities {
         } else {
             return null;
         }
-        return new NodeHash(node, hash);
+        return hash == null ? null : new NodeHash(node, hash);
     }
 
     class NodeHash {
@@ -28,7 +30,8 @@ public interface EntityCapabilities {
         public final im.conversations.android.xmpp.EntityCapabilities.Hash hash;
 
         private NodeHash(
-                String node, final im.conversations.android.xmpp.EntityCapabilities.Hash hash) {
+                @Nullable String node,
+                @NonNull final im.conversations.android.xmpp.EntityCapabilities.Hash hash) {
             this.node = node;
             this.hash = hash;
         }
