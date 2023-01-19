@@ -1884,7 +1884,8 @@ public class XmppConnection implements Runnable {
         final var nodeHash = this.streamFeatures.getCapabilities();
         final var domainDiscoItem = Entity.discoItem(account.address.getDomain());
         if (nodeHash != null) {
-            discoFutures.add(discoManager.info(domainDiscoItem, nodeHash.node, nodeHash.hash));
+            discoFutures.add(
+                    discoManager.infoOrCache(domainDiscoItem, nodeHash.node, nodeHash.hash));
         } else {
             discoFutures.add(discoManager.info(domainDiscoItem));
         }

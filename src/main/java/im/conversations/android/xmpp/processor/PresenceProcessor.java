@@ -43,7 +43,7 @@ public class PresenceProcessor extends XmppConnection.Delegate implements Consum
         final var nodeHash = presencePacket.getCapabilities();
         if (nodeHash != null) {
             getManager(DiscoManager.class)
-                    .info(Entity.presence(entity), nodeHash.node, nodeHash.hash);
+                    .infoOrCache(Entity.presence(entity), nodeHash.node, nodeHash.hash);
         }
     }
 }

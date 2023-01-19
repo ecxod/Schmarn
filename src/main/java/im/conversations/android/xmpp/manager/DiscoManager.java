@@ -1,8 +1,10 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.common.collect.Collections2;
+import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -15,6 +17,7 @@ import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import im.conversations.android.xmpp.model.disco.items.ItemsQuery;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -29,22 +32,30 @@ public class DiscoManager extends AbstractManager {
         return info(entity, null);
     }
 
-    public ListenableFuture<Void> info(
+    public ListenableFuture<Void> infoOrCache(
             final Entity entity, @Nullable final String node, final EntityCapabilities.Hash hash) {
-        final String capabilityNode = hash.capabilityNode(node);
-        if (getDatabase().discoDao().set(getAccount(), entity, capabilityNode, hash)) {
+        if (getDatabase().discoDao().set(getAccount(), entity, node, hash)) {
             return Futures.immediateFuture(null);
         }
         return Futures.transform(
-                info(entity, capabilityNode), f -> null, MoreExecutors.directExecutor());
+                info(entity, node, hash), f -> null, MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<InfoQuery> info(final Entity entity, final String node) {
+    public ListenableFuture<InfoQuery> info(
+            @NonNull final Entity entity, @Nullable final String node) {
+        return info(entity, node, null);
+    }
+
+    public ListenableFuture<InfoQuery> info(
+            final Entity entity,
+            @Nullable final String node,
+            @Nullable final EntityCapabilities.Hash hash) {
+        final var requestNode = hash != null && node != null ? hash.capabilityNode(node) : node;
         final var iqRequest = new IqPacket(IqPacket.TYPE.GET);
         iqRequest.setTo(entity.address);
         final var infoQueryRequest = new InfoQuery();
-        if (node != null) {
-            infoQueryRequest.setNode(node);
+        if (requestNode != null) {
+            infoQueryRequest.setNode(requestNode);
         }
         iqRequest.addChild(infoQueryRequest);
         final var future = connection.sendIqPacket(iqRequest);
@@ -57,18 +68,43 @@ public class DiscoManager extends AbstractManager {
                     if (infoQuery == null) {
                         throw new IllegalStateException("Response did not have query child");
                     }
-                    if (!Objects.equals(node, infoQuery.getNode())) {
+                    if (!Objects.equals(requestNode, infoQuery.getNode())) {
                         throw new IllegalStateException(
                                 "Node in response did not match node in request");
                     }
-                    final byte[] caps = EntityCapabilities.hash(infoQuery).hash;
-                    final byte[] caps2 = EntityCapabilities2.hash(infoQuery).hash;
+                    final var caps = EntityCapabilities.hash(infoQuery);
+                    final var caps2 = EntityCapabilities2.hash(infoQuery);
+                    if (hash instanceof EntityCapabilities.EntityCapsHash) {
+                        checkMatch(
+                                (EntityCapabilities.EntityCapsHash) hash,
+                                caps,
+                                EntityCapabilities.EntityCapsHash.class);
+                    }
+                    if (hash instanceof EntityCapabilities2.EntityCaps2Hash) {
+                        checkMatch(
+                                (EntityCapabilities2.EntityCaps2Hash) hash,
+                                caps2,
+                                EntityCapabilities2.EntityCaps2Hash.class);
+                    }
                     getDatabase()
                             .discoDao()
-                            .set(getAccount(), entity, node, caps, caps2, infoQuery);
+                            .set(getAccount(), entity, node, caps.hash, caps2.hash, infoQuery);
                     return infoQuery;
                 },
                 MoreExecutors.directExecutor());
+    }
+
+    private <H extends EntityCapabilities.Hash> void checkMatch(
+            final H expected, final H was, final Class<H> clazz) {
+        if (Arrays.equals(expected.hash, was.hash)) {
+            return;
+        }
+        throw new IllegalStateException(
+                String.format(
+                        "%s mismatch. Expected %s was %s",
+                        clazz.getSimpleName(),
+                        BaseEncoding.base64().encode(expected.hash),
+                        BaseEncoding.base64().encode(was.hash)));
     }
 
     public ListenableFuture<Collection<Item>> items(final Entity.DiscoItem entity) {
@@ -97,11 +133,9 @@ public class DiscoManager extends AbstractManager {
         return Futures.transformAsync(
                 itemsFutures,
                 items -> {
-                    final var filtered =
-                            Collections2.filter(items, i -> Objects.nonNull(i.getJid()));
                     Collection<ListenableFuture<InfoQuery>> infoFutures =
                             Collections2.transform(
-                                    filtered, i -> info(Entity.discoItem(i.getJid()), i.getNode()));
+                                    items, i -> info(Entity.discoItem(i.getJid()), i.getNode()));
                     return Futures.allAsList(infoFutures);
                 },
                 MoreExecutors.directExecutor());
