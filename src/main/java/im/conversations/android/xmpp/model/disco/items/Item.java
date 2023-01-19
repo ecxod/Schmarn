@@ -1,5 +1,6 @@
 package im.conversations.android.xmpp.model.disco.items;
 
+import androidx.annotation.Nullable;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.xmpp.model.Extension;
@@ -14,7 +15,7 @@ public class Item extends Extension {
         return getAttributeAsJid("jid");
     }
 
-    public String getNode() {
+    public @Nullable String getNode() {
         return this.getAttribute("node");
     }
 }

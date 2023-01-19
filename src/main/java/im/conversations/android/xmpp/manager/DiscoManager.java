@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
+import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.EntityCapabilities2;
 import im.conversations.android.xmpp.XmppConnection;
@@ -24,12 +25,12 @@ public class DiscoManager extends AbstractManager {
         super(context, connection);
     }
 
-    public ListenableFuture<InfoQuery> info(final Jid entity) {
+    public ListenableFuture<InfoQuery> info(final Entity entity) {
         return info(entity, null);
     }
 
     public ListenableFuture<Void> info(
-            final Jid entity, @Nullable final String node, final EntityCapabilities.Hash hash) {
+            final Entity entity, @Nullable final String node, final EntityCapabilities.Hash hash) {
         final String capabilityNode = hash.capabilityNode(node);
         if (getDatabase().discoDao().set(getAccount(), entity, capabilityNode, hash)) {
             return Futures.immediateFuture(null);
@@ -38,9 +39,9 @@ public class DiscoManager extends AbstractManager {
                 info(entity, capabilityNode), f -> null, MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<InfoQuery> info(final Jid entity, final String node) {
+    public ListenableFuture<InfoQuery> info(final Entity entity, final String node) {
         final var iqRequest = new IqPacket(IqPacket.TYPE.GET);
-        iqRequest.setTo(entity);
+        iqRequest.setTo(entity.address);
         final var infoQueryRequest = new InfoQuery();
         if (node != null) {
             infoQueryRequest.setNode(node);
@@ -70,9 +71,9 @@ public class DiscoManager extends AbstractManager {
                 MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<Collection<Item>> items(final Jid entity) {
+    public ListenableFuture<Collection<Item>> items(final Entity.DiscoItem entity) {
         final var iqPacket = new IqPacket(IqPacket.TYPE.GET);
-        iqPacket.setTo(entity);
+        iqPacket.setTo(entity.address);
         iqPacket.addChild(new ItemsQuery());
         final var future = connection.sendIqPacket(iqPacket);
         return Futures.transform(
@@ -91,14 +92,16 @@ public class DiscoManager extends AbstractManager {
                 MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<List<InfoQuery>> itemsWithInfo(final Jid entity) {
+    public ListenableFuture<List<InfoQuery>> itemsWithInfo(final Entity.DiscoItem entity) {
         final var itemsFutures = items(entity);
         return Futures.transformAsync(
                 itemsFutures,
                 items -> {
-                    // TODO filter out items with empty jid
+                    final var filtered =
+                            Collections2.filter(items, i -> Objects.nonNull(i.getJid()));
                     Collection<ListenableFuture<InfoQuery>> infoFutures =
-                            Collections2.transform(items, i -> info(i.getJid(), i.getNode()));
+                            Collections2.transform(
+                                    filtered, i -> info(Entity.discoItem(i.getJid()), i.getNode()));
                     return Futures.allAsList(infoFutures);
                 },
                 MoreExecutors.directExecutor());

@@ -1735,43 +1735,40 @@ public class XmppConnection implements Runnable {
                     final Element bind = packet.findChild("bind");
                     if (bind != null && packet.getType() == IqPacket.TYPE.RESULT) {
                         isBound = true;
-                        final Element jid = bind.findChild("jid");
-                        if (jid != null && jid.getContent() != null) {
-                            try {
-                                final Jid assignedJid = Jid.ofEscaped(jid.getContent());
-                                if (!account.address.getDomain().equals(assignedJid.getDomain())) {
-                                    Log.d(
-                                            Config.LOGTAG,
-                                            account.address
-                                                    + ": server tried to re-assign domain to "
-                                                    + assignedJid.getDomain());
-                                    throw new StateChangingError(ConnectionState.BIND_FAILURE);
-                                }
-                                setConnectionAddress(assignedJid);
-                                if (streamFeatures.hasChild("session")
-                                        && !streamFeatures
-                                                .findChild("session")
-                                                .hasChild("optional")) {
-                                    sendStartSession();
-                                } else {
-                                    enableStreamManagement();
-                                    sendPostBindInitialization(false);
-                                }
-                                return;
-                            } catch (final IllegalArgumentException e) {
-                                Log.d(
-                                        Config.LOGTAG,
-                                        account.address
-                                                + ": server reported invalid jid ("
-                                                + jid.getContent()
-                                                + ") on bind");
-                            }
-                        } else {
+                        final String jid = bind.findChildContent("jid");
+                        if (Strings.isNullOrEmpty(jid)) {
+                            throw new StateChangingError(ConnectionState.BIND_FAILURE);
+                        }
+                        final Jid assignedJid;
+                        try {
+                            assignedJid = Jid.ofEscaped(jid);
+                        } catch (final IllegalArgumentException e) {
                             Log.d(
                                     Config.LOGTAG,
                                     account.address
-                                            + ": disconnecting because of bind failure. (no jid)");
+                                            + ": server reported invalid jid ("
+                                            + jid
+                                            + ") on bind");
+                            throw new StateChangingError(ConnectionState.BIND_FAILURE);
                         }
+
+                        if (!account.address.getDomain().equals(assignedJid.getDomain())) {
+                            Log.d(
+                                    Config.LOGTAG,
+                                    account.address
+                                            + ": server tried to re-assign domain to "
+                                            + assignedJid.getDomain());
+                            throw new StateChangingError(ConnectionState.BIND_FAILURE);
+                        }
+                        setConnectionAddress(assignedJid);
+                        if (streamFeatures.hasChild("session")
+                                && !streamFeatures.findChild("session").hasChild("optional")) {
+                            sendStartSession();
+                        } else {
+                            enableStreamManagement();
+                            sendPostBindInitialization(false);
+                        }
+                        return;
                     } else {
                         Log.d(
                                 Config.LOGTAG,
@@ -1885,14 +1882,14 @@ public class XmppConnection implements Runnable {
         final var discoManager = getManager(DiscoManager.class);
 
         final var nodeHash = this.streamFeatures.getCapabilities();
+        final var domainDiscoItem = Entity.discoItem(account.address.getDomain());
         if (nodeHash != null) {
-            discoFutures.add(
-                    discoManager.info(account.address.getDomain(), nodeHash.node, nodeHash.hash));
+            discoFutures.add(discoManager.info(domainDiscoItem, nodeHash.node, nodeHash.hash));
         } else {
-            discoFutures.add(discoManager.info(account.address.getDomain()));
+            discoFutures.add(discoManager.info(domainDiscoItem));
         }
-        discoFutures.add(discoManager.info(account.address));
-        discoFutures.add(discoManager.itemsWithInfo(account.address.getDomain()));
+        discoFutures.add(discoManager.info(Entity.discoItem(account.address)));
+        discoFutures.add(discoManager.itemsWithInfo(domainDiscoItem));
 
         final var discoFuture =
                 Futures.withTimeout(
@@ -1912,6 +1909,7 @@ public class XmppConnection implements Runnable {
 
                     @Override
                     public void onFailure(@NonNull Throwable t) {
+                        Log.d(Config.LOGTAG, "unable to fetch disco foo " + t);
                         // TODO reset stream ID so we get a proper connect next time
                         finalizeBind();
                     }

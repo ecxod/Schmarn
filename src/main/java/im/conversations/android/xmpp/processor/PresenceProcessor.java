@@ -4,6 +4,7 @@ import android.content.Context;
 import eu.siacs.conversations.xmpp.stanzas.PresencePacket;
 import im.conversations.android.database.model.PresenceShow;
 import im.conversations.android.database.model.PresenceType;
+import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.DiscoManager;
 import java.util.function.Consumer;
@@ -41,7 +42,8 @@ public class PresenceProcessor extends XmppConnection.Delegate implements Consum
         final var entity = presencePacket.getFrom();
         final var nodeHash = presencePacket.getCapabilities();
         if (nodeHash != null) {
-            getManager(DiscoManager.class).info(entity, nodeHash.node, nodeHash.hash);
+            getManager(DiscoManager.class)
+                    .info(Entity.presence(entity), nodeHash.node, nodeHash.hash);
         }
     }
 }

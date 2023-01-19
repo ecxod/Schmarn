@@ -1,10 +1,13 @@
 package im.conversations.android.database.dao;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
 import androidx.room.Upsert;
+import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.DiscoEntity;
@@ -15,6 +18,7 @@ import im.conversations.android.database.entity.DiscoFeatureEntity;
 import im.conversations.android.database.entity.DiscoIdentityEntity;
 import im.conversations.android.database.entity.DiscoItemEntity;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.EntityCapabilities2;
 import im.conversations.android.xmpp.model.data.Data;
@@ -43,12 +47,18 @@ public abstract class DiscoDao {
     protected abstract void deleteNonExistentDiscoItems(
             final long account, final Jid parent, final Collection<Jid> existent);
 
+    @Query(
+            "UPDATE presence SET discoId=:discoId WHERE accountId=:account AND address=:address"
+                    + " AND resource=:resource")
+    protected abstract void updateDiscoIdInPresence(
+            long account, Jid address, String resource, long discoId);
+
     @Insert
     protected abstract void insertDiscoFieldValues(
             Collection<DiscoExtensionFieldValueEntity> value);
 
     @Upsert(entity = DiscoItemEntity.class)
-    protected abstract void insert(DiscoItemWithDiscoId item);
+    protected abstract void updateDiscoIdInDiscoItem(DiscoItemWithDiscoId item);
 
     @Insert
     protected abstract long insert(DiscoEntity entity);
@@ -60,19 +70,20 @@ public abstract class DiscoDao {
     protected abstract long insert(DiscoExtensionFieldEntity entity);
 
     @Transaction
-    public void set(final Account account, final Jid parent, final Collection<Item> items) {
+    public void set(
+            final Account account, final Entity.DiscoItem parent, final Collection<Item> items) {
         final var entities =
                 Collections2.transform(items, i -> DiscoItemWithParent.of(account.id, parent, i));
         insertDiscoItems(entities);
         deleteNonExistentDiscoItems(
-                account.id, parent, Collections2.transform(items, Item::getJid));
+                account.id, parent.address, Collections2.transform(items, Item::getJid));
     }
 
     @Transaction
     public boolean set(
             final Account account,
-            final Jid address,
-            final String node,
+            final Entity entity,
+            @Nullable final String node,
             final EntityCapabilities.Hash capsHash) {
         final Long existingDiscoId;
         if (capsHash instanceof EntityCapabilities2.EntityCaps2Hash) {
@@ -85,14 +96,31 @@ public abstract class DiscoDao {
         if (existingDiscoId == null) {
             return false;
         }
-        insert(DiscoItemWithDiscoId.of(account.id, address, node, existingDiscoId));
+        updateDiscoId(account.id, entity, node, existingDiscoId);
         return true;
+    }
+
+    protected void updateDiscoId(
+            final long account,
+            final Entity entity,
+            @Nullable final String node,
+            final long discoId) {
+        if (entity instanceof Entity.DiscoItem) {
+            updateDiscoIdInDiscoItem(
+                    DiscoItemWithDiscoId.of(account, (Entity.DiscoItem) entity, node, discoId));
+        } else if (entity instanceof Entity.Presence) {
+            updateDiscoIdInPresence(
+                    account,
+                    entity.address.asBareJid(),
+                    Strings.nullToEmpty(entity.address.getResource()),
+                    discoId);
+        }
     }
 
     @Transaction
     public void set(
             final Account account,
-            final Jid address,
+            final Entity entity,
             final String node,
             final byte[] capsHash,
             final byte[] caps2HashSha256,
@@ -100,7 +128,7 @@ public abstract class DiscoDao {
 
         final Long existingDiscoId = getDiscoId(account.id, caps2HashSha256);
         if (existingDiscoId != null) {
-            insert(DiscoItemWithDiscoId.of(account.id, address, node, existingDiscoId));
+            updateDiscoId(account.id, entity, node, existingDiscoId);
             return;
         }
         final long discoId = insert(DiscoEntity.of(account.id, capsHash, caps2HashSha256));
@@ -125,6 +153,7 @@ public abstract class DiscoDao {
                                 v -> DiscoExtensionFieldValueEntity.of(fieldId, v.getContent())));
             }
         }
+        updateDiscoId(account.id, entity, node, discoId);
     }
 
     @Query("SELECT id FROM disco WHERE accountId=:accountId AND caps2HashSha256=:caps2HashSha256")
@@ -141,32 +170,35 @@ public abstract class DiscoDao {
 
     public static class DiscoItemWithParent {
         public long accountId;
-        public Jid address;
-        public String node;
-        public Jid parent;
+        public @NonNull Jid address;
+        public @NonNull String node;
+        public @Nullable Jid parent;
 
         public static DiscoItemWithParent of(
-                final long account, final Jid parent, final Item item) {
+                final long account, Entity.DiscoItem parent, final Item item) {
             final var entity = new DiscoItemWithParent();
             entity.accountId = account;
             entity.address = item.getJid();
-            entity.node = item.getNode();
-            entity.parent = parent;
+            entity.node = Strings.nullToEmpty(item.getNode());
+            entity.parent = parent.address;
             return entity;
         }
     }
 
     public static class DiscoItemWithDiscoId {
         public long accountId;
-        public Jid address;
-        public String node;
+        public @NonNull Jid address;
+        public @NonNull String node;
         public long discoId;
 
         public static DiscoItemWithDiscoId of(
-                final long account, final Jid address, final String node, final long discoId) {
+                final long account,
+                final Entity.DiscoItem discoItem,
+                @NonNull final String node,
+                final long discoId) {
             final var entity = new DiscoItemWithDiscoId();
             entity.accountId = account;
-            entity.address = address;
+            entity.address = discoItem.address;
             entity.node = node;
             entity.discoId = discoId;
             return entity;

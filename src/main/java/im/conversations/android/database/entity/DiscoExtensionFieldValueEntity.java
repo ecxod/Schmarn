@@ -10,7 +10,7 @@ import androidx.room.PrimaryKey;
         tableName = "disco_ext_field_value",
         foreignKeys =
                 @ForeignKey(
-                        entity = DiscoExtensionEntity.class,
+                        entity = DiscoExtensionFieldEntity.class,
                         parentColumns = {"id"},
                         childColumns = {"fieldId"},
                         onDelete = ForeignKey.CASCADE),
@@ -25,6 +25,9 @@ public class DiscoExtensionFieldValueEntity {
     public String value;
 
     public static DiscoExtensionFieldValueEntity of(long fieldId, final String value) {
-        return null;
+        final var entity = new DiscoExtensionFieldValueEntity();
+        entity.fieldId = fieldId;
+        entity.value = value;
+        return entity;
     }
 }

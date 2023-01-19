@@ -72,7 +72,7 @@ public class Element {
     }
 
     public <E extends Extension> E getExtension(final Class<E> clazz) {
-        final var extension = Iterables.find(this.children, clazz::isInstance);
+        final var extension = Iterables.find(this.children, clazz::isInstance, null);
         if (extension == null) {
             return null;
         }

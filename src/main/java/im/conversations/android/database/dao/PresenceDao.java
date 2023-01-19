@@ -1,5 +1,7 @@
 package im.conversations.android.database.dao;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.room.Dao;
 import androidx.room.Query;
 import androidx.room.Upsert;
@@ -28,12 +30,12 @@ public abstract class PresenceDao {
     abstract void insert(PresenceEntity entity);
 
     public void set(
-            Account account,
-            Jid address,
-            String resource,
-            PresenceType type,
-            PresenceShow show,
-            String status) {
+            @NonNull final Account account,
+            @NonNull final Jid address,
+            @Nullable final String resource,
+            @Nullable final PresenceType type,
+            @Nullable final PresenceShow show,
+            @Nullable final String status) {
         if (resource == null
                 && Arrays.asList(PresenceType.ERROR, PresenceType.UNAVAILABLE).contains(type)) {
             deletePresences(account.id, address);

@@ -40,7 +40,7 @@ public class DiscoItemEntity {
 
     @NonNull Jid address;
 
-    @Nullable public String node;
+    @NonNull public String node;
 
     @Nullable public Jid parent;
 
