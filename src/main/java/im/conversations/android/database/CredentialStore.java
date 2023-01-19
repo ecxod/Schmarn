@@ -201,7 +201,8 @@ public class CredentialStore {
         return getEncryptedFile(getCredentialStoreFile());
     }
 
-    private EncryptedFile getEncryptedFile(final File file) throws GeneralSecurityException, IOException {
+    private EncryptedFile getEncryptedFile(final File file)
+            throws GeneralSecurityException, IOException {
         final KeyGenParameterSpec keyGenParameterSpec = MasterKeys.AES256_GCM_SPEC;
         final String mainKeyAlias = MasterKeys.getOrCreate(keyGenParameterSpec);
         return new EncryptedFile.Builder(

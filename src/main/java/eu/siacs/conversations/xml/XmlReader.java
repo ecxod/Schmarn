@@ -3,7 +3,7 @@ package eu.siacs.conversations.xml;
 import android.util.Log;
 import android.util.Xml;
 import eu.siacs.conversations.Config;
-import im.conversations.android.xmpp.Extensions;
+import im.conversations.android.xmpp.ExtensionFactory;
 import im.conversations.android.xmpp.model.Extension;
 import java.io.Closeable;
 import java.io.IOException;
@@ -106,7 +106,7 @@ public class XmlReader implements Closeable {
         final var attributes = currentTag.getAttributes();
         final var namespace = attributes.get("xmlns");
         final var name = currentTag.getName();
-        final Element element = Extensions.create(name, namespace);
+        final Element element = ExtensionFactory.create(name, namespace);
         element.setAttributes(currentTag.getAttributes());
         Tag nextTag = this.readTag();
         if (nextTag == null) {
