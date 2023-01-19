@@ -16,7 +16,6 @@ import im.conversations.android.xmpp.sasl.HashedToken;
 import im.conversations.android.xmpp.sasl.SaslMechanism;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -80,7 +79,7 @@ public class CredentialStore {
         this.set(account, modifiedCredential);
     }
 
-    public void setFastToken(
+    public synchronized void setFastToken(
             final Account account, final HashedToken.Mechanism mechanism, final String token)
             throws GeneralSecurityException, IOException {
         final Credential credential = getOrEmpty(account);
@@ -98,7 +97,8 @@ public class CredentialStore {
         this.set(account, modifiedCredential);
     }
 
-    public void resetFastToken(final Account account) throws GeneralSecurityException, IOException {
+    public synchronized void resetFastToken(final Account account)
+            throws GeneralSecurityException, IOException {
         final Credential credential = getOrEmpty(account);
         final Credential modifiedCredential =
                 new Credential(
@@ -114,7 +114,8 @@ public class CredentialStore {
         this.set(account, modifiedCredential);
     }
 
-    public void setPinnedMechanism(final Account account, final SaslMechanism mechanism)
+    public synchronized void setPinnedMechanism(
+            final Account account, final SaslMechanism mechanism)
             throws GeneralSecurityException, IOException {
         final String pinnedMechanism = mechanism.getMechanism();
         final String pinnedChannelBinding;
@@ -139,7 +140,7 @@ public class CredentialStore {
         this.set(account, modifiedCredential);
     }
 
-    public void resetPinnedMechanism(final Account account)
+    public synchronized void resetPinnedMechanism(final Account account)
             throws GeneralSecurityException, IOException {
         final Credential credential = getOrEmpty(account);
         final Credential modifiedCredential =
@@ -181,19 +182,23 @@ public class CredentialStore {
 
     private Map<String, Credential> load() throws GeneralSecurityException, IOException {
         final EncryptedFile encryptedFile = getEncryptedFile();
-        final FileInputStream inputStream = encryptedFile.openFileInput();
-        final Type type = new TypeToken<Map<String, Credential>>() {}.getType();
-        return GSON.fromJson(new InputStreamReader(inputStream), type);
+        try (final FileInputStream inputStream = encryptedFile.openFileInput()) {
+            final Type type = new TypeToken<Map<String, Credential>>() {}.getType();
+            return GSON.fromJson(new InputStreamReader(inputStream), type);
+        }
     }
 
     private void store(final Map<String, Credential> store)
             throws GeneralSecurityException, IOException {
         final File file = getCredentialStoreFile();
-        file.delete();
+        if (file.delete()) {
+            // Log.d(Config.LOGTAG,"delete old credential file: "+file.getAbsolutePath());
+        }
         final EncryptedFile encryptedFile = getEncryptedFile(file);
-        try (final FileOutputStream outputStream = encryptedFile.openFileOutput()) {
-            GSON.toJson(store, new OutputStreamWriter(outputStream));
-            outputStream.flush();
+        try (final OutputStreamWriter writer =
+                new OutputStreamWriter(encryptedFile.openFileOutput())) {
+            GSON.toJson(store, writer);
+            writer.flush();
         }
     }
 
