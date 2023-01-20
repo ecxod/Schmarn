@@ -9,7 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 public final class ExtensionFactory {
 
     public static Element create(final String name, final String namespace) {
-        final Class<? extends Element> clazz = of(name, namespace);
+        final Class<? extends Extension> clazz = of(name, namespace);
         if (clazz == null) {
             return new Element(name, namespace);
         }
@@ -30,7 +30,7 @@ public final class ExtensionFactory {
         }
     }
 
-    private static Class<? extends Element> of(final String name, final String namespace) {
+    private static Class<? extends Extension> of(final String name, final String namespace) {
         return Extensions.EXTENSION_CLASS_MAP.get(new Id(name, namespace));
     }
 
