@@ -29,27 +29,36 @@
 
 package eu.siacs.conversations.ui.util;
 
+import java.util.function.Supplier;
+
 public class PendingItem<T> {
 
-	private T item = null;
+    private T item = null;
 
-	public synchronized void push(T item) {
-		this.item = item;
-	}
+    public synchronized void push(T item) {
+        this.item = item;
+    }
 
-	public synchronized T pop() {
-		final T item = this.item;
-		this.item = null;
-		return item;
-	}
+    public synchronized T pop() {
+        final T item = this.item;
+        this.item = null;
+        return item;
+    }
 
-	public synchronized T peek() {
-		return item;
-	}
+    public synchronized T peek() {
+        return item;
+    }
 
-	public synchronized boolean clear() {
-		boolean notNull = this.item != null;
-		this.item = null;
-		return notNull;
-	}
+    public synchronized T peekOrCreate(final Supplier<T> supplier) {
+        if (this.item == null) {
+            this.item = supplier.get();
+        }
+        return this.item;
+    }
+
+    public synchronized boolean clear() {
+        boolean notNull = this.item != null;
+        this.item = null;
+        return notNull;
+    }
 }

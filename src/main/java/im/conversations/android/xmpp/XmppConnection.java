@@ -30,6 +30,7 @@ import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.MemorizingTrustManager;
 import eu.siacs.conversations.services.MessageArchiveService;
 import eu.siacs.conversations.services.NotificationService;
+import eu.siacs.conversations.ui.util.PendingItem;
 import eu.siacs.conversations.utils.Patterns;
 import eu.siacs.conversations.utils.PhoneHelper;
 import eu.siacs.conversations.utils.Resolver;
@@ -160,6 +161,7 @@ public class XmppConnection implements Runnable {
     private final Consumer<Jid> bindConsumer;
     private final ClassToInstanceMap<AbstractManager> managers;
     private Consumer<XmppConnection> statusListener = null;
+    private PendingItem<SettableFuture<XmppConnection>> connectedFuture = new PendingItem<>();
     private SaslMechanism saslMechanism;
     private HashedToken.Mechanism hashTokenRequest;
     private HttpUrl redirectionUrl = null;
@@ -243,6 +245,16 @@ public class XmppConnection implements Runnable {
             this.connectionState = nextStatus;
             if (nextStatus.isError() || nextStatus == ConnectionState.ONLINE) {
                 this.recentErrorConnectionState = nextStatus;
+            }
+            if (nextStatus != ConnectionState.CONNECTING && nextStatus != ConnectionState.OFFLINE) {
+                final var future = this.connectedFuture.pop();
+                if (future != null) {
+                    if (nextStatus == ConnectionState.ONLINE) {
+                        future.set(this);
+                    } else {
+                        future.setException(new ConnectionException(nextStatus));
+                    }
+                }
             }
         }
         if (statusListener != null) {
@@ -2223,6 +2235,15 @@ public class XmppConnection implements Runnable {
 
     public void setOnStatusChangedListener(final Consumer<XmppConnection> listener) {
         this.statusListener = listener;
+    }
+
+    public ListenableFuture<XmppConnection> asConnectedFuture() {
+        synchronized (this) {
+            if (this.connectionState == ConnectionState.ONLINE) {
+                return Futures.immediateFuture(this);
+            }
+            return this.connectedFuture.peekOrCreate(SettableFuture::create);
+        }
     }
 
     private void forceCloseSocket() {
