@@ -5,6 +5,7 @@ import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
+import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.database.model.Proxy;
 
@@ -20,7 +21,7 @@ public class AccountEntity {
     @PrimaryKey(autoGenerate = true)
     public Long id;
 
-    @NonNull public String address;
+    @NonNull public Jid address;
     public String resource;
     public byte[] randomSeed;
 

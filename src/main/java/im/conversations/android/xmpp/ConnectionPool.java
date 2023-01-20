@@ -55,15 +55,53 @@ public class ConnectionPool {
                 reconfigurationExecutor);
     }
 
-    public synchronized XmppConnection get(final Jid address) {
-        return Iterables.find(this.connections, c -> address.equals(c.getAccount().address));
+    public synchronized XmppConnection reconfigure(final Account account) {
+        final Optional<XmppConnection> xmppConnectionOptional =
+                Iterables.tryFind(this.connections, c -> c.getAccount().equals(account));
+        if (xmppConnectionOptional.isPresent()) {
+            return xmppConnectionOptional.get();
+        }
+        return setupXmppConnection(context, account);
     }
 
-    public synchronized XmppConnection get(final long id) {
-        return Iterables.find(this.connections, c -> id == c.getAccount().id);
+    public synchronized ListenableFuture<XmppConnection> get(final Jid address) {
+        final var configured =
+                Iterables.tryFind(this.connections, c -> address.equals(c.getAccount().address));
+        if (configured.isPresent()) {
+            return Futures.immediateFuture(configured.get());
+        }
+        return Futures.transform(
+                ConversationsDatabase.getInstance(context).accountDao().getEnabledAccount(address),
+                account -> {
+                    if (account == null) {
+                        throw new IllegalStateException(
+                                String.format(
+                                        "No enabled account with address %s",
+                                        address.toEscapedString()));
+                    }
+                    return reconfigure(account);
+                },
+                reconfigurationExecutor);
     }
 
-    public synchronized boolean isEnabled(final long id) {
+    public synchronized ListenableFuture<XmppConnection> get(final long id) {
+        final var configured = Iterables.tryFind(this.connections, c -> id == c.getAccount().id);
+        if (configured.isPresent()) {
+            return Futures.immediateFuture(configured.get());
+        }
+        return Futures.transform(
+                ConversationsDatabase.getInstance(context).accountDao().getEnabledAccount(id),
+                account -> {
+                    if (account == null) {
+                        throw new IllegalStateException(
+                                String.format("No enabled account with id %d", id));
+                    }
+                    return reconfigure(account);
+                },
+                reconfigurationExecutor);
+    }
+
+    private synchronized boolean isEnabled(final long id) {
         return Iterables.any(this.connections, c -> id == c.getAccount().id);
     }
 
@@ -76,9 +114,7 @@ public class ConnectionPool {
         final Set<Account> removed = Sets.difference(current, accounts);
         final Set<Account> added = Sets.difference(accounts, current);
         for (final Account account : added) {
-            final XmppConnection connection = this.instantiate(context, account);
-            connection.setOnStatusChangedListener(this::onStatusChanged);
-            reconnectAccount(connection);
+            this.setupXmppConnection(context, account);
         }
         for (final Account account : removed) {
             final Optional<XmppConnection> connectionOptional =
@@ -324,9 +360,11 @@ public class ConnectionPool {
         }
     }
 
-    private XmppConnection instantiate(final Context context, final Account account) {
+    private XmppConnection setupXmppConnection(final Context context, final Account account) {
         final XmppConnection xmppConnection = new XmppConnection(context, account);
         this.connections.add(xmppConnection);
+        xmppConnection.setOnStatusChangedListener(this::onStatusChanged);
+        reconnectAccount(xmppConnection);
         return xmppConnection;
     }
 

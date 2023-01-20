@@ -5,6 +5,7 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import com.google.common.util.concurrent.ListenableFuture;
+import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
@@ -13,11 +14,17 @@ import java.util.List;
 @Dao
 public interface AccountDao {
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    void insert(final AccountEntity account);
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    long insert(final AccountEntity account);
 
     @Query("SELECT id,address,randomSeed FROM account WHERE enabled = 1")
     ListenableFuture<List<Account>> getEnabledAccounts();
+
+    @Query("SELECT id,address,randomSeed FROM account WHERE address=:address AND enabled=1")
+    ListenableFuture<Account> getEnabledAccount(Jid address);
+
+    @Query("SELECT id,address,randomSeed FROM account WHERE id=:id AND enabled=1")
+    ListenableFuture<Account> getEnabledAccount(long id);
 
     @Query("SELECT hostname,port,directTls FROM account WHERE id=:id AND hostname != null")
     Connection getConnectionSettings(long id);

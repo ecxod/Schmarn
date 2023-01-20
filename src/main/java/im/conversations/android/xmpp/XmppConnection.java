@@ -1979,6 +1979,7 @@ public class XmppConnection implements Runnable {
     }
 
     private void finalizeBind() {
+        this.enableAdvancedStreamFeatures();
         this.bindConsumer.accept(this.connectionAddress);
         this.changeStatusToOnline();
     }
@@ -1989,10 +1990,6 @@ public class XmppConnection implements Runnable {
                 && !this.carbonsEnabled) {
             sendEnableCarbons();
         }
-        // TODO discover commands
-        /*if (getFeatures().commands()) {
-            discoverCommands();
-        }*/
     }
 
     private void sendEnableCarbons() {

@@ -1,12 +1,13 @@
 package im.conversations.android.database.entity;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
+import com.google.common.base.Strings;
 import eu.siacs.conversations.xmpp.Jid;
+import im.conversations.android.xmpp.model.disco.items.Item;
 
 @Entity(
         tableName = "disco_item",
@@ -24,7 +25,7 @@ import eu.siacs.conversations.xmpp.Jid;
         },
         indices = {
             @Index(
-                    value = {"accountId", "address", "node"},
+                    value = {"accountId", "address", "node", "parent"},
                     unique = true),
             @Index(
                     value = {"accountId", "parent"},
@@ -36,13 +37,33 @@ public class DiscoItemEntity {
     @PrimaryKey(autoGenerate = true)
     public Long id;
 
-    @NonNull Long accountId;
+    @NonNull public Long accountId;
 
-    @NonNull Jid address;
+    @NonNull public Jid address;
 
     @NonNull public String node;
 
-    @Nullable public Jid parent;
+    @NonNull public String parent;
 
     public Long discoId;
+
+    public static DiscoItemEntity of(long accountId, final Jid parent, Item item) {
+        final var entity = new DiscoItemEntity();
+        entity.accountId = accountId;
+        entity.address = item.getJid();
+        entity.node = Strings.nullToEmpty(item.getNode());
+        entity.parent = parent.toEscapedString();
+        return entity;
+    }
+
+    public static DiscoItemEntity of(
+            long accountId, final Jid address, final String node, final long discoId) {
+        final var entity = new DiscoItemEntity();
+        entity.accountId = accountId;
+        entity.address = address;
+        entity.node = Strings.nullToEmpty(node);
+        entity.parent = "";
+        entity.discoId = discoId;
+        return entity;
+    }
 }
