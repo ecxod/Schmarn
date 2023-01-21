@@ -8,4 +8,12 @@ public class ItemsQuery extends Extension {
     public ItemsQuery() {
         super(ItemsQuery.class);
     }
+
+    public void setNode(final String node) {
+        this.setAttribute("node", node);
+    }
+
+    public String getNode() {
+        return this.getAttribute("node");
+    }
 }

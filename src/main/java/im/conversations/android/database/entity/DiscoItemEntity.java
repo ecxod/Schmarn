@@ -25,10 +25,10 @@ import im.conversations.android.xmpp.model.disco.items.Item;
         },
         indices = {
             @Index(
-                    value = {"accountId", "address", "node", "parent"},
+                    value = {"accountId", "address", "node", "parentAddress", "parentNode"},
                     unique = true),
             @Index(
-                    value = {"accountId", "parent"},
+                    value = {"accountId", "parentAddress"},
                     unique = false),
             @Index(value = {"discoId"})
         })
@@ -43,16 +43,20 @@ public class DiscoItemEntity {
 
     @NonNull public String node;
 
-    @NonNull public String parent;
+    @NonNull public String parentAddress;
+
+    @NonNull public String parentNode;
 
     public Long discoId;
 
-    public static DiscoItemEntity of(long accountId, final Jid parent, Item item) {
+    public static DiscoItemEntity of(
+            long accountId, final Jid parent, final String parentNode, final Item item) {
         final var entity = new DiscoItemEntity();
         entity.accountId = accountId;
         entity.address = item.getJid();
         entity.node = Strings.nullToEmpty(item.getNode());
-        entity.parent = parent.toEscapedString();
+        entity.parentAddress = parent.toEscapedString();
+        entity.parentNode = Strings.nullToEmpty(parentNode);
         return entity;
     }
 
@@ -62,7 +66,7 @@ public class DiscoItemEntity {
         entity.accountId = accountId;
         entity.address = address;
         entity.node = Strings.nullToEmpty(node);
-        entity.parent = "";
+        entity.parentAddress = "";
         entity.discoId = discoId;
         return entity;
     }

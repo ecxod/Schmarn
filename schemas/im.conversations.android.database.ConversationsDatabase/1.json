@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8f1d4d8d2bdb8b2358132202037aba7a",
+    "identityHash": "e2dbbac3327bc8ef188286642b379e7d",
     "entities": [
       {
         "tableName": "account",
@@ -601,7 +601,7 @@
       },
       {
         "tableName": "disco_item",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `address` TEXT NOT NULL, `node` TEXT NOT NULL, `parent` TEXT NOT NULL, `discoId` INTEGER, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`discoId`) REFERENCES `disco`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `address` TEXT NOT NULL, `node` TEXT NOT NULL, `parentAddress` TEXT NOT NULL, `parentNode` TEXT NOT NULL, `discoId` INTEGER, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`discoId`) REFERENCES `disco`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -628,8 +628,14 @@
             "notNull": true
           },
           {
-            "fieldPath": "parent",
-            "columnName": "parent",
+            "fieldPath": "parentAddress",
+            "columnName": "parentAddress",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentNode",
+            "columnName": "parentNode",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -648,26 +654,27 @@
         },
         "indices": [
           {
-            "name": "index_disco_item_accountId_address_node_parent",
+            "name": "index_disco_item_accountId_address_node_parentAddress_parentNode",
             "unique": true,
             "columnNames": [
               "accountId",
               "address",
               "node",
-              "parent"
+              "parentAddress",
+              "parentNode"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_disco_item_accountId_address_node_parent` ON `${TABLE_NAME}` (`accountId`, `address`, `node`, `parent`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_disco_item_accountId_address_node_parentAddress_parentNode` ON `${TABLE_NAME}` (`accountId`, `address`, `node`, `parentAddress`, `parentNode`)"
           },
           {
-            "name": "index_disco_item_accountId_parent",
+            "name": "index_disco_item_accountId_parentAddress",
             "unique": false,
             "columnNames": [
               "accountId",
-              "parent"
+              "parentAddress"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_disco_item_accountId_parent` ON `${TABLE_NAME}` (`accountId`, `parent`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_disco_item_accountId_parentAddress` ON `${TABLE_NAME}` (`accountId`, `parentAddress`)"
           },
           {
             "name": "index_disco_item_discoId",
@@ -1337,7 +1344,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8f1d4d8d2bdb8b2358132202037aba7a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e2dbbac3327bc8ef188286642b379e7d')"
     ]
   }
 }

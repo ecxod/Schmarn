@@ -44,10 +44,13 @@ public abstract class DiscoDao {
     protected abstract void insertDiscoFeatures(Collection<DiscoFeatureEntity> features);
 
     @Query(
-            "DELETE FROM disco_item WHERE accountId=:account AND parent=:parent AND address NOT"
-                    + " IN(:existent)")
+            "DELETE FROM disco_item WHERE accountId=:account AND parentAddress=:parent AND"
+                    + " parentNode=:parentNode AND address NOT IN(:existent)")
     protected abstract void deleteNonExistentDiscoItems(
-            final long account, final Jid parent, final Collection<Jid> existent);
+            final long account,
+            final Jid parent,
+            final String parentNode,
+            final Collection<Jid> existent);
 
     @Query(
             "UPDATE presence SET discoId=:discoId WHERE accountId=:account AND address=:address"
@@ -76,13 +79,19 @@ public abstract class DiscoDao {
 
     @Transaction
     public void set(
-            final Account account, final Entity.DiscoItem parent, final Collection<Item> items) {
+            final Account account,
+            final Entity.DiscoItem parent,
+            final String parentNode,
+            final Collection<Item> items) {
         final var entities =
                 Collections2.transform(
-                        items, i -> DiscoItemEntity.of(account.id, parent.address, i));
+                        items, i -> DiscoItemEntity.of(account.id, parent.address, parentNode, i));
         insertDiscoItems(entities);
         deleteNonExistentDiscoItems(
-                account.id, parent.address, Collections2.transform(items, Item::getJid));
+                account.id,
+                parent.address,
+                Strings.nullToEmpty(parentNode),
+                Collections2.transform(items, Item::getJid));
     }
 
     @Transaction

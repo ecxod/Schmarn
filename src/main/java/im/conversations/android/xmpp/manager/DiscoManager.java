@@ -3,6 +3,7 @@ package im.conversations.android.xmpp.manager;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
@@ -53,11 +54,10 @@ public class DiscoManager extends AbstractManager {
         final var requestNode = hash != null && node != null ? hash.capabilityNode(node) : node;
         final var iqRequest = new IqPacket(IqPacket.TYPE.GET);
         iqRequest.setTo(entity.address);
-        final var infoQueryRequest = new InfoQuery();
+        final var infoQueryRequest = iqRequest.addChild(new InfoQuery());
         if (requestNode != null) {
             infoQueryRequest.setNode(requestNode);
         }
-        iqRequest.addChild(infoQueryRequest);
         final var future = connection.sendIqPacket(iqRequest);
         // TODO we need to remove the disco info associated with $entity in case of failure
         // this might happen in (rather unlikely) scenarios where an item no longer speaks disco
@@ -108,9 +108,18 @@ public class DiscoManager extends AbstractManager {
     }
 
     public ListenableFuture<Collection<Item>> items(final Entity.DiscoItem entity) {
+        return items(entity, null);
+    }
+
+    public ListenableFuture<Collection<Item>> items(
+            @NonNull final Entity.DiscoItem entity, @Nullable final String node) {
+        final var requestNode = Strings.emptyToNull(node);
         final var iqPacket = new IqPacket(IqPacket.TYPE.GET);
         iqPacket.setTo(entity.address);
-        iqPacket.addChild(new ItemsQuery());
+        final var itemsQueryRequest = iqPacket.addChild(new ItemsQuery());
+        if (requestNode != null) {
+            itemsQueryRequest.setNode(requestNode);
+        }
         final var future = connection.sendIqPacket(iqPacket);
         return Futures.transform(
                 future,
@@ -119,10 +128,14 @@ public class DiscoManager extends AbstractManager {
                     if (itemsQuery == null) {
                         throw new IllegalStateException();
                     }
+                    if (!Objects.equals(requestNode, itemsQuery.getNode())) {
+                        throw new IllegalStateException(
+                                "Node in response did not match node in request");
+                    }
                     final var items = itemsQuery.getExtensions(Item.class);
                     final var validItems =
                             Collections2.filter(items, i -> Objects.nonNull(i.getJid()));
-                    getDatabase().discoDao().set(getAccount(), entity, validItems);
+                    getDatabase().discoDao().set(getAccount(), entity, requestNode, validItems);
                     return validItems;
                 },
                 MoreExecutors.directExecutor());

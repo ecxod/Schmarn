@@ -37,6 +37,11 @@ public class Element {
         return child;
     }
 
+    public <T extends Extension> T addChild(T child) {
+        this.addChild(child);
+        return child;
+    }
+
     public Element addChild(String name) {
         this.content = null;
         Element child = new Element(name);
