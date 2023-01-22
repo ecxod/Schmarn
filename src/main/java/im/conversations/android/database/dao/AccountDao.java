@@ -2,7 +2,6 @@ package im.conversations.android.database.dao;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
-import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import com.google.common.util.concurrent.ListenableFuture;
 import eu.siacs.conversations.xmpp.Jid;
@@ -14,7 +13,7 @@ import java.util.List;
 @Dao
 public interface AccountDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     long insert(final AccountEntity account);
 
     @Query("SELECT id,address,randomSeed FROM account WHERE enabled = 1")
