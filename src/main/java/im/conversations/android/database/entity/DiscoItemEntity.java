@@ -34,6 +34,8 @@ import im.conversations.android.xmpp.model.disco.items.Item;
         })
 public class DiscoItemEntity {
 
+    private static final String EMPTY_STRING = "";
+
     @PrimaryKey(autoGenerate = true)
     public Long id;
 
@@ -66,7 +68,8 @@ public class DiscoItemEntity {
         entity.accountId = accountId;
         entity.address = address;
         entity.node = Strings.nullToEmpty(node);
-        entity.parentAddress = "";
+        entity.parentAddress = EMPTY_STRING;
+        entity.parentNode = EMPTY_STRING;
         entity.discoId = discoId;
         return entity;
     }

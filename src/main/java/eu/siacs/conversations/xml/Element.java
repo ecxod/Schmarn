@@ -37,7 +37,7 @@ public class Element {
         return child;
     }
 
-    public <T extends Extension> T addChild(T child) {
+    public <T extends Extension> T addExtension(T child) {
         this.addChild(child);
         return child;
     }

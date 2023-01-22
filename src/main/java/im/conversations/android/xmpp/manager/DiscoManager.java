@@ -54,7 +54,7 @@ public class DiscoManager extends AbstractManager {
         final var requestNode = hash != null && node != null ? hash.capabilityNode(node) : node;
         final var iqRequest = new IqPacket(IqPacket.TYPE.GET);
         iqRequest.setTo(entity.address);
-        final var infoQueryRequest = iqRequest.addChild(new InfoQuery());
+        final InfoQuery infoQueryRequest = iqRequest.addExtension(new InfoQuery());
         if (requestNode != null) {
             infoQueryRequest.setNode(requestNode);
         }
@@ -116,7 +116,7 @@ public class DiscoManager extends AbstractManager {
         final var requestNode = Strings.emptyToNull(node);
         final var iqPacket = new IqPacket(IqPacket.TYPE.GET);
         iqPacket.setTo(entity.address);
-        final var itemsQueryRequest = iqPacket.addChild(new ItemsQuery());
+        final ItemsQuery itemsQueryRequest = iqPacket.addExtension(new ItemsQuery());
         if (requestNode != null) {
             itemsQueryRequest.setNode(requestNode);
         }

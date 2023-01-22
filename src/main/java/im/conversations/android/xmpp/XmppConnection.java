@@ -1922,7 +1922,7 @@ public class XmppConnection implements Runnable {
 
                     @Override
                     public void onFailure(@NonNull Throwable t) {
-                        Log.d(Config.LOGTAG, "unable to fetch disco foo " + t);
+                        Log.d(Config.LOGTAG, "unable to fetch disco", t);
                         // TODO reset stream ID so we get a proper connect next time
                         finalizeBind();
                     }
