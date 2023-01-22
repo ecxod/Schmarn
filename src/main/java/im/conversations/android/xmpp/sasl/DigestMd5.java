@@ -1,6 +1,7 @@
 package im.conversations.android.xmpp.sasl;
 
 import android.util.Base64;
+import com.google.common.base.Strings;
 import eu.siacs.conversations.utils.CryptoHelper;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Credential;
@@ -54,7 +55,7 @@ public class DigestMd5 extends SaslMechanism {
                                     + ":"
                                     + account.address.getDomain()
                                     + ":"
-                                    + credential.password;
+                                    + Strings.nullToEmpty(credential.password);
                     final MessageDigest md = MessageDigest.getInstance("MD5");
                     final byte[] y = md.digest(x.getBytes(Charset.defaultCharset()));
                     final String cNonce = CryptoHelper.random(100);

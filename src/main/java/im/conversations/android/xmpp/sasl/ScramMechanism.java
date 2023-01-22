@@ -3,6 +3,7 @@ package im.conversations.android.xmpp.sasl;
 import android.util.Base64;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.HashFunction;
@@ -215,7 +216,7 @@ abstract class ScramMechanism extends SaslMechanism {
                 try {
                     keys =
                             getKeyPair(
-                                    CryptoHelper.saslPrep(credential.password),
+                                    CryptoHelper.saslPrep(Strings.nullToEmpty(credential.password)),
                                     salt,
                                     iterationCount);
                 } catch (ExecutionException e) {

@@ -1,6 +1,7 @@
 package im.conversations.android.xmpp.sasl;
 
 import android.util.Base64;
+import com.google.common.base.Strings;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Credential;
 import java.nio.charset.Charset;
@@ -31,6 +32,7 @@ public class Plain extends SaslMechanism {
 
     @Override
     public String getClientFirstMessage(final SSLSocket sslSocket) {
-        return getMessage(account.address.getEscapedLocal(), credential.password);
+        return getMessage(
+                account.address.getEscapedLocal(), Strings.nullToEmpty(credential.password));
     }
 }
