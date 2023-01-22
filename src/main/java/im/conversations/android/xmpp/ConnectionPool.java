@@ -267,7 +267,7 @@ public class ConnectionPool {
                     final long lastReceived = connection.getLastPacketReceived();
                     final long lastSent = connection.getLastPingSent();
                     final long msToNextPing =
-                            (Math.max(lastReceived, lastSent) + Config.PING_MAX_INTERVAL)
+                            (Math.max(lastReceived, lastSent) + Config.PING_MAX_INTERVAL * 1000)
                                     - SystemClock.elapsedRealtime();
                     final int pingTimeout =
                             lowPingTimeoutMode.contains(account.address)
@@ -280,8 +280,7 @@ public class ConnectionPool {
                             Log.d(Config.LOGTAG, account.address + ": ping timeout");
                             this.reconnectAccount(connection);
                         } else {
-                            final int secs = (int) (pingTimeoutIn / 1000);
-                            this.scheduleWakeUpCall(secs);
+                            this.scheduleWakeUpCall(Ints.saturatedCast(pingTimeoutIn / 1000));
                         }
                     } else {
                         pingCandidates.add(connection);
