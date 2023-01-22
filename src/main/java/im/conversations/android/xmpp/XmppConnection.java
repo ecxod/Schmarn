@@ -28,7 +28,6 @@ import eu.siacs.conversations.crypto.XmppDomainVerifier;
 import eu.siacs.conversations.http.HttpConnectionManager;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.MemorizingTrustManager;
-import eu.siacs.conversations.services.MessageArchiveService;
 import eu.siacs.conversations.services.NotificationService;
 import eu.siacs.conversations.ui.util.PendingItem;
 import eu.siacs.conversations.utils.Patterns;
@@ -41,22 +40,12 @@ import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.LocalizedContent;
 import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xml.Tag;
-import eu.siacs.conversations.xml.TagWriter;
 import eu.siacs.conversations.xml.XmlReader;
+import eu.siacs.conversations.xmpp.InvalidJid;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.bind.Bind2;
 import eu.siacs.conversations.xmpp.forms.Data;
-import eu.siacs.conversations.xmpp.jingle.stanzas.JinglePacket;
-import eu.siacs.conversations.xmpp.stanzas.AbstractAcknowledgeableStanza;
-import eu.siacs.conversations.xmpp.stanzas.AbstractStanza;
-import eu.siacs.conversations.xmpp.stanzas.IqPacket;
-import eu.siacs.conversations.xmpp.stanzas.MessagePacket;
-import eu.siacs.conversations.xmpp.stanzas.PresencePacket;
-import eu.siacs.conversations.xmpp.stanzas.csi.ActivePacket;
-import eu.siacs.conversations.xmpp.stanzas.csi.InactivePacket;
-import eu.siacs.conversations.xmpp.stanzas.streammgmt.AckPacket;
 import eu.siacs.conversations.xmpp.stanzas.streammgmt.EnablePacket;
-import eu.siacs.conversations.xmpp.stanzas.streammgmt.RequestPacket;
 import eu.siacs.conversations.xmpp.stanzas.streammgmt.ResumePacket;
 import im.conversations.android.IDs;
 import im.conversations.android.database.ConversationsDatabase;
@@ -64,12 +53,24 @@ import im.conversations.android.database.CredentialStore;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.database.model.Credential;
+import im.conversations.android.xml.TagWriter;
 import im.conversations.android.xmpp.manager.AbstractManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.model.StreamElement;
+import im.conversations.android.xmpp.model.csi.Active;
+import im.conversations.android.xmpp.model.csi.Inactive;
+import im.conversations.android.xmpp.model.register.Register;
+import im.conversations.android.xmpp.model.sm.Ack;
+import im.conversations.android.xmpp.model.sm.Enable;
+import im.conversations.android.xmpp.model.sm.Request;
+import im.conversations.android.xmpp.model.sm.Resume;
+import im.conversations.android.xmpp.model.stanza.IQ;
+import im.conversations.android.xmpp.model.stanza.Message;
+import im.conversations.android.xmpp.model.stanza.Presence;
+import im.conversations.android.xmpp.model.stanza.Stanza;
 import im.conversations.android.xmpp.model.streams.Features;
 import im.conversations.android.xmpp.processor.BindProcessor;
 import im.conversations.android.xmpp.processor.IqProcessor;
-import im.conversations.android.xmpp.processor.JingleProcessor;
 import im.conversations.android.xmpp.processor.MessageAcknowledgeProcessor;
 import im.conversations.android.xmpp.processor.MessageProcessor;
 import im.conversations.android.xmpp.processor.PresenceProcessor;
@@ -93,7 +94,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -117,14 +117,9 @@ import org.xmlpull.v1.XmlPullParserException;
 
 public class XmppConnection implements Runnable {
 
-    private static final int PACKET_IQ = 0;
-    private static final int PACKET_MESSAGE = 1;
-    private static final int PACKET_PRESENCE = 2;
     protected final Account account;
-    private final HashMap<String, Jid> commands = new HashMap<>();
-    private final SparseArray<AbstractAcknowledgeableStanza> mStanzaQueue = new SparseArray<>();
-    private final Hashtable<String, Pair<IqPacket, Consumer<IqPacket>>> packetCallbacks =
-            new Hashtable<>();
+    private final SparseArray<Stanza> mStanzaQueue = new SparseArray<>();
+    private final Hashtable<String, Pair<IQ, Consumer<IQ>>> packetCallbacks = new Hashtable<>();
     private final Context context;
     private Socket socket;
     private XmlReader tagReader;
@@ -149,19 +144,17 @@ public class XmppConnection implements Runnable {
     private long lastPingSent = 0;
     private long lastConnect = 0;
     private long lastSessionStarted = 0;
-    private boolean isMamPreferenceAlways = false;
     private final AtomicBoolean mWaitingForSmCatchup = new AtomicBoolean(false);
     private final AtomicInteger mSmCatchupMessageCounter = new AtomicInteger(0);
     private int attempt = 0;
-    private final Consumer<PresencePacket> presencePacketConsumer;
-    private final Consumer<JinglePacket> jinglePacketConsumer;
-    private final Consumer<IqPacket> iqPacketConsumer;
-    private final Consumer<MessagePacket> messagePacketConsumer;
+    private final Consumer<Presence> presencePacketConsumer;
+    private final Consumer<IQ> iqPacketConsumer;
+    private final Consumer<Message> messagePacketConsumer;
     private final BiFunction<Jid, String, Boolean> messageAcknowledgeProcessor;
     private final Consumer<Jid> bindConsumer;
     private final ClassToInstanceMap<AbstractManager> managers;
     private Consumer<XmppConnection> statusListener = null;
-    private PendingItem<SettableFuture<XmppConnection>> connectedFuture = new PendingItem<>();
+    private final PendingItem<SettableFuture<XmppConnection>> connectedFuture = new PendingItem<>();
     private SaslMechanism saslMechanism;
     private HashedToken.Mechanism hashTokenRequest;
     private HttpUrl redirectionUrl = null;
@@ -181,7 +174,6 @@ public class XmppConnection implements Runnable {
         this.messagePacketConsumer = new MessageProcessor(context, this);
         this.presencePacketConsumer = new PresenceProcessor(context, this);
         this.iqPacketConsumer = new IqProcessor(context, this);
-        this.jinglePacketConsumer = new JingleProcessor(context, this);
         this.messageAcknowledgeProcessor = new MessageAcknowledgeProcessor(context, this);
         this.bindConsumer = new BindProcessor(context, this);
         this.managers = Managers.initialize(context, this);
@@ -259,12 +251,6 @@ public class XmppConnection implements Runnable {
         }
         if (statusListener != null) {
             statusListener.accept(this);
-        }
-    }
-
-    public Jid getJidForCommand(final String node) {
-        synchronized (this.commands) {
-            return this.commands.get(node);
         }
     }
 
@@ -616,7 +602,7 @@ public class XmppConnection implements Runnable {
                             Config.LOGTAG,
                             account.address + ": acknowledging stanza #" + this.stanzasReceived);
                 }
-                final AckPacket ack = new AckPacket(this.stanzasReceived);
+                final Ack ack = new Ack(this.stanzasReceived);
                 tagWriter.writeStanzaAsync(ack);
             } else if (nextTag.isStart("a")) {
                 synchronized (NotificationService.CATCHUP_LOCK) {
@@ -849,7 +835,7 @@ public class XmppConnection implements Runnable {
 
     private void resetOutboundStanzaQueue() {
         synchronized (this.mStanzaQueue) {
-            final List<AbstractAcknowledgeableStanza> intermediateStanzas = new ArrayList<>();
+            final List<Stanza> intermediateStanzas = new ArrayList<>();
             if (Config.EXTENDED_SM_LOGGING) {
                 Log.d(
                         Config.LOGTAG,
@@ -858,7 +844,7 @@ public class XmppConnection implements Runnable {
                                 + this.stanzasSentBeforeAuthentication);
             }
             for (int i = this.stanzasSentBeforeAuthentication + 1; i <= this.stanzasSent; ++i) {
-                final AbstractAcknowledgeableStanza stanza = this.mStanzaQueue.get(i);
+                final Stanza stanza = this.mStanzaQueue.get(i);
                 if (stanza != null) {
                     intermediateStanzas.add(stanza);
                 }
@@ -966,14 +952,14 @@ public class XmppConnection implements Runnable {
         this.streamId = streamId;
         this.stanzasReceived = 0;
         this.inSmacksSession = true;
-        final RequestPacket r = new RequestPacket();
+        final Request r = new Request();
         tagWriter.writeStanzaAsync(r);
     }
 
     private void processResumed(final Element resumed) throws StateChangingException {
         this.inSmacksSession = true;
         this.isBound = true;
-        this.tagWriter.writeStanzaAsync(new RequestPacket());
+        this.tagWriter.writeStanzaAsync(new Request());
         lastPacketReceived = SystemClock.elapsedRealtime();
         final Optional<Integer> h = resumed.getOptionalIntAttribute("h");
         final int serverCount;
@@ -983,7 +969,7 @@ public class XmppConnection implements Runnable {
             resetStreamId();
             throw new StateChangingException(ConnectionState.INCOMPATIBLE_SERVER);
         }
-        final ArrayList<AbstractAcknowledgeableStanza> failedStanzas = new ArrayList<>();
+        final ArrayList<Stanza> failedStanzas = new ArrayList<>();
         final boolean acknowledgedMessages;
         synchronized (this.mStanzaQueue) {
             if (serverCount < stanzasSent) {
@@ -999,9 +985,9 @@ public class XmppConnection implements Runnable {
             mStanzaQueue.clear();
         }
         Log.d(Config.LOGTAG, account.address + ": resending " + failedStanzas.size() + " stanzas");
-        for (final AbstractAcknowledgeableStanza packet : failedStanzas) {
-            if (packet instanceof MessagePacket) {
-                MessagePacket message = (MessagePacket) packet;
+        for (final Stanza packet : failedStanzas) {
+            if (packet instanceof Message) {
+                Message message = (Message) packet;
                 // TODO set ack = false in message table
                 // context.markMessage(account, message.getTo().asBareJid(), message.getId(),
                 // Message.STATUS_UNSEND);
@@ -1058,9 +1044,9 @@ public class XmppConnection implements Runnable {
                                     + ": server acknowledged stanza #"
                                     + mStanzaQueue.keyAt(i));
                 }
-                final AbstractAcknowledgeableStanza stanza = mStanzaQueue.valueAt(i);
-                if (stanza instanceof MessagePacket && messageAcknowledgeProcessor != null) {
-                    final MessagePacket packet = (MessagePacket) stanza;
+                final Stanza stanza = mStanzaQueue.valueAt(i);
+                if (stanza instanceof Message) {
+                    final Message packet = (Message) stanza;
                     final String id = packet.getId();
                     final Jid to = packet.getTo();
                     if (id != null && to != null) {
@@ -1074,36 +1060,9 @@ public class XmppConnection implements Runnable {
         return acknowledgedMessages;
     }
 
-    private @NonNull Element processPacket(final Tag currentTag, final int packetType)
+    private <S extends Stanza> S processStanza(final Tag currentTag, final Class<S> clazz)
             throws IOException {
-        final Element element;
-        switch (packetType) {
-            case PACKET_IQ:
-                element = new IqPacket();
-                break;
-            case PACKET_MESSAGE:
-                element = new MessagePacket();
-                break;
-            case PACKET_PRESENCE:
-                element = new PresencePacket();
-                break;
-            default:
-                throw new AssertionError("Should never encounter invalid type");
-        }
-        element.setAttributes(currentTag.getAttributes());
-        Tag nextTag = tagReader.readTag();
-        if (nextTag == null) {
-            throw new IOException("interrupted mid tag");
-        }
-        while (!nextTag.isEnd(element.getName())) {
-            if (!nextTag.isNo()) {
-                element.addChild(tagReader.readElement(nextTag));
-            }
-            nextTag = tagReader.readTag();
-            if (nextTag == null) {
-                throw new IOException("interrupted mid tag");
-            }
-        }
+        final S stanza = tagReader.readElement(currentTag, clazz);
         if (stanzasReceived == Integer.MAX_VALUE) {
             resetStreamId();
             throw new IOException("time to restart the session. cant handle >2 billion pcks");
@@ -1115,103 +1074,93 @@ public class XmppConnection implements Runnable {
                     Config.LOGTAG,
                     account.address
                             + ": not counting stanza("
-                            + element.getClass().getSimpleName()
+                            + stanza.getClass().getSimpleName()
                             + "). Not in smacks session.");
         }
         lastPacketReceived = SystemClock.elapsedRealtime();
-        if (element instanceof IqPacket
-                && (((IqPacket) element).getType() == IqPacket.TYPE.SET)
-                && element.hasChild("jingle", Namespace.JINGLE)) {
-            return JinglePacket.upgrade((IqPacket) element);
-        } else {
-            return element;
+        if (InvalidJid.invalid(stanza.getTo()) || InvalidJid.invalid(stanza.getFrom())) {
+            Log.e(
+                    Config.LOGTAG,
+                    "encountered invalid stanza from "
+                            + stanza.getFrom()
+                            + " to "
+                            + stanza.getTo());
         }
+        return stanza;
     }
 
     private void processIq(final Tag currentTag) throws IOException {
-        final IqPacket packet = (IqPacket) processPacket(currentTag, PACKET_IQ);
-        if (!packet.valid()) {
+        final IQ packet = processStanza(currentTag, IQ.class);
+        if (InvalidJid.invalid(packet.getTo()) || InvalidJid.invalid(packet.getFrom())) {
             Log.e(
                     Config.LOGTAG,
-                    "encountered invalid iq from='"
-                            + packet.getFrom()
-                            + "' to='"
-                            + packet.getTo()
-                            + "'");
+                    "encountered invalid IQ from " + packet.getFrom() + " to " + packet.getTo());
             return;
         }
-        if (packet instanceof JinglePacket) {
-            this.jinglePacketConsumer.accept((JinglePacket) packet);
-        } else {
-            final Consumer<IqPacket> callback;
-            synchronized (this.packetCallbacks) {
-                final Pair<IqPacket, Consumer<IqPacket>> packetCallbackDuple =
-                        packetCallbacks.get(packet.getId());
-                if (packetCallbackDuple != null) {
-                    // Packets to the server should have responses from the server
-                    if (toServer(packetCallbackDuple.first)) {
-                        if (fromServer(packet)) {
-                            callback = packetCallbackDuple.second;
-                            packetCallbacks.remove(packet.getId());
-                        } else {
-                            callback = null;
-                            Log.e(Config.LOGTAG, account.address + ": ignoring spoofed iq packet");
-                        }
+        final Consumer<IQ> callback;
+        synchronized (this.packetCallbacks) {
+            final Pair<IQ, Consumer<IQ>> packetCallbackDuple = packetCallbacks.get(packet.getId());
+            if (packetCallbackDuple != null) {
+                // Packets to the server should have responses from the server
+                if (toServer(packetCallbackDuple.first)) {
+                    if (fromServer(packet)) {
+                        callback = packetCallbackDuple.second;
+                        packetCallbacks.remove(packet.getId());
                     } else {
-                        if (packet.getFrom() != null
-                                && packet.getFrom().equals(packetCallbackDuple.first.getTo())) {
-                            callback = packetCallbackDuple.second;
-                            packetCallbacks.remove(packet.getId());
-                        } else {
-                            callback = null;
-                            Log.e(Config.LOGTAG, account.address + ": ignoring spoofed iq packet");
-                        }
+                        callback = null;
+                        Log.e(Config.LOGTAG, account.address + ": ignoring spoofed iq packet");
                     }
-                } else if (packet.getType() == IqPacket.TYPE.GET
-                        || packet.getType() == IqPacket.TYPE.SET) {
-                    callback = this.iqPacketConsumer;
                 } else {
-                    callback = null;
+                    if (packet.getFrom() != null
+                            && packet.getFrom().equals(packetCallbackDuple.first.getTo())) {
+                        callback = packetCallbackDuple.second;
+                        packetCallbacks.remove(packet.getId());
+                    } else {
+                        callback = null;
+                        Log.e(Config.LOGTAG, account.address + ": ignoring spoofed iq packet");
+                    }
                 }
+            } else if (packet.getType() == IQ.Type.GET || packet.getType() == IQ.Type.SET) {
+                callback = this.iqPacketConsumer;
+            } else {
+                callback = null;
             }
-            if (callback != null) {
-                try {
-                    callback.accept(packet);
-                } catch (StateChangingError error) {
-                    throw new StateChangingException(error.state);
-                }
+        }
+        if (callback != null) {
+            try {
+                callback.accept(packet);
+            } catch (StateChangingError error) {
+                throw new StateChangingException(error.state);
             }
         }
     }
 
     private void processMessage(final Tag currentTag) throws IOException {
-        final MessagePacket packet = (MessagePacket) processPacket(currentTag, PACKET_MESSAGE);
-        if (!packet.valid()) {
+        final var message = processStanza(currentTag, Message.class);
+        if (InvalidJid.invalid(message.getTo()) || InvalidJid.invalid(message.getFrom())) {
             Log.e(
                     Config.LOGTAG,
-                    "encountered invalid message from='"
-                            + packet.getFrom()
-                            + "' to='"
-                            + packet.getTo()
-                            + "'");
+                    "encountered invalid Message from "
+                            + message.getFrom()
+                            + " to "
+                            + message.getTo());
             return;
         }
-        this.messagePacketConsumer.accept(packet);
+        this.messagePacketConsumer.accept(message);
     }
 
     private void processPresence(final Tag currentTag) throws IOException {
-        PresencePacket packet = (PresencePacket) processPacket(currentTag, PACKET_PRESENCE);
-        if (!packet.valid()) {
+        final var presence = processStanza(currentTag, Presence.class);
+        if (InvalidJid.invalid(presence.getTo()) || InvalidJid.invalid(presence.getFrom())) {
             Log.e(
                     Config.LOGTAG,
-                    "encountered invalid presence from='"
-                            + packet.getFrom()
-                            + "' to='"
-                            + packet.getTo()
-                            + "'");
+                    "encountered invalid Presence from "
+                            + presence.getFrom()
+                            + " to "
+                            + presence.getTo());
             return;
         }
-        this.presencePacketConsumer.accept(packet);
+        this.presencePacketConsumer.accept(presence);
     }
 
     private void sendStartTLS() throws IOException {
@@ -1350,7 +1299,7 @@ public class XmppConnection implements Runnable {
                         Config.LOGTAG,
                         account.address + ": resuming after stanza #" + stanzasReceived);
             }
-            final ResumePacket resume = new ResumePacket(this.streamId, stanzasReceived);
+            final Resume resume = new Resume(this.streamId, stanzasReceived);
             this.mSmCatchupMessageCounter.set(0);
             this.mWaitingForSmCatchup.set(true);
             this.tagWriter.writeStanzaAsync(resume);
@@ -1563,15 +1512,15 @@ public class XmppConnection implements Runnable {
             sendRegistryRequest();
             return;
         }
-        final IqPacket preAuthRequest = new IqPacket(IqPacket.TYPE.SET);
+        final IQ preAuthRequest = new IQ(IQ.Type.SET);
         preAuthRequest.addChild("preauth", Namespace.PARS).setAttribute("token", preAuth);
         sendUnmodifiedIqPacket(
                 preAuthRequest,
                 (response) -> {
-                    if (response.getType() == IqPacket.TYPE.RESULT) {
+                    if (response.getType() == IQ.Type.RESULT) {
                         sendRegistryRequest();
                     } else {
-                        final String error = response.getErrorCondition();
+                        final String error = ""; // response.getErrorCondition();
                         Log.d(Config.LOGTAG, account.address + ": failed to pre auth. " + error);
                         throw new StateChangingError(ConnectionState.REGISTRATION_INVALID_TOKEN);
                     }
@@ -1580,32 +1529,39 @@ public class XmppConnection implements Runnable {
     }
 
     private void sendRegistryRequest() {
-        final IqPacket register = new IqPacket(IqPacket.TYPE.GET);
-        register.query(Namespace.REGISTER);
-        register.setTo(account.address.getDomain());
+        final IQ retrieveRegistration = new IQ(IQ.Type.GET);
+        retrieveRegistration.addExtension(new Register());
+        retrieveRegistration.setTo(account.address.getDomain());
         sendUnmodifiedIqPacket(
-                register,
+                retrieveRegistration,
                 (packet) -> {
-                    if (packet.getType() == IqPacket.TYPE.TIMEOUT) {
+                    if (packet.getType() == IQ.Type.TIMEOUT) {
                         return;
                     }
-                    if (packet.getType() == IqPacket.TYPE.ERROR) {
+                    if (packet.getType() == IQ.Type.ERROR) {
                         throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
                     }
-                    final Element query = packet.query(Namespace.REGISTER);
+                    final Register query = packet.getExtension(Register.class);
+                    if (query == null) {
+                        throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
+                    }
                     if (query.hasChild("username") && (query.hasChild("password"))) {
                         final Credential credential =
                                 CredentialStore.getInstance(context).get(account);
-                        final IqPacket register1 = new IqPacket(IqPacket.TYPE.SET);
+                        final IQ registrationRequest = new IQ(IQ.Type.SET);
                         final Element username =
                                 new Element("username")
                                         .setContent(account.address.getEscapedLocal());
                         final Element password =
                                 new Element("password").setContent(credential.password);
-                        register1.query(Namespace.REGISTER).addChild(username);
-                        register1.query().addChild(password);
-                        register1.setFrom(account.address);
-                        sendUnmodifiedIqPacket(register1, this::handleRegistrationResponse, true);
+
+                        final var register = registrationRequest.addExtension(new Register());
+
+                        register.addChild(username);
+                        register.addChild(password);
+                        registrationRequest.setFrom(account.address);
+                        sendUnmodifiedIqPacket(
+                                registrationRequest, this::handleRegistrationResponse, true);
                     } else if (query.hasChild("x", Namespace.DATA)) {
                         final Data data = Data.parse(query.findChild("x", Namespace.DATA));
                         final Element blob = query.findChild("data", "urn:xmpp:bob");
@@ -1667,8 +1623,8 @@ public class XmppConnection implements Runnable {
                 true);
     }
 
-    private void handleRegistrationResponse(final IqPacket packet) {
-        if (packet.getType() == IqPacket.TYPE.RESULT) {
+    private void handleRegistrationResponse(final IQ packet) {
+        if (packet.getType() == IQ.Type.RESULT) {
             ConversationsDatabase.getInstance(context)
                     .accountDao()
                     .setPendingRegistration(account.id, false);
@@ -1716,9 +1672,6 @@ public class XmppConnection implements Runnable {
         this.stanzasSent = 0;
         mStanzaQueue.clear();
         this.redirectionUrl = null;
-        synchronized (this.commands) {
-            this.commands.clear();
-        }
         this.saslMechanism = null;
     }
 
@@ -1736,16 +1689,16 @@ public class XmppConnection implements Runnable {
         } else {
             resource = this.createNewResource(IDs.tiny(account.randomSeed));
         }
-        final IqPacket iq = new IqPacket(IqPacket.TYPE.SET);
+        final IQ iq = new IQ(IQ.Type.SET);
         iq.addChild("bind", Namespace.BIND).addChild("resource").setContent(resource);
         this.sendUnmodifiedIqPacket(
                 iq,
                 (packet) -> {
-                    if (packet.getType() == IqPacket.TYPE.TIMEOUT) {
+                    if (packet.getType() == IQ.Type.TIMEOUT) {
                         return;
                     }
                     final Element bind = packet.findChild("bind");
-                    if (bind != null && packet.getType() == IqPacket.TYPE.RESULT) {
+                    if (bind != null && packet.getType() == IQ.Type.RESULT) {
                         isBound = true;
                         final String jid = bind.findChildContent("jid");
                         if (Strings.isNullOrEmpty(jid)) {
@@ -1789,7 +1742,7 @@ public class XmppConnection implements Runnable {
                                         + packet);
                     }
                     final Element error = packet.findChild("error");
-                    if (packet.getType() == IqPacket.TYPE.ERROR
+                    if (packet.getType() == IQ.Type.ERROR
                             && error != null
                             && error.hasChild("conflict")) {
                         final String alternativeResource = createNewResource(IDs.tiny());
@@ -1813,8 +1766,8 @@ public class XmppConnection implements Runnable {
     }
 
     private void clearIqCallbacks() {
-        final IqPacket failurePacket = new IqPacket(IqPacket.TYPE.TIMEOUT);
-        final ArrayList<Consumer<IqPacket>> callbacks = new ArrayList<>();
+        final IQ failurePacket = new IQ(IQ.Type.TIMEOUT);
+        final ArrayList<Consumer<IQ>> callbacks = new ArrayList<>();
         synchronized (this.packetCallbacks) {
             if (this.packetCallbacks.size() == 0) {
                 return;
@@ -1825,15 +1778,15 @@ public class XmppConnection implements Runnable {
                             + ": clearing "
                             + this.packetCallbacks.size()
                             + " iq callbacks");
-            final Iterator<Pair<IqPacket, Consumer<IqPacket>>> iterator =
+            final Iterator<Pair<IQ, Consumer<IQ>>> iterator =
                     this.packetCallbacks.values().iterator();
             while (iterator.hasNext()) {
-                Pair<IqPacket, Consumer<IqPacket>> entry = iterator.next();
+                Pair<IQ, Consumer<IQ>> entry = iterator.next();
                 callbacks.add(entry.second);
                 iterator.remove();
             }
         }
-        for (final Consumer<IqPacket> callback : callbacks) {
+        for (final Consumer<IQ> callback : callbacks) {
             try {
                 callback.accept(failurePacket);
             } catch (StateChangingError error) {
@@ -1856,15 +1809,15 @@ public class XmppConnection implements Runnable {
 
     private void sendStartSession() {
         Log.d(Config.LOGTAG, account.address + ": sending legacy session to outdated server");
-        final IqPacket startSession = new IqPacket(IqPacket.TYPE.SET);
+        final IQ startSession = new IQ(IQ.Type.SET);
         startSession.addChild("session", "urn:ietf:params:xml:ns:xmpp-session");
         this.sendUnmodifiedIqPacket(
                 startSession,
                 (packet) -> {
-                    if (packet.getType() == IqPacket.TYPE.RESULT) {
+                    if (packet.getType() == IQ.Type.RESULT) {
                         enableStreamManagement();
                         sendPostBindInitialization(false);
-                    } else if (packet.getType() != IqPacket.TYPE.TIMEOUT) {
+                    } else if (packet.getType() != IQ.Type.TIMEOUT) {
                         throw new StateChangingError(ConnectionState.SESSION_FAILURE);
                     }
                 },
@@ -1876,7 +1829,7 @@ public class XmppConnection implements Runnable {
         final boolean streamManagement = this.streamFeatures.streamManagement();
         if (streamManagement) {
             synchronized (this.mStanzaQueue) {
-                final EnablePacket enable = new EnablePacket();
+                final Enable enable = new Enable();
                 tagWriter.writeStanzaAsync(enable);
                 stanzasSent = 0;
                 mStanzaQueue.clear();
@@ -1936,60 +1889,6 @@ public class XmppConnection implements Runnable {
         return this.connectionState;
     }
 
-    private void discoverMamPreferences() {
-        IqPacket request = new IqPacket(IqPacket.TYPE.GET);
-        request.addChild("prefs", MessageArchiveService.Version.MAM_2.namespace);
-        sendIqPacket(
-                request,
-                (response) -> {
-                    if (response.getType() == IqPacket.TYPE.RESULT) {
-                        Element prefs =
-                                response.findChild(
-                                        "prefs", MessageArchiveService.Version.MAM_2.namespace);
-                        isMamPreferenceAlways =
-                                "always"
-                                        .equals(
-                                                prefs == null
-                                                        ? null
-                                                        : prefs.getAttribute("default"));
-                    }
-                });
-    }
-
-    private void discoverCommands() {
-        final IqPacket request = new IqPacket(IqPacket.TYPE.GET);
-        request.setTo(account.address.getDomain());
-        request.addChild("query", Namespace.DISCO_ITEMS).setAttribute("node", Namespace.COMMANDS);
-        sendIqPacket(
-                request,
-                (response) -> {
-                    if (response.getType() == IqPacket.TYPE.RESULT) {
-                        final Element query = response.findChild("query", Namespace.DISCO_ITEMS);
-                        if (query == null) {
-                            return;
-                        }
-                        final HashMap<String, Jid> commands = new HashMap<>();
-                        for (final Element child : query.getChildren()) {
-                            if ("item".equals(child.getName())) {
-                                final String node = child.getAttribute("node");
-                                final Jid jid = child.getAttributeAsJid("jid");
-                                if (node != null && jid != null) {
-                                    commands.put(node, jid);
-                                }
-                            }
-                        }
-                        synchronized (this.commands) {
-                            this.commands.clear();
-                            this.commands.putAll(commands);
-                        }
-                    }
-                });
-    }
-
-    public boolean isMamPreferenceAlways() {
-        return isMamPreferenceAlways;
-    }
-
     private void finalizeBind() {
         this.enableAdvancedStreamFeatures();
         this.bindConsumer.accept(this.connectionAddress);
@@ -2005,12 +1904,12 @@ public class XmppConnection implements Runnable {
     }
 
     private void sendEnableCarbons() {
-        final IqPacket iq = new IqPacket(IqPacket.TYPE.SET);
+        final IQ iq = new IQ(IQ.Type.SET);
         iq.addChild("enable", Namespace.CARBONS);
         this.sendIqPacket(
                 iq,
                 (packet) -> {
-                    if (packet.getType() == IqPacket.TYPE.RESULT) {
+                    if (packet.getType() == IQ.Type.RESULT) {
                         Log.d(Config.LOGTAG, account.address + ": successfully enabled carbons");
                         this.carbonsEnabled = true;
                     } else {
@@ -2055,9 +1954,9 @@ public class XmppConnection implements Runnable {
     private void failPendingMessages(final String error) {
         synchronized (this.mStanzaQueue) {
             for (int i = 0; i < mStanzaQueue.size(); ++i) {
-                final AbstractAcknowledgeableStanza stanza = mStanzaQueue.valueAt(i);
-                if (stanza instanceof MessagePacket) {
-                    final MessagePacket packet = (MessagePacket) stanza;
+                final Stanza stanza = mStanzaQueue.valueAt(i);
+                if (stanza instanceof Message) {
+                    final Message packet = (Message) stanza;
                     final String id = packet.getId();
                     final Jid to = packet.getTo();
                     // TODO set ack=true but add error?
@@ -2123,15 +2022,15 @@ public class XmppConnection implements Runnable {
         return String.format("%s.%s", context.getString(R.string.app_name), postfixId);
     }
 
-    public ListenableFuture<IqPacket> sendIqPacket(final IqPacket packet) {
-        final SettableFuture<IqPacket> future = SettableFuture.create();
+    public ListenableFuture<IQ> sendIqPacket(final IQ packet) {
+        final SettableFuture<IQ> future = SettableFuture.create();
         sendIqPacket(
                 packet,
                 result -> {
                     final var type = result.getType();
-                    if (type == IqPacket.TYPE.RESULT) {
+                    if (type == IQ.Type.RESULT) {
                         future.set(result);
-                    } else if (type == IqPacket.TYPE.TIMEOUT) {
+                    } else if (type == IQ.Type.TIMEOUT) {
                         future.setException(new TimeoutException());
                     } else {
                         // TODO some sort of IqErrorException
@@ -2141,15 +2040,15 @@ public class XmppConnection implements Runnable {
         return future;
     }
 
-    public String sendIqPacket(final IqPacket packet, final Consumer<IqPacket> callback) {
+    public String sendIqPacket(final IQ packet, final Consumer<IQ> callback) {
         packet.setFrom(account.address);
         return this.sendUnmodifiedIqPacket(packet, callback, false);
     }
 
     public synchronized String sendUnmodifiedIqPacket(
-            final IqPacket packet, final Consumer<IqPacket> callback, boolean force) {
+            final IQ packet, final Consumer<IQ> callback, boolean force) {
         if (Strings.isNullOrEmpty(packet.getId())) {
-            packet.setAttribute("id", IDs.medium());
+            packet.setId(IDs.medium());
         }
         if (callback != null) {
             synchronized (this.packetCallbacks) {
@@ -2160,19 +2059,19 @@ public class XmppConnection implements Runnable {
         return packet.getId();
     }
 
-    public void sendMessagePacket(final MessagePacket packet) {
+    public void sendMessagePacket(final Message packet) {
         this.sendPacket(packet);
     }
 
-    public void sendPresencePacket(final PresencePacket packet) {
+    public void sendPresencePacket(final Presence packet) {
         this.sendPacket(packet);
     }
 
-    private synchronized void sendPacket(final AbstractStanza packet) {
+    private synchronized void sendPacket(final StreamElement packet) {
         sendPacket(packet, false);
     }
 
-    private synchronized void sendPacket(final AbstractStanza packet, final boolean force) {
+    private synchronized void sendPacket(final StreamElement packet, final boolean force) {
         if (stanzasSent == Integer.MAX_VALUE) {
             resetStreamId();
             disconnect(true);
@@ -2188,8 +2087,8 @@ public class XmppConnection implements Runnable {
                                 + " do not write stanza to unbound stream "
                                 + packet.toString());
             }
-            if (packet instanceof AbstractAcknowledgeableStanza) {
-                AbstractAcknowledgeableStanza stanza = (AbstractAcknowledgeableStanza) packet;
+            if (packet instanceof Stanza) {
+                final Stanza stanza = (Stanza) packet;
 
                 if (this.mStanzaQueue.size() != 0) {
                     int currentHighestKey = this.mStanzaQueue.keyAt(this.mStanzaQueue.size() - 1);
@@ -2209,7 +2108,7 @@ public class XmppConnection implements Runnable {
                                     + stanzasSent);
                 }
                 this.mStanzaQueue.append(stanzasSent, stanza);
-                if (stanza instanceof MessagePacket && stanza.getId() != null && inSmacksSession) {
+                if (stanza instanceof Message && stanza.getId() != null && inSmacksSession) {
                     if (Config.EXTENDED_SM_LOGGING) {
                         Log.d(
                                 Config.LOGTAG,
@@ -2217,7 +2116,7 @@ public class XmppConnection implements Runnable {
                                         + ": requesting ack for message stanza #"
                                         + stanzasSent);
                     }
-                    tagWriter.writeStanzaAsync(new RequestPacket());
+                    tagWriter.writeStanzaAsync(new Request());
                 }
             }
         }
@@ -2225,7 +2124,7 @@ public class XmppConnection implements Runnable {
 
     public void sendPing() {
         if (!r()) {
-            final IqPacket iq = new IqPacket(IqPacket.TYPE.GET);
+            final IQ iq = new IQ(IQ.Type.GET);
             iq.setFrom(account.address);
             iq.addChild("ping", Namespace.PING);
             this.sendIqPacket(iq, null);
@@ -2308,7 +2207,7 @@ public class XmppConnection implements Runnable {
 
     public boolean r() {
         if (this.inSmacksSession) {
-            this.tagWriter.writeStanzaAsync(new RequestPacket());
+            this.tagWriter.writeStanzaAsync(new Request());
             return true;
         } else {
             return false;
@@ -2346,11 +2245,11 @@ public class XmppConnection implements Runnable {
     }
 
     public void sendActive() {
-        this.sendPacket(new ActivePacket());
+        this.sendPacket(new Active());
     }
 
     public void sendInactive() {
-        this.sendPacket(new InactivePacket());
+        this.sendPacket(new Inactive());
     }
 
     public void resetAttemptCount(boolean resetConnectTime) {
@@ -2360,7 +2259,7 @@ public class XmppConnection implements Runnable {
         }
     }
 
-    public boolean fromServer(final AbstractStanza stanza) {
+    public boolean fromServer(final Stanza stanza) {
         final Jid from = stanza.getFrom();
         return from == null
                 || from.equals(connectionAddress.getDomain())
@@ -2368,7 +2267,7 @@ public class XmppConnection implements Runnable {
                 || from.equals(connectionAddress);
     }
 
-    public boolean toServer(final AbstractStanza stanza) {
+    public boolean toServer(final Stanza stanza) {
         final Jid to = stanza.getTo();
         return to == null
                 || to.equals(connectionAddress.getDomain())
@@ -2376,7 +2275,7 @@ public class XmppConnection implements Runnable {
                 || to.equals(connectionAddress);
     }
 
-    public boolean fromAccount(final AbstractStanza stanza) {
+    public boolean fromAccount(final Stanza stanza) {
         final Jid from = stanza.getFrom();
         return from != null && from.asBareJid().equals(connectionAddress.asBareJid());
     }

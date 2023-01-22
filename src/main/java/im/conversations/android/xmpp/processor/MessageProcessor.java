@@ -1,14 +1,14 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
-import eu.siacs.conversations.xmpp.stanzas.MessagePacket;
 import im.conversations.android.xmpp.XmppConnection;
+import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.function.Consumer;
 
-public class MessageProcessor implements Consumer<MessagePacket> {
+public class MessageProcessor implements Consumer<Message> {
 
     public MessageProcessor(final Context context, final XmppConnection connection) {}
 
     @Override
-    public void accept(final MessagePacket messagePacket) {}
+    public void accept(final Message messagePacket) {}
 }

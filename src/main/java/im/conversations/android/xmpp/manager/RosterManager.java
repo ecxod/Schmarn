@@ -5,10 +5,10 @@ import android.util.Log;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.roster.Item;
 import im.conversations.android.xmpp.model.roster.Query;
+import im.conversations.android.xmpp.model.stanza.IQ;
 import java.util.Objects;
 
 public class RosterManager extends AbstractManager {
@@ -27,7 +27,7 @@ public class RosterManager extends AbstractManager {
         final var account = getAccount();
         final var database = getDatabase();
         final String rosterVersion = database.accountDao().getRosterVersion(account.id);
-        final IqPacket iqPacket = new IqPacket(IqPacket.TYPE.GET);
+        final IQ iqPacket = new IQ(IQ.Type.GET);
         final Query rosterQuery = new Query();
         iqPacket.addChild(rosterQuery);
         if (Strings.isNullOrEmpty(rosterVersion)) {
@@ -39,8 +39,8 @@ public class RosterManager extends AbstractManager {
         connection.sendIqPacket(iqPacket, this::handleFetchResult);
     }
 
-    private void handleFetchResult(final IqPacket result) {
-        if (result.getType() != IqPacket.TYPE.RESULT) {
+    private void handleFetchResult(final IQ result) {
+        if (result.getType() != IQ.Type.RESULT) {
             return;
         }
         final var query = result.getExtension(Query.class);

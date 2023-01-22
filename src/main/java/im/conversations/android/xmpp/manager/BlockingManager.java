@@ -2,11 +2,11 @@ package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
 import com.google.common.collect.Collections2;
-import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.blocking.Block;
 import im.conversations.android.xmpp.model.blocking.Blocklist;
 import im.conversations.android.xmpp.model.blocking.Unblock;
+import im.conversations.android.xmpp.model.stanza.IQ;
 import java.util.Objects;
 
 public class BlockingManager extends AbstractManager {
@@ -20,13 +20,13 @@ public class BlockingManager extends AbstractManager {
     public void handlePush(final Unblock unblock) {}
 
     public void fetch() {
-        final IqPacket iqPacket = new IqPacket(IqPacket.TYPE.GET);
+        final IQ iqPacket = new IQ(IQ.Type.GET);
         iqPacket.addChild(new Blocklist());
         connection.sendIqPacket(iqPacket, this::handleFetchResult);
     }
 
-    private void handleFetchResult(final IqPacket result) {
-        if (result.getType() != IqPacket.TYPE.RESULT) {
+    private void handleFetchResult(final IQ result) {
+        if (result.getType() != IQ.Type.RESULT) {
             return;
         }
         final var blocklist = result.getExtension(Blocklist.class);

@@ -1,22 +1,22 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
-import eu.siacs.conversations.xmpp.stanzas.PresencePacket;
 import im.conversations.android.database.model.PresenceShow;
 import im.conversations.android.database.model.PresenceType;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.model.stanza.Presence;
 import java.util.function.Consumer;
 
-public class PresenceProcessor extends XmppConnection.Delegate implements Consumer<PresencePacket> {
+public class PresenceProcessor extends XmppConnection.Delegate implements Consumer<Presence> {
 
     public PresenceProcessor(final Context context, final XmppConnection connection) {
         super(context, connection);
     }
 
     @Override
-    public void accept(final PresencePacket presencePacket) {
+    public void accept(final Presence presencePacket) {
         final var from = presencePacket.getFrom();
         final var address = from == null ? null : from.asBareJid();
         final var resource = from == null ? null : from.getResource();
@@ -38,7 +38,7 @@ public class PresenceProcessor extends XmppConnection.Delegate implements Consum
         fetchCapabilities(presencePacket);
     }
 
-    private void fetchCapabilities(final PresencePacket presencePacket) {
+    private void fetchCapabilities(final Presence presencePacket) {
         final var entity = presencePacket.getFrom();
         final var nodeHash = presencePacket.getCapabilities();
         if (nodeHash != null) {

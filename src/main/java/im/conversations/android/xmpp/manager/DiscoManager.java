@@ -10,7 +10,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import eu.siacs.conversations.xmpp.Jid;
-import eu.siacs.conversations.xmpp.stanzas.IqPacket;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.EntityCapabilities2;
@@ -18,6 +17,7 @@ import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import im.conversations.android.xmpp.model.disco.items.ItemsQuery;
+import im.conversations.android.xmpp.model.stanza.IQ;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -52,7 +52,7 @@ public class DiscoManager extends AbstractManager {
             @Nullable final String node,
             @Nullable final EntityCapabilities.Hash hash) {
         final var requestNode = hash != null && node != null ? hash.capabilityNode(node) : node;
-        final var iqRequest = new IqPacket(IqPacket.TYPE.GET);
+        final var iqRequest = new IQ(IQ.Type.GET);
         iqRequest.setTo(entity.address);
         final InfoQuery infoQueryRequest = iqRequest.addExtension(new InfoQuery());
         if (requestNode != null) {
@@ -114,7 +114,7 @@ public class DiscoManager extends AbstractManager {
     public ListenableFuture<Collection<Item>> items(
             @NonNull final Entity.DiscoItem entity, @Nullable final String node) {
         final var requestNode = Strings.emptyToNull(node);
-        final var iqPacket = new IqPacket(IqPacket.TYPE.GET);
+        final var iqPacket = new IQ(IQ.Type.GET);
         iqPacket.setTo(entity.address);
         final ItemsQuery itemsQueryRequest = iqPacket.addExtension(new ItemsQuery());
         if (requestNode != null) {
