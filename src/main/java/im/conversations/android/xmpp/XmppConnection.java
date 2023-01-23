@@ -55,6 +55,7 @@ import im.conversations.android.database.model.Connection;
 import im.conversations.android.database.model.Credential;
 import im.conversations.android.xml.TagWriter;
 import im.conversations.android.xmpp.manager.AbstractManager;
+import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.model.StreamElement;
 import im.conversations.android.xmpp.model.csi.Active;
@@ -126,8 +127,6 @@ public class XmppConnection implements Runnable {
     private TagWriter tagWriter = new TagWriter();
 
     private boolean encryptionEnabled = false;
-
-    private boolean carbonsEnabled = false;
     private boolean shouldAuthenticate = true;
     private boolean inSmacksSession = false;
     private boolean quickStartInProgress = false;
@@ -780,7 +779,6 @@ public class XmppConnection implements Runnable {
                 }
                 if (carbonsEnabled != null) {
                     Log.d(Config.LOGTAG, account.address + ": successfully enabled carbons");
-                    this.carbonsEnabled = true;
                 }
                 sendPostBindInitialization(carbonsEnabled != null);
                 processNopStreamFeatures = true;
@@ -1841,7 +1839,7 @@ public class XmppConnection implements Runnable {
     }
 
     private void sendPostBindInitialization(final boolean carbonsEnabled) {
-        this.carbonsEnabled = carbonsEnabled;
+        getManager(CarbonsManager.class).setEnabled(carbonsEnabled);
         Log.d(Config.LOGTAG, account.address + ": starting service discovery");
         final ArrayList<ListenableFuture<?>> discoFutures = new ArrayList<>();
         final var discoManager = getManager(DiscoManager.class);
@@ -1896,28 +1894,12 @@ public class XmppConnection implements Runnable {
     }
 
     private void enableAdvancedStreamFeatures() {
-        if (getManager(DiscoManager.class)
-                        .hasFeature(connectionAddress.getDomain(), Namespace.CARBONS)
-                && !this.carbonsEnabled) {
-            sendEnableCarbons();
+        if (getManager(CarbonsManager.class).isEnabled()) {
+            return;
         }
-    }
-
-    private void sendEnableCarbons() {
-        final IQ iq = new IQ(IQ.Type.SET);
-        iq.addChild("enable", Namespace.CARBONS);
-        this.sendIqPacket(
-                iq,
-                (packet) -> {
-                    if (packet.getType() == IQ.Type.RESULT) {
-                        Log.d(Config.LOGTAG, account.address + ": successfully enabled carbons");
-                        this.carbonsEnabled = true;
-                    } else {
-                        Log.d(
-                                Config.LOGTAG,
-                                account.address + ": could not enable carbons " + packet);
-                    }
-                });
+        if (getManager(DiscoManager.class).hasServerFeature(Namespace.CARBONS)) {
+            getManager(CarbonsManager.class).enable();
+        }
     }
 
     private void processStreamError(final Tag currentTag) throws IOException {

@@ -36,11 +36,11 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
 
         final var discoManager = getManager(DiscoManager.class);
 
-        if (discoManager.hasFeature(account.address.getDomain(), Namespace.BLOCKING)) {
+        if (discoManager.hasServerFeature(Namespace.BLOCKING)) {
             getManager(BlockingManager.class).fetch();
         }
 
-        if (discoManager.hasFeature(account.address.getDomain(), Namespace.COMMANDS)) {
+        if (discoManager.hasServerFeature(Namespace.COMMANDS)) {
             discoManager.items(Entity.discoItem(account.address.getDomain()), Namespace.COMMANDS);
         }
 

@@ -157,4 +157,8 @@ public class DiscoManager extends AbstractManager {
     public boolean hasFeature(final Jid entity, final String feature) {
         return getDatabase().discoDao().hasFeature(getAccount().id, entity, feature);
     }
+
+    public boolean hasServerFeature(final String feature) {
+        return hasFeature(getAccount().address.getDomain(), feature);
+    }
 }
