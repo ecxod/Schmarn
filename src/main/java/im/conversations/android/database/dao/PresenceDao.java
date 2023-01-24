@@ -3,8 +3,9 @@ package im.conversations.android.database.dao;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.Dao;
+import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
-import androidx.room.Upsert;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.PresenceEntity;
 import im.conversations.android.database.model.Account;
@@ -26,7 +27,7 @@ public abstract class PresenceDao {
                     + " resource=:resource")
     abstract void deletePresence(long account, Jid address, String resource);
 
-    @Upsert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract void insert(PresenceEntity entity);
 
     public void set(

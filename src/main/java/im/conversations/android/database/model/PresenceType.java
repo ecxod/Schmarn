@@ -12,6 +12,6 @@ public enum PresenceType {
         if (typeAttribute == null) {
             return null;
         }
-        return of(typeAttribute.toUpperCase(Locale.ROOT));
+        return valueOf(typeAttribute.toUpperCase(Locale.ROOT));
     }
 }

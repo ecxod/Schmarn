@@ -8,4 +8,8 @@ public class Message extends Stanza {
     public Message() {
         super(Message.class);
     }
+
+    public String getBody() {
+        return this.findChildContent("body");
+    }
 }

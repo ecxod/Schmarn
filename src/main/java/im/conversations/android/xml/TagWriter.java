@@ -1,7 +1,5 @@
 package im.conversations.android.xml;
 
-import android.util.Log;
-import eu.siacs.conversations.Config;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.Tag;
 import im.conversations.android.xmpp.model.StreamElement;
@@ -11,8 +9,12 @@ import java.io.OutputStreamWriter;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TagWriter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TagWriter.class);
 
     private OutputStreamWriter outputStream;
     private boolean finished = false;
@@ -83,7 +85,7 @@ public class TagWriter {
 
     public void writeStanzaAsync(StreamElement stanza) {
         if (finished) {
-            Log.d(Config.LOGTAG, "attempting to write stanza to finished TagWriter");
+            LOGGER.info("attempting to write stanza to finished TagWriter");
         } else {
             if (!asyncStanzaWriter.isAlive()) {
                 try {

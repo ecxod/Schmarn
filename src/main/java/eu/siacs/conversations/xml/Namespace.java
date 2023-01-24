@@ -79,4 +79,5 @@ public final class Namespace {
             "http://gultsch.de/xmpp/drafts/omemo/dlts-srtp-verification";
     public static final String UNIFIED_PUSH = "http://gultsch.de/xmpp/drafts/unified-push";
     public static final String JABBER_CLIENT = "jabber:client";
+    public static final String FORWARD = "urn:xmpp:forward:0";
 }

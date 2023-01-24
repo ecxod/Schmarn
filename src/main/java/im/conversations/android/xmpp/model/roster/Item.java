@@ -32,7 +32,7 @@ public class Item extends Extension {
     public Subscription getSubscription() {
         final String value = this.getAttribute("subscription");
         try {
-            return value == null ? null : Subscription.valueOf(value.toLowerCase(Locale.ROOT));
+            return value == null ? null : Subscription.valueOf(value.toUpperCase(Locale.ROOT));
         } catch (final IllegalArgumentException e) {
             return null;
         }

@@ -13,6 +13,10 @@
 -keep class org.openintents.openpgp.*
 -keep class org.webrtc.** { *; }
 
+# Logger
+-keep class org.slf4j.** {*;}
+-keep class ch.qos.** {*;}
+
 -dontwarn javax.mail.internet.MimeMessage
 -dontwarn javax.mail.internet.MimeBodyPart
 -dontwarn javax.mail.internet.SharedInputStream
