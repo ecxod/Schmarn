@@ -2,4 +2,5 @@
 <resources>
     <string name="default_resource">Tablet</string>
     <bool name="portrait_only">false</bool>
+    <bool name="is_device_table">true</bool>
 </resources>

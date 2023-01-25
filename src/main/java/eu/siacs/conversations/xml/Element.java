@@ -43,6 +43,12 @@ public class Element {
         return child;
     }
 
+    public void addExtensions(final Collection<? extends Extension> extensions) {
+        for(final Extension extension : extensions) {
+            addExtension(extension);
+        }
+    }
+
     public Element addChild(String name) {
         this.content = null;
         Element child = new Element(name);

@@ -24,4 +24,16 @@ public class Identity extends Extension {
     public String getIdentityName() {
         return this.getAttribute("name");
     }
+
+    public void setIdentityName(final String name) {
+        this.setAttribute("name", name);
+    }
+
+    public void setType(final String type) {
+        this.setAttribute("type", type);
+    }
+
+    public void setCategory(final String category) {
+        this.setAttribute("category", category);
+    }
 }

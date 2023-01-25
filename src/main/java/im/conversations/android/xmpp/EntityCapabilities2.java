@@ -18,6 +18,7 @@ import im.conversations.android.xmpp.model.disco.info.Identity;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Objects;
 
 public class EntityCapabilities2 {
 
@@ -164,6 +165,20 @@ public class EntityCapabilities2 {
         public String capabilityNode(String node) {
             return String.format(
                     "%s#%s.%s", Namespace.ENTITY_CAPABILITIES_2, algorithm.toString(), encoded());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+            EntityCaps2Hash that = (EntityCaps2Hash) o;
+            return algorithm == that.algorithm;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), algorithm);
         }
     }
 }

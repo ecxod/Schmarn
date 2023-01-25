@@ -32,4 +32,13 @@ public class LegacyCapabilities extends Extension {
             return null;
         }
     }
+
+    public void setNode(final String node) {
+        this.setAttribute("node", node);
+    }
+
+    public void setHash(final EntityCapabilities.EntityCapsHash hash) {
+        this.setAttribute("hash", HASH_ALGORITHM);
+        this.setAttribute("ver", hash.encoded());
+    }
 }

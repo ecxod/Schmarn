@@ -12,4 +12,8 @@ public class Feature extends Extension {
     public String getVar() {
         return this.getAttribute("var");
     }
+
+    public void setVar(final String feature) {
+        this.setAttribute("var", feature);
+    }
 }

@@ -17,6 +17,10 @@ public class Hash extends Extension {
         return Algorithm.tryParse(this.getAttribute("algo"));
     }
 
+    public void setAlgorithm(final Algorithm algorithm) {
+        this.setAttribute("algo", algorithm.toString());
+    }
+
     public enum Algorithm {
         SHA_1,
         SHA_256,

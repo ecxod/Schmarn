@@ -8,6 +8,7 @@ import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.BlockingManager;
 import im.conversations.android.xmpp.manager.BookmarkManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.manager.PresenceManager;
 import im.conversations.android.xmpp.manager.RosterManager;
 import java.util.function.Consumer;
 
@@ -46,8 +47,6 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
 
         getManager(BookmarkManager.class).fetch();
 
-        // connection.sendPresencePacket(new Presence());
-
-        // TODO send initial presence
+        getManager(PresenceManager.class).sendPresence();
     }
 }

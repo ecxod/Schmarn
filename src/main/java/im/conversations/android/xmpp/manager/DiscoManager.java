@@ -5,15 +5,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+
+import eu.siacs.conversations.BuildConfig;
+import eu.siacs.conversations.R;
+import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.EntityCapabilities2;
 import im.conversations.android.xmpp.XmppConnection;
+import im.conversations.android.xmpp.model.disco.info.Feature;
+import im.conversations.android.xmpp.model.disco.info.Identity;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import im.conversations.android.xmpp.model.disco.items.ItemsQuery;
@@ -24,6 +31,42 @@ import java.util.List;
 import java.util.Objects;
 
 public class DiscoManager extends AbstractManager {
+
+    public static final String CAPABILITY_NODE = "http://conversations.im";
+
+    private static final Collection<String> FEATURES_BASE =
+            Arrays.asList(
+                    Namespace.JINGLE,
+                    Namespace.JINGLE_FILE_TRANSFER_3,
+                    Namespace.JINGLE_FILE_TRANSFER_4,
+                    Namespace.JINGLE_FILE_TRANSFER_5,
+                    Namespace.JINGLE_TRANSPORTS_S5B,
+                    Namespace.JINGLE_TRANSPORTS_IBB,
+                    Namespace.JINGLE_ENCRYPTED_TRANSPORT,
+                    Namespace.JINGLE_ENCRYPTED_TRANSPORT_OMEMO,
+                    Namespace.MUC,
+                    Namespace.CONFERENCE,
+                    Namespace.OOB,
+                    Namespace.ENTITY_CAPABILITIES,
+                    Namespace.ENTITY_CAPABILITIES_2,
+                    Namespace.DISCO_INFO,
+                    Namespace.PING,
+                    Namespace.VERSION,
+                    Namespace.CHAT_STATES,
+                    Namespace.LAST_MESSAGE_CORRECTION,
+                    Namespace.DELIVERY_RECEIPTS);
+
+    private static final Collection<String> FEATURES_AV_CALLS =
+            Arrays.asList(
+                    Namespace.JINGLE_TRANSPORT_ICE_UDP,
+                    Namespace.JINGLE_FEATURE_AUDIO,
+                    Namespace.JINGLE_FEATURE_VIDEO,
+                    Namespace.JINGLE_APPS_RTP,
+                    Namespace.JINGLE_APPS_DTLS,
+                    Namespace.JINGLE_MESSAGE);
+
+    private static final Collection<String> FEATURES_NOTIFY =
+            Arrays.asList(Namespace.NICK, Namespace.AVATAR_METADATA, Namespace.BOOKMARKS2);
 
     public DiscoManager(Context context, XmppConnection connection) {
         super(context, connection);
@@ -160,5 +203,53 @@ public class DiscoManager extends AbstractManager {
 
     public boolean hasServerFeature(final String feature) {
         return hasFeature(getAccount().address.getDomain(), feature);
+    }
+
+    public InfoQuery getInfo() {
+        return getInfo(false);
+    }
+
+    private InfoQuery getInfo(final boolean privacyMode) {
+        final var infoQuery = new InfoQuery();
+        final ImmutableList.Builder<String> stringFeatureBuilder = ImmutableList.builder();
+        stringFeatureBuilder.addAll(FEATURES_BASE);
+        stringFeatureBuilder.addAll(
+                Collections2.transform(FEATURES_NOTIFY, fn -> String.format("%s+notify", fn)));
+        if (!privacyMode) {
+            stringFeatureBuilder.addAll(FEATURES_AV_CALLS);
+        }
+        final var stringFeatures = stringFeatureBuilder.build();
+        final Collection<Feature> features =
+                Collections2.transform(
+                        stringFeatures,
+                        sf -> {
+                            final var feature = new Feature();
+                            feature.setVar(sf);
+                            return feature;
+                        });
+        infoQuery.addExtensions(features);
+        final var identity = infoQuery.addExtension(new Identity());
+        identity.setIdentityName(getIdentityName());
+        identity.setCategory("client");
+        identity.setType(getIdentityType());
+        return infoQuery;
+    }
+
+    String getIdentityVersion() {
+        return BuildConfig.VERSION_NAME;
+    }
+
+    String getIdentityName() {
+        return BuildConfig.APP_NAME;
+    }
+
+    String getIdentityType() {
+        if ("chromium".equals(android.os.Build.BRAND)) {
+            return "pc";
+        } else if (context.getResources().getBoolean(R.bool.is_device_table)) {
+            return "tablet";
+        } else {
+            return "phone";
+        }
     }
 }

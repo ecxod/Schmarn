@@ -8,6 +8,7 @@ import java.util.List;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlMessage;
 import eu.siacs.conversations.entities.DownloadableFile;
 import eu.siacs.conversations.xml.Element;
+import eu.siacs.conversations.xml.Namespace;
 
 public class FileTransferDescription extends GenericDescription {
 
@@ -72,9 +73,9 @@ public class FileTransferDescription extends GenericDescription {
     }
 
     public enum Version {
-        FT_3("urn:xmpp:jingle:apps:file-transfer:3"),
-        FT_4("urn:xmpp:jingle:apps:file-transfer:4"),
-        FT_5("urn:xmpp:jingle:apps:file-transfer:5");
+        FT_3(Namespace.JINGLE_FILE_TRANSFER_3),
+        FT_4(Namespace.JINGLE_FILE_TRANSFER_4),
+        FT_5(Namespace.JINGLE_FILE_TRANSFER_5);
 
         private final String namespace;
 

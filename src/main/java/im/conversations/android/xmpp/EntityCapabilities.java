@@ -12,6 +12,7 @@ import im.conversations.android.xmpp.model.disco.info.Feature;
 import im.conversations.android.xmpp.model.disco.info.Identity;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -101,6 +102,19 @@ public final class EntityCapabilities {
         }
 
         public abstract String capabilityNode(final String node);
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Hash hash1 = (Hash) o;
+            return Arrays.equals(hash, hash1.hash);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(hash);
+        }
     }
 
     public static class EntityCapsHash extends Hash {

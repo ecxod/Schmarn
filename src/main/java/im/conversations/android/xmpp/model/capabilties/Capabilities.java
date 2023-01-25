@@ -32,4 +32,11 @@ public class Capabilities extends Extension {
         }
         return null;
     }
+
+    public void setHash(final EntityCapabilities2.EntityCaps2Hash caps2Hash) {
+        final Hash hash = new Hash();
+        hash.setAlgorithm(caps2Hash.algorithm);
+        hash.setContent(caps2Hash.encoded());
+        this.addExtension(hash);
+    }
 }

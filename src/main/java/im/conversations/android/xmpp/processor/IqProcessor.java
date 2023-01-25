@@ -71,7 +71,7 @@ public class IqProcessor extends XmppConnection.Delegate implements Consumer<Iq>
         for (final Extension extension : extensions) {
             response.addExtension(extension);
         }
-        connection.sendIqPacket(response);
+        connection.sendIqPacket(response, null);
     }
 
     public void sendErrorFor(final Iq request, final Condition condition) {
@@ -82,6 +82,6 @@ public class IqProcessor extends XmppConnection.Delegate implements Consumer<Iq>
         response.setId(id);
         final Error error = response.addExtension(new Error());
         error.setCondition(condition);
-        connection.sendIqPacket(response);
+        connection.sendIqPacket(response, null);
     }
 }
