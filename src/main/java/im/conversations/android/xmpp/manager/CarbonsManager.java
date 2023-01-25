@@ -5,7 +5,7 @@ import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.carbons.Enable;
 import im.conversations.android.xmpp.model.carbons.Received;
 import im.conversations.android.xmpp.model.carbons.Sent;
-import im.conversations.android.xmpp.model.stanza.IQ;
+import im.conversations.android.xmpp.model.stanza.Iq;
 import im.conversations.android.xmpp.processor.MessageProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +24,12 @@ public class CarbonsManager extends AbstractManager {
     }
 
     public void enable() {
-        final var iq = new IQ(IQ.Type.SET);
+        final var iq = new Iq(Iq.Type.SET);
         iq.addExtension(new Enable());
         connection.sendIqPacket(
                 iq,
                 result -> {
-                    if (result.getType() == IQ.Type.RESULT) {
+                    if (result.getType() == Iq.Type.RESULT) {
                         LOGGER.info("{}: successfully enabled carbons", getAccount().address);
                         this.enabled = true;
                     } else {

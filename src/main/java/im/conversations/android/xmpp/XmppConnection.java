@@ -60,12 +60,13 @@ import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.model.StreamElement;
 import im.conversations.android.xmpp.model.csi.Active;
 import im.conversations.android.xmpp.model.csi.Inactive;
+import im.conversations.android.xmpp.model.ping.Ping;
 import im.conversations.android.xmpp.model.register.Register;
 import im.conversations.android.xmpp.model.sm.Ack;
 import im.conversations.android.xmpp.model.sm.Enable;
 import im.conversations.android.xmpp.model.sm.Request;
 import im.conversations.android.xmpp.model.sm.Resume;
-import im.conversations.android.xmpp.model.stanza.IQ;
+import im.conversations.android.xmpp.model.stanza.Iq;
 import im.conversations.android.xmpp.model.stanza.Message;
 import im.conversations.android.xmpp.model.stanza.Presence;
 import im.conversations.android.xmpp.model.stanza.Stanza;
@@ -120,7 +121,7 @@ public class XmppConnection implements Runnable {
 
     protected final Account account;
     private final SparseArray<Stanza> mStanzaQueue = new SparseArray<>();
-    private final Hashtable<String, Pair<IQ, Consumer<IQ>>> packetCallbacks = new Hashtable<>();
+    private final Hashtable<String, Pair<Iq, Consumer<Iq>>> packetCallbacks = new Hashtable<>();
     private final Context context;
     private Socket socket;
     private XmlReader tagReader;
@@ -147,7 +148,7 @@ public class XmppConnection implements Runnable {
     private final AtomicInteger mSmCatchupMessageCounter = new AtomicInteger(0);
     private int attempt = 0;
     private final Consumer<Presence> presencePacketConsumer;
-    private final Consumer<IQ> iqPacketConsumer;
+    private final Consumer<Iq> iqPacketConsumer;
     private final Consumer<Message> messagePacketConsumer;
     private final BiFunction<Jid, String, Boolean> messageAcknowledgeProcessor;
     private final Consumer<Jid> bindConsumer;
@@ -1088,16 +1089,16 @@ public class XmppConnection implements Runnable {
     }
 
     private void processIq(final Tag currentTag) throws IOException {
-        final IQ packet = processStanza(currentTag, IQ.class);
+        final Iq packet = processStanza(currentTag, Iq.class);
         if (InvalidJid.invalid(packet.getTo()) || InvalidJid.invalid(packet.getFrom())) {
             Log.e(
                     Config.LOGTAG,
                     "encountered invalid IQ from " + packet.getFrom() + " to " + packet.getTo());
             return;
         }
-        final Consumer<IQ> callback;
+        final Consumer<Iq> callback;
         synchronized (this.packetCallbacks) {
-            final Pair<IQ, Consumer<IQ>> packetCallbackDuple = packetCallbacks.get(packet.getId());
+            final Pair<Iq, Consumer<Iq>> packetCallbackDuple = packetCallbacks.get(packet.getId());
             if (packetCallbackDuple != null) {
                 // Packets to the server should have responses from the server
                 if (toServer(packetCallbackDuple.first)) {
@@ -1118,7 +1119,7 @@ public class XmppConnection implements Runnable {
                         Log.e(Config.LOGTAG, account.address + ": ignoring spoofed iq packet");
                     }
                 }
-            } else if (packet.getType() == IQ.Type.GET || packet.getType() == IQ.Type.SET) {
+            } else if (packet.getType() == Iq.Type.GET || packet.getType() == Iq.Type.SET) {
                 callback = this.iqPacketConsumer;
             } else {
                 callback = null;
@@ -1510,12 +1511,12 @@ public class XmppConnection implements Runnable {
             sendRegistryRequest();
             return;
         }
-        final IQ preAuthRequest = new IQ(IQ.Type.SET);
+        final Iq preAuthRequest = new Iq(Iq.Type.SET);
         preAuthRequest.addChild("preauth", Namespace.PARS).setAttribute("token", preAuth);
         sendUnmodifiedIqPacket(
                 preAuthRequest,
                 (response) -> {
-                    if (response.getType() == IQ.Type.RESULT) {
+                    if (response.getType() == Iq.Type.RESULT) {
                         sendRegistryRequest();
                     } else {
                         final String error = ""; // response.getErrorCondition();
@@ -1527,16 +1528,16 @@ public class XmppConnection implements Runnable {
     }
 
     private void sendRegistryRequest() {
-        final IQ retrieveRegistration = new IQ(IQ.Type.GET);
+        final Iq retrieveRegistration = new Iq(Iq.Type.GET);
         retrieveRegistration.addExtension(new Register());
         retrieveRegistration.setTo(account.address.getDomain());
         sendUnmodifiedIqPacket(
                 retrieveRegistration,
                 (packet) -> {
-                    if (packet.getType() == IQ.Type.TIMEOUT) {
+                    if (packet.getType() == Iq.Type.TIMEOUT) {
                         return;
                     }
-                    if (packet.getType() == IQ.Type.ERROR) {
+                    if (packet.getType() == Iq.Type.ERROR) {
                         throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
                     }
                     final Register query = packet.getExtension(Register.class);
@@ -1546,7 +1547,7 @@ public class XmppConnection implements Runnable {
                     if (query.hasChild("username") && (query.hasChild("password"))) {
                         final Credential credential =
                                 CredentialStore.getInstance(context).get(account);
-                        final IQ registrationRequest = new IQ(IQ.Type.SET);
+                        final Iq registrationRequest = new Iq(Iq.Type.SET);
                         final Element username =
                                 new Element("username")
                                         .setContent(account.address.getEscapedLocal());
@@ -1621,8 +1622,8 @@ public class XmppConnection implements Runnable {
                 true);
     }
 
-    private void handleRegistrationResponse(final IQ packet) {
-        if (packet.getType() == IQ.Type.RESULT) {
+    private void handleRegistrationResponse(final Iq packet) {
+        if (packet.getType() == Iq.Type.RESULT) {
             ConversationsDatabase.getInstance(context)
                     .accountDao()
                     .setPendingRegistration(account.id, false);
@@ -1687,16 +1688,16 @@ public class XmppConnection implements Runnable {
         } else {
             resource = this.createNewResource(IDs.tiny(account.randomSeed));
         }
-        final IQ iq = new IQ(IQ.Type.SET);
+        final Iq iq = new Iq(Iq.Type.SET);
         iq.addChild("bind", Namespace.BIND).addChild("resource").setContent(resource);
         this.sendUnmodifiedIqPacket(
                 iq,
                 (packet) -> {
-                    if (packet.getType() == IQ.Type.TIMEOUT) {
+                    if (packet.getType() == Iq.Type.TIMEOUT) {
                         return;
                     }
                     final Element bind = packet.findChild("bind");
-                    if (bind != null && packet.getType() == IQ.Type.RESULT) {
+                    if (bind != null && packet.getType() == Iq.Type.RESULT) {
                         isBound = true;
                         final String jid = bind.findChildContent("jid");
                         if (Strings.isNullOrEmpty(jid)) {
@@ -1740,7 +1741,7 @@ public class XmppConnection implements Runnable {
                                         + packet);
                     }
                     final Element error = packet.findChild("error");
-                    if (packet.getType() == IQ.Type.ERROR
+                    if (packet.getType() == Iq.Type.ERROR
                             && error != null
                             && error.hasChild("conflict")) {
                         final String alternativeResource = createNewResource(IDs.tiny());
@@ -1764,8 +1765,8 @@ public class XmppConnection implements Runnable {
     }
 
     private void clearIqCallbacks() {
-        final IQ failurePacket = new IQ(IQ.Type.TIMEOUT);
-        final ArrayList<Consumer<IQ>> callbacks = new ArrayList<>();
+        final Iq failurePacket = new Iq(Iq.Type.TIMEOUT);
+        final ArrayList<Consumer<Iq>> callbacks = new ArrayList<>();
         synchronized (this.packetCallbacks) {
             if (this.packetCallbacks.size() == 0) {
                 return;
@@ -1776,15 +1777,15 @@ public class XmppConnection implements Runnable {
                             + ": clearing "
                             + this.packetCallbacks.size()
                             + " iq callbacks");
-            final Iterator<Pair<IQ, Consumer<IQ>>> iterator =
+            final Iterator<Pair<Iq, Consumer<Iq>>> iterator =
                     this.packetCallbacks.values().iterator();
             while (iterator.hasNext()) {
-                Pair<IQ, Consumer<IQ>> entry = iterator.next();
+                Pair<Iq, Consumer<Iq>> entry = iterator.next();
                 callbacks.add(entry.second);
                 iterator.remove();
             }
         }
-        for (final Consumer<IQ> callback : callbacks) {
+        for (final Consumer<Iq> callback : callbacks) {
             try {
                 callback.accept(failurePacket);
             } catch (StateChangingError error) {
@@ -1807,15 +1808,15 @@ public class XmppConnection implements Runnable {
 
     private void sendStartSession() {
         Log.d(Config.LOGTAG, account.address + ": sending legacy session to outdated server");
-        final IQ startSession = new IQ(IQ.Type.SET);
+        final Iq startSession = new Iq(Iq.Type.SET);
         startSession.addChild("session", "urn:ietf:params:xml:ns:xmpp-session");
         this.sendUnmodifiedIqPacket(
                 startSession,
                 (packet) -> {
-                    if (packet.getType() == IQ.Type.RESULT) {
+                    if (packet.getType() == Iq.Type.RESULT) {
                         enableStreamManagement();
                         sendPostBindInitialization(false);
-                    } else if (packet.getType() != IQ.Type.TIMEOUT) {
+                    } else if (packet.getType() != Iq.Type.TIMEOUT) {
                         throw new StateChangingError(ConnectionState.SESSION_FAILURE);
                     }
                 },
@@ -2004,15 +2005,15 @@ public class XmppConnection implements Runnable {
         return String.format("%s.%s", context.getString(R.string.app_name), postfixId);
     }
 
-    public ListenableFuture<IQ> sendIqPacket(final IQ packet) {
-        final SettableFuture<IQ> future = SettableFuture.create();
+    public ListenableFuture<Iq> sendIqPacket(final Iq packet) {
+        final SettableFuture<Iq> future = SettableFuture.create();
         sendIqPacket(
                 packet,
                 result -> {
                     final var type = result.getType();
-                    if (type == IQ.Type.RESULT) {
+                    if (type == Iq.Type.RESULT) {
                         future.set(result);
-                    } else if (type == IQ.Type.TIMEOUT) {
+                    } else if (type == Iq.Type.TIMEOUT) {
                         future.setException(new TimeoutException());
                     } else {
                         // TODO some sort of IqErrorException
@@ -2022,13 +2023,13 @@ public class XmppConnection implements Runnable {
         return future;
     }
 
-    public String sendIqPacket(final IQ packet, final Consumer<IQ> callback) {
+    public String sendIqPacket(final Iq packet, final Consumer<Iq> callback) {
         packet.setFrom(account.address);
         return this.sendUnmodifiedIqPacket(packet, callback, false);
     }
 
     public synchronized String sendUnmodifiedIqPacket(
-            final IQ packet, final Consumer<IQ> callback, boolean force) {
+            final Iq packet, final Consumer<Iq> callback, boolean force) {
         if (Strings.isNullOrEmpty(packet.getId())) {
             packet.setId(IDs.medium());
         }
@@ -2106,9 +2107,9 @@ public class XmppConnection implements Runnable {
 
     public void sendPing() {
         if (!r()) {
-            final IQ iq = new IQ(IQ.Type.GET);
+            final Iq iq = new Iq(Iq.Type.GET);
             iq.setFrom(account.address);
-            iq.addChild("ping", Namespace.PING);
+            iq.addExtension(new Ping());
             this.sendIqPacket(iq, null);
         }
         this.lastPingSent = SystemClock.elapsedRealtime();

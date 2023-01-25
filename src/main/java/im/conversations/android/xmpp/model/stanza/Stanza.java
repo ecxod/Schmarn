@@ -3,6 +3,7 @@ package im.conversations.android.xmpp.model.stanza;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.StreamElement;
+import im.conversations.android.xmpp.model.error.Error;
 
 public abstract class Stanza extends StreamElement {
 
@@ -32,5 +33,9 @@ public abstract class Stanza extends StreamElement {
 
     public void setTo(final Jid to) {
         this.setAttribute("to", to);
+    }
+
+    public Error getError() {
+        return this.getExtension(Error.class);
     }
 }

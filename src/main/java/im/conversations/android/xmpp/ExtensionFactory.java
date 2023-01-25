@@ -1,5 +1,6 @@
 package im.conversations.android.xmpp;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import eu.siacs.conversations.xml.Element;
 import im.conversations.android.xmpp.model.Extension;
@@ -60,6 +61,14 @@ public final class ExtensionFactory {
         @Override
         public int hashCode() {
             return Objects.hashCode(name, namespace);
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("name", name)
+                    .add("namespace", namespace)
+                    .toString();
         }
     }
 }

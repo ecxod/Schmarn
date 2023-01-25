@@ -9,7 +9,6 @@ import im.conversations.android.xmpp.manager.BlockingManager;
 import im.conversations.android.xmpp.manager.BookmarkManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.manager.RosterManager;
-import im.conversations.android.xmpp.model.stanza.Presence;
 import java.util.function.Consumer;
 
 public class BindProcessor extends XmppConnection.Delegate implements Consumer<Jid> {
@@ -47,7 +46,7 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
 
         getManager(BookmarkManager.class).fetch();
 
-        connection.sendPresencePacket(new Presence());
+        // connection.sendPresencePacket(new Presence());
 
         // TODO send initial presence
     }

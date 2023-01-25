@@ -7,7 +7,7 @@ import im.conversations.android.xmpp.model.blocking.Block;
 import im.conversations.android.xmpp.model.blocking.Blocklist;
 import im.conversations.android.xmpp.model.blocking.Item;
 import im.conversations.android.xmpp.model.blocking.Unblock;
-import im.conversations.android.xmpp.model.stanza.IQ;
+import im.conversations.android.xmpp.model.stanza.Iq;
 import java.util.Objects;
 
 public class BlockingManager extends AbstractManager {
@@ -38,13 +38,13 @@ public class BlockingManager extends AbstractManager {
     }
 
     public void fetch() {
-        final IQ iqPacket = new IQ(IQ.Type.GET);
+        final Iq iqPacket = new Iq(Iq.Type.GET);
         iqPacket.addChild(new Blocklist());
         connection.sendIqPacket(iqPacket, this::handleFetchResult);
     }
 
-    private void handleFetchResult(final IQ result) {
-        if (result.getType() != IQ.Type.RESULT) {
+    private void handleFetchResult(final Iq result) {
+        if (result.getType() != Iq.Type.RESULT) {
             return;
         }
         final var blocklist = result.getExtension(Blocklist.class);

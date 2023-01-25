@@ -5,14 +5,14 @@ import im.conversations.android.annotation.XmlElement;
 import java.util.Locale;
 
 @XmlElement
-public class IQ extends Stanza {
+public class Iq extends Stanza {
 
-    public IQ() {
-        super(IQ.class);
+    public Iq() {
+        super(Iq.class);
     }
 
-    public IQ(final Type type) {
-        super(IQ.class);
+    public Iq(final Type type) {
+        super(Iq.class);
         this.setAttribute("type", type.toString().toLowerCase(Locale.ROOT));
     }
 

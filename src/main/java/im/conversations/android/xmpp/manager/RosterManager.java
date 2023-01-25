@@ -6,7 +6,7 @@ import com.google.common.collect.Collections2;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.roster.Item;
 import im.conversations.android.xmpp.model.roster.Query;
-import im.conversations.android.xmpp.model.stanza.IQ;
+import im.conversations.android.xmpp.model.stanza.Iq;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public class RosterManager extends AbstractManager {
         final var account = getAccount();
         final var database = getDatabase();
         final String rosterVersion = database.accountDao().getRosterVersion(account.id);
-        final IQ iqPacket = new IQ(IQ.Type.GET);
+        final Iq iqPacket = new Iq(Iq.Type.GET);
         final Query rosterQuery = new Query();
         iqPacket.addChild(rosterQuery);
         if (Strings.isNullOrEmpty(rosterVersion)) {
@@ -41,8 +41,8 @@ public class RosterManager extends AbstractManager {
         connection.sendIqPacket(iqPacket, this::handleFetchResult);
     }
 
-    private void handleFetchResult(final IQ result) {
-        if (result.getType() != IQ.Type.RESULT) {
+    private void handleFetchResult(final Iq result) {
+        if (result.getType() != Iq.Type.RESULT) {
             return;
         }
         final var query = result.getExtension(Query.class);

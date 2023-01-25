@@ -1,6 +1,7 @@
 package im.conversations.android.annotation.processor;
 
 import com.google.auto.service.AutoService;
+import com.google.common.base.CaseFormat;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -8,7 +9,6 @@ import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.annotation.XmlPackage;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
@@ -88,8 +88,9 @@ public class XmlElementProcessor extends AbstractProcessor {
 
     private static Id of(final TypeElement typeElement) {
         final XmlElement xmlElement = typeElement.getAnnotation(XmlElement.class);
-        PackageElement packageElement = (PackageElement) typeElement.getEnclosingElement();
-        XmlPackage xmlPackage = packageElement.getAnnotation(XmlPackage.class);
+        PackageElement packageElement = getPackageElement(typeElement);
+        XmlPackage xmlPackage =
+                packageElement == null ? null : packageElement.getAnnotation(XmlPackage.class);
         if (xmlElement == null) {
             throw new IllegalStateException(
                     String.format(
@@ -112,11 +113,27 @@ public class XmlElementProcessor extends AbstractProcessor {
         }
         final String name;
         if (Strings.isNullOrEmpty(elementName)) {
-            name = typeElement.getSimpleName().toString().toLowerCase(Locale.ROOT);
+            name =
+                    CaseFormat.UPPER_CAMEL.to(
+                            CaseFormat.LOWER_HYPHEN, typeElement.getSimpleName().toString());
         } else {
             name = elementName;
         }
         return new Id(name, namespace);
+    }
+
+    private static PackageElement getPackageElement(final TypeElement typeElement) {
+        final Element parent = typeElement.getEnclosingElement();
+        if (parent instanceof PackageElement) {
+            return (PackageElement) parent;
+        } else {
+            final Element nextParent = parent.getEnclosingElement();
+            if (nextParent instanceof PackageElement) {
+                return (PackageElement) nextParent;
+            } else {
+                return null;
+            }
+        }
     }
 
     public static class Id {

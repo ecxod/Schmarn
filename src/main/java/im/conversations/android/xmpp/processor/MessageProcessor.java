@@ -42,5 +42,14 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
         if (!Strings.isNullOrEmpty(body)) {
             LOGGER.info("'{}' from {}", body, message.getFrom());
         }
+
+        // TODO process receipt requests (184 + 333)
+
+        // TODO collect Extensions that require transformation (everything that will end up in the
+        // message tables)
+
+        // TODO pass pubsub events to pubsub manager
+
+        // TODO pass JMI to JingleManager
     }
 }

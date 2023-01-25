@@ -80,4 +80,6 @@ public final class Namespace {
     public static final String UNIFIED_PUSH = "http://gultsch.de/xmpp/drafts/unified-push";
     public static final String JABBER_CLIENT = "jabber:client";
     public static final String FORWARD = "urn:xmpp:forward:0";
+
+    public static final String STANZAS = "urn:ietf:params:xml:ns:xmpp-stanzas";
 }

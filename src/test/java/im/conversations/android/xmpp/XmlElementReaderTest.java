@@ -6,8 +6,11 @@ import static org.junit.Assert.assertEquals;
 
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.XmlElementReader;
+import im.conversations.android.xmpp.model.error.Condition;
+import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.roster.Item;
 import im.conversations.android.xmpp.model.roster.Query;
+import im.conversations.android.xmpp.model.stanza.Message;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -30,5 +33,24 @@ public class XmlElementReaderTest {
         final Query query = (Query) element;
         final Collection<Item> items = query.getExtensions(Item.class);
         assertEquals(2, items.size());
+    }
+
+    public void readMessageError() throws IOException {
+        final String xml =
+                "<message\n"
+                        + "    to='juliet@capulet.com/balcony'\n"
+                        + "    from='romeo@montague.net/garden'\n"
+                        + "    xmlns='jabber:client'\n"
+                        + "    type='error'>\n"
+                        + "  <body>Wherefore art thou, Romeo?</body>\n"
+                        + "  <error code='404' type='cancel'>\n"
+                        + "    <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>\n"
+                        + "  </error>\n"
+                        + "</message>";
+        final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
+        assertThat(element, instanceOf(Message.class));
+        final Message message = (Message) element;
+        final Error error = message.getError();
+        assertThat(error.getCondition(), instanceOf(Condition.ItemNotFound.class));
     }
 }
