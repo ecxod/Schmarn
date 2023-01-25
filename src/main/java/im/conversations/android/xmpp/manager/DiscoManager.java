@@ -1,6 +1,7 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
+import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.common.base.Strings;
@@ -25,8 +26,10 @@ import im.conversations.android.xmpp.model.disco.items.Item;
 import im.conversations.android.xmpp.model.disco.items.ItemsQuery;
 import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.stanza.Iq;
+import im.conversations.android.xmpp.model.version.Version;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -34,10 +37,8 @@ import org.slf4j.LoggerFactory;
 
 public class DiscoManager extends AbstractManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DiscoManager.class);
-
     public static final String CAPABILITY_NODE = "http://conversations.im";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiscoManager.class);
     private static final Collection<String> FEATURES_BASE =
             Arrays.asList(
                     Namespace.JINGLE,
@@ -55,7 +56,6 @@ public class DiscoManager extends AbstractManager {
                     Namespace.ENTITY_CAPABILITIES_2,
                     Namespace.DISCO_INFO,
                     Namespace.PING,
-                    Namespace.VERSION,
                     Namespace.CHAT_STATES,
                     Namespace.LAST_MESSAGE_CORRECTION,
                     Namespace.DELIVERY_RECEIPTS);
@@ -69,11 +69,46 @@ public class DiscoManager extends AbstractManager {
                     Namespace.JINGLE_APPS_DTLS,
                     Namespace.JINGLE_MESSAGE);
 
+    private static final Collection<String> FEATURES_IMPACTING_PRIVACY =
+            Collections.singleton(Namespace.VERSION);
+
     private static final Collection<String> FEATURES_NOTIFY =
             Arrays.asList(Namespace.NICK, Namespace.AVATAR_METADATA, Namespace.BOOKMARKS2);
 
     public DiscoManager(Context context, XmppConnection connection) {
         super(context, connection);
+    }
+
+    public static EntityCapabilities.Hash buildHashFromNode(final String node) {
+        final var capsPrefix = CAPABILITY_NODE + "#";
+        final var caps2Prefix = Namespace.ENTITY_CAPABILITIES_2 + "#";
+        if (node.startsWith(capsPrefix)) {
+            final String hash = node.substring(capsPrefix.length());
+            if (Strings.isNullOrEmpty(hash)) {
+                return null;
+            }
+            if (BaseEncoding.base64().canDecode(hash)) {
+                return EntityCapabilities.EntityCapsHash.of(hash);
+            }
+        } else if (node.startsWith(caps2Prefix)) {
+            final String caps = node.substring(caps2Prefix.length());
+            if (Strings.isNullOrEmpty(caps)) {
+                return null;
+            }
+            final int separator = caps.lastIndexOf('.');
+            if (separator < 0) {
+                return null;
+            }
+            final Hash.Algorithm algorithm = Hash.Algorithm.tryParse(caps.substring(0, separator));
+            final String hash = caps.substring(separator + 1);
+            if (algorithm == null || Strings.isNullOrEmpty(hash)) {
+                return null;
+            }
+            if (BaseEncoding.base64().canDecode(hash)) {
+                return EntityCapabilities2.EntityCaps2Hash.of(algorithm, hash);
+            }
+        }
+        return null;
     }
 
     public ListenableFuture<InfoQuery> info(final Entity entity) {
@@ -210,28 +245,27 @@ public class DiscoManager extends AbstractManager {
     }
 
     public ServiceDescription getServiceDescription() {
-        return getServiceDescription(false);
+        return getServiceDescription(isPrivacyModeEnabled());
     }
 
     private ServiceDescription getServiceDescription(final boolean privacyMode) {
-        final ImmutableList.Builder<String> stringFeatureBuilder = ImmutableList.builder();
-        stringFeatureBuilder.addAll(FEATURES_BASE);
-        stringFeatureBuilder.addAll(
+        final ImmutableList.Builder<String> builder = ImmutableList.builder();
+        final List<String> features;
+        builder.addAll(FEATURES_BASE);
+        builder.addAll(
                 Collections2.transform(FEATURES_NOTIFY, fn -> String.format("%s+notify", fn)));
-        if (!privacyMode) {
-            stringFeatureBuilder.addAll(FEATURES_AV_CALLS);
+        if (privacyMode) {
+            features = builder.build();
+        } else {
+            features = builder.addAll(FEATURES_AV_CALLS).addAll(FEATURES_IMPACTING_PRIVACY).build();
         }
         return new ServiceDescription(
-                stringFeatureBuilder.build(),
-                new ServiceDescription.Identity(getIdentityName(), "client", getIdentityType()));
+                features,
+                new ServiceDescription.Identity(BuildConfig.APP_NAME, "client", getIdentityType()));
     }
 
     String getIdentityVersion() {
         return BuildConfig.VERSION_NAME;
-    }
-
-    String getIdentityName() {
-        return BuildConfig.APP_NAME;
     }
 
     String getIdentityType() {
@@ -270,35 +304,19 @@ public class DiscoManager extends AbstractManager {
         connection.sendResultFor(request, infoQuery);
     }
 
-    public static EntityCapabilities.Hash buildHashFromNode(final String node) {
-        final var capsPrefix = CAPABILITY_NODE + "#";
-        final var caps2Prefix = Namespace.ENTITY_CAPABILITIES_2 + "#";
-        if (node.startsWith(capsPrefix)) {
-            final String hash = node.substring(capsPrefix.length());
-            if (Strings.isNullOrEmpty(hash)) {
-                return null;
-            }
-            if (BaseEncoding.base64().canDecode(hash)) {
-                return EntityCapabilities.EntityCapsHash.of(hash);
-            }
-        } else if (node.startsWith(caps2Prefix)) {
-            final String caps = node.substring(caps2Prefix.length());
-            if (Strings.isNullOrEmpty(caps)) {
-                return null;
-            }
-            final int separator = caps.lastIndexOf('.');
-            if (separator < 0) {
-                return null;
-            }
-            final Hash.Algorithm algorithm = Hash.Algorithm.tryParse(caps.substring(0, separator));
-            final String hash = caps.substring(separator + 1);
-            if (algorithm == null || Strings.isNullOrEmpty(hash)) {
-                return null;
-            }
-            if (BaseEncoding.base64().canDecode(hash)) {
-                return EntityCapabilities2.EntityCaps2Hash.of(algorithm, hash);
-            }
+    public void handleVersion(final Iq request) {
+        if (isPrivacyModeEnabled()) {
+            connection.sendErrorFor(request, new Condition.ServiceUnavailable());
+        } else {
+            final var version = new Version();
+            version.setSoftwareName(BuildConfig.APP_NAME);
+            version.setVersion(BuildConfig.VERSION_NAME);
+            version.setOs(String.format("Android %s", Build.VERSION.RELEASE));
+            connection.sendResultFor(request, version);
         }
-        return null;
+    }
+
+    private boolean isPrivacyModeEnabled() {
+        return false;
     }
 }

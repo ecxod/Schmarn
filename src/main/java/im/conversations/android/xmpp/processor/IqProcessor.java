@@ -13,6 +13,7 @@ import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.ping.Ping;
 import im.conversations.android.xmpp.model.roster.Query;
 import im.conversations.android.xmpp.model.stanza.Iq;
+import im.conversations.android.xmpp.model.version.Version;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -59,6 +60,11 @@ public class IqProcessor extends XmppConnection.Delegate implements Consumer<Iq>
 
         if (type == Iq.Type.GET && packet.hasExtension(InfoQuery.class)) {
             getManager(DiscoManager.class).handleInfoQuery(packet);
+            return;
+        }
+
+        if (type == Iq.Type.GET && packet.hasExtension(Version.class)) {
+            getManager(DiscoManager.class).handleVersion(packet);
             return;
         }
 
