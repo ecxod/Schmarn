@@ -2,9 +2,11 @@ package im.conversations.android.xmpp;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNull;
 
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.XmlElementReader;
+import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,8 +28,8 @@ public class EntityCapabilitiesTest {
                         + " node='http://code.google.com/p/exodus#QgayPKawpkPSDYmwT/WM94uAlu0='>\n"
                         + "    <identity category='client' name='Exodus 0.9.1' type='pc'/>\n"
                         + "    <feature var='http://jabber.org/protocol/caps'/>\n"
-                        + "    <feature var='http://jabber.org/protocol/disco#info'/>\n"
                         + "    <feature var='http://jabber.org/protocol/disco#items'/>\n"
+                        + "    <feature var='http://jabber.org/protocol/disco#info'/>\n"
                         + "    <feature var='http://jabber.org/protocol/muc'/>\n"
                         + "  </query>";
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
@@ -181,5 +183,31 @@ public class EntityCapabilitiesTest {
         final InfoQuery info = (InfoQuery) element;
         final String var = EntityCapabilities2.hash(info).encoded();
         Assert.assertEquals("u79ZroNJbdSWhdSp311mddz44oHHPsEBntQ5b1jqBSY=", var);
+    }
+
+    @Test
+    public void parseCaps2Node() {
+        final var caps =
+                DiscoManager.buildHashFromNode(
+                        "urn:xmpp:caps#sha-256.u79ZroNJbdSWhdSp311mddz44oHHPsEBntQ5b1jqBSY=");
+        assertThat(caps, instanceOf(EntityCapabilities2.EntityCaps2Hash.class));
+    }
+
+    @Test
+    public void parseCaps2NodeMissingHash() {
+        final var caps = DiscoManager.buildHashFromNode("urn:xmpp:caps#sha-256.");
+        assertNull(caps);
+    }
+
+    @Test
+    public void parseCaps2NodeInvalid() {
+        final var caps = DiscoManager.buildHashFromNode("urn:xmpp:caps#-");
+        assertNull(caps);
+    }
+
+    @Test
+    public void parseCaps2NodeUnknownAlgo() {
+        final var caps = DiscoManager.buildHashFromNode("urn:xmpp:caps#test.test");
+        assertNull(caps);
     }
 }

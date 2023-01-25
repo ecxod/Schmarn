@@ -57,9 +57,12 @@ import im.conversations.android.xml.TagWriter;
 import im.conversations.android.xmpp.manager.AbstractManager;
 import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.StreamElement;
 import im.conversations.android.xmpp.model.csi.Active;
 import im.conversations.android.xmpp.model.csi.Inactive;
+import im.conversations.android.xmpp.model.error.Condition;
+import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.ping.Ping;
 import im.conversations.android.xmpp.model.register.Register;
 import im.conversations.android.xmpp.model.sm.Ack;
@@ -2042,6 +2045,29 @@ public class XmppConnection implements Runnable {
         return packet.getId();
     }
 
+    public void sendResultFor(final Iq request, final Extension... extensions) {
+        final var from = request.getFrom();
+        final var id = request.getId();
+        final var response = new Iq(Iq.Type.RESULT);
+        response.setTo(from);
+        response.setId(id);
+        for (final Extension extension : extensions) {
+            response.addExtension(extension);
+        }
+        this.sendPacket(response);
+    }
+
+    public void sendErrorFor(final Iq request, final Condition condition) {
+        final var from = request.getFrom();
+        final var id = request.getId();
+        final var response = new Iq(Iq.Type.ERROR);
+        response.setTo(from);
+        response.setId(id);
+        final Error error = response.addExtension(new Error());
+        error.setCondition(condition);
+        this.sendPacket(response);
+    }
+
     public void sendMessagePacket(final Message packet) {
         this.sendPacket(packet);
     }
@@ -2325,7 +2351,7 @@ public class XmppConnection implements Runnable {
         }
     }
 
-    private static class StateChangingError extends Error {
+    private static class StateChangingError extends java.lang.Error {
         private final ConnectionState state;
 
         public StateChangingError(ConnectionState state) {

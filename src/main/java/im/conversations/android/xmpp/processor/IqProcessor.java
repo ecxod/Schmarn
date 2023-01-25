@@ -4,12 +4,12 @@ import android.content.Context;
 import com.google.common.base.Preconditions;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.BlockingManager;
+import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.manager.RosterManager;
-import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.blocking.Block;
 import im.conversations.android.xmpp.model.blocking.Unblock;
+import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.error.Condition;
-import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.ping.Ping;
 import im.conversations.android.xmpp.model.roster.Query;
 import im.conversations.android.xmpp.model.stanza.Iq;
@@ -34,54 +34,36 @@ public class IqProcessor extends XmppConnection.Delegate implements Consumer<Iq>
                 && connection.fromAccount(packet)
                 && packet.hasExtension(Query.class)) {
             getManager(RosterManager.class).handlePush(packet.getExtension(Query.class));
-            sendResultFor(packet);
+            connection.sendResultFor(packet);
             return;
         }
         if (type == Iq.Type.SET
                 && connection.fromAccount(packet)
                 && packet.hasExtension(Block.class)) {
             getManager(BlockingManager.class).handlePush(packet.getExtension(Block.class));
-            sendResultFor(packet);
+            connection.sendResultFor(packet);
             return;
         }
         if (type == Iq.Type.SET
                 && connection.fromAccount(packet)
                 && packet.hasExtension(Unblock.class)) {
             getManager(BlockingManager.class).handlePush(packet.getExtension(Unblock.class));
-            sendResultFor(packet);
+            connection.sendResultFor(packet);
             return;
         }
         if (type == Iq.Type.GET && packet.hasExtension(Ping.class)) {
             LOGGER.debug("Responding to ping from {}", packet.getFrom());
-            sendResultFor(packet);
+            connection.sendResultFor(packet);
+            return;
+        }
+
+        if (type == Iq.Type.GET && packet.hasExtension(InfoQuery.class)) {
+            getManager(DiscoManager.class).handleInfoQuery(packet);
             return;
         }
 
         final var extensionIds = packet.getExtensionIds();
         LOGGER.info("Could not handle {}. Sending feature-not-implemented", extensionIds);
-        sendErrorFor(packet, new Condition.FeatureNotImplemented());
-    }
-
-    public void sendResultFor(final Iq request, final Extension... extensions) {
-        final var from = request.getFrom();
-        final var id = request.getId();
-        final var response = new Iq(Iq.Type.RESULT);
-        response.setTo(from);
-        response.setId(id);
-        for (final Extension extension : extensions) {
-            response.addExtension(extension);
-        }
-        connection.sendIqPacket(response, null);
-    }
-
-    public void sendErrorFor(final Iq request, final Condition condition) {
-        final var from = request.getFrom();
-        final var id = request.getId();
-        final var response = new Iq(Iq.Type.ERROR);
-        response.setTo(from);
-        response.setId(id);
-        final Error error = response.addExtension(new Error());
-        error.setCondition(condition);
-        connection.sendIqPacket(response, null);
+        connection.sendErrorFor(packet, new Condition.FeatureNotImplemented());
     }
 }

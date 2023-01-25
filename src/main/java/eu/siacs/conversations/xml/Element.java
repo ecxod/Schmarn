@@ -44,7 +44,7 @@ public class Element {
     }
 
     public void addExtensions(final Collection<? extends Extension> extensions) {
-        for(final Extension extension : extensions) {
+        for (final Extension extension : extensions) {
             addExtension(extension);
         }
     }

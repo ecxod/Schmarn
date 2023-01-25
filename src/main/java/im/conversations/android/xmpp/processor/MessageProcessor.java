@@ -43,6 +43,8 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
             LOGGER.info("'{}' from {}", body, message.getFrom());
         }
 
+        LOGGER.info("Message received {}", message.getExtensionIds());
+
         // TODO process receipt requests (184 + 333)
 
         // TODO collect Extensions that require transformation (everything that will end up in the

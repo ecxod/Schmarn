@@ -10,7 +10,6 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-
 import eu.siacs.conversations.BuildConfig;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.xml.Namespace;
@@ -18,19 +17,24 @@ import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.EntityCapabilities2;
+import im.conversations.android.xmpp.ServiceDescription;
 import im.conversations.android.xmpp.XmppConnection;
-import im.conversations.android.xmpp.model.disco.info.Feature;
-import im.conversations.android.xmpp.model.disco.info.Identity;
+import im.conversations.android.xmpp.model.Hash;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import im.conversations.android.xmpp.model.disco.items.ItemsQuery;
+import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DiscoManager extends AbstractManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiscoManager.class);
 
     public static final String CAPABILITY_NODE = "http://conversations.im";
 
@@ -205,12 +209,11 @@ public class DiscoManager extends AbstractManager {
         return hasFeature(getAccount().address.getDomain(), feature);
     }
 
-    public InfoQuery getInfo() {
-        return getInfo(false);
+    public ServiceDescription getServiceDescription() {
+        return getServiceDescription(false);
     }
 
-    private InfoQuery getInfo(final boolean privacyMode) {
-        final var infoQuery = new InfoQuery();
+    private ServiceDescription getServiceDescription(final boolean privacyMode) {
         final ImmutableList.Builder<String> stringFeatureBuilder = ImmutableList.builder();
         stringFeatureBuilder.addAll(FEATURES_BASE);
         stringFeatureBuilder.addAll(
@@ -218,21 +221,9 @@ public class DiscoManager extends AbstractManager {
         if (!privacyMode) {
             stringFeatureBuilder.addAll(FEATURES_AV_CALLS);
         }
-        final var stringFeatures = stringFeatureBuilder.build();
-        final Collection<Feature> features =
-                Collections2.transform(
-                        stringFeatures,
-                        sf -> {
-                            final var feature = new Feature();
-                            feature.setVar(sf);
-                            return feature;
-                        });
-        infoQuery.addExtensions(features);
-        final var identity = infoQuery.addExtension(new Identity());
-        identity.setIdentityName(getIdentityName());
-        identity.setCategory("client");
-        identity.setType(getIdentityType());
-        return infoQuery;
+        return new ServiceDescription(
+                stringFeatureBuilder.build(),
+                new ServiceDescription.Identity(getIdentityName(), "client", getIdentityType()));
     }
 
     String getIdentityVersion() {
@@ -251,5 +242,63 @@ public class DiscoManager extends AbstractManager {
         } else {
             return "phone";
         }
+    }
+
+    public void handleInfoQuery(final Iq request) {
+        final var infoQueryRequest = request.getExtension(InfoQuery.class);
+        final var nodeRequest = infoQueryRequest.getNode();
+        LOGGER.warn("{} requested disco info for node {}", request.getFrom(), nodeRequest);
+        final ServiceDescription serviceDescription;
+        if (Strings.isNullOrEmpty(nodeRequest)) {
+            serviceDescription = getServiceDescription();
+        } else {
+            final var hash = buildHashFromNode(nodeRequest);
+            final var cachedServiceDescription =
+                    hash != null
+                            ? getManager(PresenceManager.class).getCachedServiceDescription(hash)
+                            : null;
+            if (cachedServiceDescription != null) {
+                serviceDescription = cachedServiceDescription;
+            } else {
+                LOGGER.warn("No disco info was cached for node {}", nodeRequest);
+                connection.sendErrorFor(request, new Condition.ItemNotFound());
+                return;
+            }
+        }
+        final var infoQuery = serviceDescription.asInfoQuery();
+        infoQuery.setNode(nodeRequest);
+        connection.sendResultFor(request, infoQuery);
+    }
+
+    public static EntityCapabilities.Hash buildHashFromNode(final String node) {
+        final var capsPrefix = CAPABILITY_NODE + "#";
+        final var caps2Prefix = Namespace.ENTITY_CAPABILITIES_2 + "#";
+        if (node.startsWith(capsPrefix)) {
+            final String hash = node.substring(capsPrefix.length());
+            if (Strings.isNullOrEmpty(hash)) {
+                return null;
+            }
+            if (BaseEncoding.base64().canDecode(hash)) {
+                return EntityCapabilities.EntityCapsHash.of(hash);
+            }
+        } else if (node.startsWith(caps2Prefix)) {
+            final String caps = node.substring(caps2Prefix.length());
+            if (Strings.isNullOrEmpty(caps)) {
+                return null;
+            }
+            final int separator = caps.lastIndexOf('.');
+            if (separator < 0) {
+                return null;
+            }
+            final Hash.Algorithm algorithm = Hash.Algorithm.tryParse(caps.substring(0, separator));
+            final String hash = caps.substring(separator + 1);
+            if (algorithm == null || Strings.isNullOrEmpty(hash)) {
+                return null;
+            }
+            if (BaseEncoding.base64().canDecode(hash)) {
+                return EntityCapabilities2.EntityCaps2Hash.of(algorithm, hash);
+            }
+        }
+        return null;
     }
 }
