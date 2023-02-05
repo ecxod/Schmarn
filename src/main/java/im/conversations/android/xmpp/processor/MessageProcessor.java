@@ -4,8 +4,10 @@ import android.content.Context;
 import com.google.common.base.Strings;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.CarbonsManager;
+import im.conversations.android.xmpp.manager.PubSubManager;
 import im.conversations.android.xmpp.model.carbons.Received;
 import im.conversations.android.xmpp.model.carbons.Sent;
+import im.conversations.android.xmpp.model.pubsub.event.Event;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -32,10 +34,17 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
 
         if (isRoot && connection.fromServer(message) && message.hasExtension(Received.class)) {
             getManager(CarbonsManager.class).handleReceived(message.getExtension(Received.class));
+            return;
         }
 
         if (isRoot && connection.fromServer(message) && message.hasExtension(Sent.class)) {
             getManager(CarbonsManager.class).handleSent(message.getExtension(Sent.class));
+            return;
+        }
+
+        if (isRoot && message.hasExtension(Event.class)) {
+            getManager(PubSubManager.class).handleEvent(message);
+            return;
         }
 
         final String body = message.getBody();

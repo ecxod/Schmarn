@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import eu.siacs.conversations.utils.XmlHelper;
 import eu.siacs.conversations.xmpp.InvalidJid;
 import eu.siacs.conversations.xmpp.Jid;
@@ -187,6 +188,11 @@ public class Element {
         } else {
             return null;
         }
+    }
+
+    public long getLongAttribute(final String name) {
+        final var value = Longs.tryParse(Strings.nullToEmpty(this.attributes.get(name)));
+        return value == null ? 0 : value;
     }
 
     public Optional<Integer> getOptionalIntAttribute(final String name) {

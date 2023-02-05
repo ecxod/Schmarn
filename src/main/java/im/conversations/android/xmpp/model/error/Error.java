@@ -18,4 +18,8 @@ public class Error extends Extension {
     public void setCondition(final Condition condition) {
         this.addExtension(condition);
     }
+
+    public Text getText() {
+        return this.getExtension(Text.class);
+    }
 }

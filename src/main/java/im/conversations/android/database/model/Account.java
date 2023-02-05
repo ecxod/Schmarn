@@ -5,6 +5,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteSource;
+import com.google.common.primitives.Ints;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.IDs;
 import java.io.IOException;
@@ -51,7 +52,15 @@ public class Account {
             return IDs.uuid(
                     ByteSource.wrap(randomSeed).slice(0, 16).hash(Hashing.sha256()).asBytes());
         } catch (final IOException e) {
-            return UUID.randomUUID();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public int getPublicDeviceIdInt() {
+        try {
+            return Math.abs(Ints.fromByteArray(ByteSource.wrap(randomSeed).slice(0, 4).read()));
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

@@ -73,7 +73,11 @@ public class DiscoManager extends AbstractManager {
             Collections.singleton(Namespace.VERSION);
 
     private static final Collection<String> FEATURES_NOTIFY =
-            Arrays.asList(Namespace.NICK, Namespace.AVATAR_METADATA, Namespace.BOOKMARKS2);
+            Arrays.asList(
+                    Namespace.NICK,
+                    Namespace.AVATAR_METADATA,
+                    Namespace.BOOKMARKS2,
+                    Namespace.AXOLOTL_DEVICE_LIST);
 
     public DiscoManager(Context context, XmppConnection connection) {
         super(context, connection);
@@ -238,6 +242,10 @@ public class DiscoManager extends AbstractManager {
 
     public boolean hasFeature(final Jid entity, final String feature) {
         return getDatabase().discoDao().hasFeature(getAccount().id, entity, feature);
+    }
+
+    public boolean hasAccountFeature(final String feature) {
+        return hasFeature(getAccount().address, feature);
     }
 
     public boolean hasServerFeature(final String feature) {

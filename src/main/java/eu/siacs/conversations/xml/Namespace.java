@@ -1,14 +1,18 @@
 package eu.siacs.conversations.xml;
 
 public final class Namespace {
+
     public static final String AVATAR_CONVERSION = "urn:xmpp:pep-vcard-conversion:0";
     public static final String AVATAR_DATA = "urn:xmpp:avatar:data";
     public static final String AVATAR_METADATA = "urn:xmpp:avatar:metadata";
+    public static final String AXOLOTL = "eu.siacs.conversations.axolotl";
+    public static final String AXOLOTL_BUNDLES = AXOLOTL + ".bundles";
+    public static final String AXOLOTL_DEVICE_LIST = AXOLOTL + ".devicelist";
     public static final String BIND = "urn:ietf:params:xml:ns:xmpp-bind";
     public static final String BIND2 = "urn:xmpp:bind:0";
     public static final String BLOCKING = "urn:xmpp:blocking";
     public static final String BOOKMARKS = "storage:bookmarks";
-    public static final String BOOKMARKS2 = "urn:xmpp:bookmarks:0";
+    public static final String BOOKMARKS2 = "urn:xmpp:bookmarks:1";
     public static final String BOOKMARKS2_COMPAT = BOOKMARKS2 + "#compat";
     public static final String BOOKMARKS_CONVERSION = "urn:xmpp:bookmarks-conversion:0";
     public static final String BYTE_STREAMS = "http://jabber.org/protocol/bytestreams";
@@ -70,9 +74,15 @@ public final class Namespace {
     public static final String PARS = "urn:xmpp:pars:0";
     public static final String PING = "urn:xmpp:ping";
     public static final String PUBSUB = "http://jabber.org/protocol/pubsub";
-    public static final String PUBSUB_ERROR = PUBSUB + "#errors";
     public static final String PUBSUB_OWNER = PUBSUB + "#owner";
     public static final String PUBSUB_PUBLISH_OPTIONS = PUBSUB + "#publish-options";
+    public static final String PUBSUB_ERROR = PUBSUB + "#errors";
+    public static final String PUB_SUB = "http://jabber.org/protocol/pubsub";
+    public static final String PUB_SUB_ERROR = PUB_SUB + "#errors";
+    public static final String PUB_SUB_EVENT = PUB_SUB + "#event";
+    public static final String PUB_SUB_OWNER = PUB_SUB + "#owner";
+    public static final String PUB_SUB_PERSISTENT_ITEMS = PUB_SUB + "#persistent-items";
+    public static final String PUB_SUB_PUBLISH_OPTIONS = PUB_SUB + "#publish-options";
     public static final String PUSH = "urn:xmpp:push:0";
     public static final String REGISTER = "jabber:iq:register";
     public static final String REGISTER_STREAM_FEATURE = "http://jabber.org/features/iq-register";

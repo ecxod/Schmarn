@@ -5,6 +5,7 @@ import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
+import im.conversations.android.xmpp.manager.AxolotlManager;
 import im.conversations.android.xmpp.manager.BlockingManager;
 import im.conversations.android.xmpp.manager.BookmarkManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
@@ -46,6 +47,8 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
         }
 
         getManager(BookmarkManager.class).fetch();
+
+        getManager(AxolotlManager.class).publishIfNecessary();
 
         getManager(PresenceManager.class).sendPresence();
     }
