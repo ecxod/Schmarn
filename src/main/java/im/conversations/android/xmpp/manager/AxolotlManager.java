@@ -172,7 +172,7 @@ public class AxolotlManager extends AbstractManager {
                 new FutureCallback<>() {
                     @Override
                     public void onSuccess(Void result) {
-                        LOGGER.info("Successfully publish bundle and device ID {}", myDeviceId);
+                        LOGGER.info("Successfully published bundle and device ID {}", myDeviceId);
                     }
 
                     @Override

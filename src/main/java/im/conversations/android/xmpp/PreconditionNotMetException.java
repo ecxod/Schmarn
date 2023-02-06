@@ -10,6 +10,7 @@ public class PreconditionNotMetException extends PubSubErrorException {
         if (this.pubSubError instanceof PubSubError.PreconditionNotMet) {
             return;
         }
-        throw new AssertionError("This exception should only be constructed for PreconditionNotMet errors");
+        throw new AssertionError(
+                "This exception should only be constructed for PreconditionNotMet errors");
     }
 }

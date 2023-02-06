@@ -15,12 +15,16 @@ import im.conversations.android.xmpp.PreconditionNotMetException;
 import im.conversations.android.xmpp.PubSubErrorException;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.Extension;
+import im.conversations.android.xmpp.model.data.Data;
 import im.conversations.android.xmpp.model.pubsub.Items;
 import im.conversations.android.xmpp.model.pubsub.PubSub;
+import im.conversations.android.xmpp.model.pubsub.Publish;
 import im.conversations.android.xmpp.model.pubsub.PublishOptions;
 import im.conversations.android.xmpp.model.pubsub.error.PubSubError;
 import im.conversations.android.xmpp.model.pubsub.event.Event;
 import im.conversations.android.xmpp.model.pubsub.event.Purge;
+import im.conversations.android.xmpp.model.pubsub.owner.Configure;
+import im.conversations.android.xmpp.model.pubsub.owner.PubSubOwner;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Map;
@@ -229,9 +233,9 @@ public class PubSubManager extends AbstractManager {
         iq.setTo(address);
         final var pubSub = iq.addExtension(new PubSub());
         pubSub.addExtension(PublishOptions.of(nodeConfiguration));
-        final var pubSubItemsWrapper = pubSub.addExtension(new PubSub.ItemsWrapper());
-        pubSubItemsWrapper.setNode(node);
-        final var item = pubSubItemsWrapper.addExtension(new PubSub.Item());
+        final var publish = pubSub.addExtension(new Publish());
+        publish.setNode(node);
+        final var item = publish.addExtension(new PubSub.Item());
         item.setId(itemId);
         item.addExtension(itemPayload);
         final ListenableFuture<Void> iqFuture =
@@ -248,8 +252,45 @@ public class PubSubManager extends AbstractManager {
 
     private ListenableFuture<Void> reconfigureNode(
             final Jid address, final String node, final NodeConfiguration nodeConfiguration) {
-        
-        return Futures.immediateVoidFuture();
+        final Iq iq = new Iq(Iq.Type.GET);
+        iq.setTo(address);
+        final var pubSub = iq.addExtension(new PubSubOwner());
+        final var configure = pubSub.addExtension(new Configure());
+        configure.setNode(node);
+        return Futures.transformAsync(
+                connection.sendIqPacket(iq),
+                result -> {
+                    final var pubSubOwnerResult = result.getExtension(PubSubOwner.class);
+                    final Configure configureResult =
+                            pubSubOwnerResult == null
+                                    ? null
+                                    : pubSubOwnerResult.getExtension(Configure.class);
+                    if (configureResult == null) {
+                        throw new IllegalStateException(
+                                "No configuration found in configuration request result");
+                    }
+                    final var data = configureResult.getData();
+                    return setNodeConfiguration(address, node, data.submit(nodeConfiguration));
+                },
+                MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<Void> setNodeConfiguration(
+            final Jid address, final String node, final Data data) {
+        LOGGER.info("Trying to set node configuration to {}", data.toString());
+        final Iq iq = new Iq(Iq.Type.SET);
+        iq.setTo(address);
+        final var pubSub = iq.addExtension(new PubSubOwner());
+        final var configure = pubSub.addExtension(new Configure());
+        configure.setNode(node);
+        configure.addExtension(data);
+        return Futures.transform(
+                connection.sendIqPacket(iq),
+                result -> {
+                    LOGGER.info("Modified node configuration {} on {}", node, address);
+                    return null;
+                },
+                MoreExecutors.directExecutor());
     }
 
     private static class PubSubExceptionTransformer<V>

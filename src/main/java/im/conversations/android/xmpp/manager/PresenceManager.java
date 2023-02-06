@@ -39,9 +39,6 @@ public class PresenceManager extends AbstractManager {
         final var presence = new Presence();
         presence.addExtension(capabilities);
         presence.addExtension(legacyCapabilities);
-
-        LOGGER.info(presence.toString());
-
         connection.sendPresencePacket(presence);
     }
 

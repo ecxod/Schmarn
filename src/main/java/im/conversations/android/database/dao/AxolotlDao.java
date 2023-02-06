@@ -45,7 +45,7 @@ public abstract class AxolotlDao {
 
     @Query(
             "SELECT EXISTS(SELECT deviceId FROM axolotl_device_list JOIN axolotl_device_list_item"
-                    + " ON axolotl_device_list.id=axolotl_device_list_item.deviceId WHERE"
+                    + " ON axolotl_device_list.id=axolotl_device_list_item.deviceListId WHERE"
                     + " accountId=:account AND address=:address AND deviceId=:deviceId)")
     public abstract boolean hasDeviceId(final long account, final Jid address, final int deviceId);
 

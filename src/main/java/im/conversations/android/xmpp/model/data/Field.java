@@ -23,4 +23,8 @@ public class Field extends Extension {
     public void setFieldName(String name) {
         this.setAttribute("var", name);
     }
+
+    public void setType(String type) {
+        this.setAttribute("type", type);
+    }
 }
