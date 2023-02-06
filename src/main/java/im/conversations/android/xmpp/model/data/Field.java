@@ -19,4 +19,8 @@ public class Field extends Extension {
     public Collection<String> getValues() {
         return Collections2.transform(getExtensions(Value.class), Element::getContent);
     }
+
+    public void setFieldName(String name) {
+        this.setAttribute("var", name);
+    }
 }

@@ -6,7 +6,7 @@ import im.conversations.android.xmpp.model.Extension;
 
 public abstract class Condition extends Extension {
 
-    private Condition(Class<? extends Extension> clazz) {
+    private Condition(Class<? extends Condition> clazz) {
         super(clazz);
     }
 

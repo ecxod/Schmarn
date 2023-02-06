@@ -21,4 +21,8 @@ public class IqErrorException extends Exception {
         final var text = error == null ? null : error.getText();
         return text == null ? null : text.getContent();
     }
+
+    public Iq getResponse() {
+        return this.response;
+    }
 }

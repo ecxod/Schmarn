@@ -11,6 +11,7 @@ import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.AxolotlDatabaseStore;
 import im.conversations.android.xmpp.IqErrorException;
+import im.conversations.android.xmpp.NodeConfiguration;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.axolotl.AxolotlAddress;
 import im.conversations.android.xmpp.model.axolotl.Bundle;
@@ -215,7 +216,11 @@ public class AxolotlManager extends AbstractManager {
         final var deviceList = new DeviceList();
         deviceList.setDeviceIds(deviceIds);
         return getManager(PubSubManager.class)
-                .publishSingleton(getAccount().address, deviceList, Namespace.AXOLOTL_DEVICE_LIST);
+                .publishSingleton(
+                        getAccount().address,
+                        deviceList,
+                        Namespace.AXOLOTL_DEVICE_LIST,
+                        NodeConfiguration.OPEN);
     }
 
     private ListenableFuture<Void> publishBundle() {
@@ -231,7 +236,8 @@ public class AxolotlManager extends AbstractManager {
                                     Namespace.AXOLOTL_BUNDLES,
                                     signalProtocolStore.getLocalRegistrationId());
                     return getManager(PubSubManager.class)
-                            .publishSingleton(getAccount().address, bundle, node);
+                            .publishSingleton(
+                                    getAccount().address, bundle, node, NodeConfiguration.OPEN);
                 },
                 MoreExecutors.directExecutor());
     }

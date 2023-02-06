@@ -78,7 +78,7 @@ public final class Namespace {
     public static final String PUBSUB_PUBLISH_OPTIONS = PUBSUB + "#publish-options";
     public static final String PUBSUB_ERROR = PUBSUB + "#errors";
     public static final String PUB_SUB = "http://jabber.org/protocol/pubsub";
-    public static final String PUB_SUB_ERROR = PUB_SUB + "#errors";
+    public static final String PUB_SUB_ERRORS = PUB_SUB + "#errors";
     public static final String PUB_SUB_EVENT = PUB_SUB + "#event";
     public static final String PUB_SUB_OWNER = PUB_SUB + "#owner";
     public static final String PUB_SUB_PERSISTENT_ITEMS = PUB_SUB + "#persistent-items";
