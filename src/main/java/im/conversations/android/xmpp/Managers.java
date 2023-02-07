@@ -9,6 +9,7 @@ import im.conversations.android.xmpp.manager.AxolotlManager;
 import im.conversations.android.xmpp.manager.BlockingManager;
 import im.conversations.android.xmpp.manager.BookmarkManager;
 import im.conversations.android.xmpp.manager.CarbonsManager;
+import im.conversations.android.xmpp.manager.ChatStateManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.manager.NickManager;
 import im.conversations.android.xmpp.manager.PepManager;
@@ -29,6 +30,7 @@ public final class Managers {
                 .put(BlockingManager.class, new BlockingManager(context, connection))
                 .put(BookmarkManager.class, new BookmarkManager(context, connection))
                 .put(CarbonsManager.class, new CarbonsManager(context, connection))
+                .put(ChatStateManager.class, new ChatStateManager(context, connection))
                 .put(DiscoManager.class, new DiscoManager(context, connection))
                 .put(NickManager.class, new NickManager(context, connection))
                 .put(PepManager.class, new PepManager(context, connection))

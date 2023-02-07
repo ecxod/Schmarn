@@ -4,6 +4,7 @@ import android.content.Context;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.CarbonsManager;
+import im.conversations.android.xmpp.manager.ChatStateManager;
 import im.conversations.android.xmpp.manager.PubSubManager;
 import im.conversations.android.xmpp.manager.ReceiptManager;
 import im.conversations.android.xmpp.model.DeliveryReceiptRequest;
@@ -11,6 +12,8 @@ import im.conversations.android.xmpp.model.carbons.Received;
 import im.conversations.android.xmpp.model.carbons.Sent;
 import im.conversations.android.xmpp.model.pubsub.event.Event;
 import im.conversations.android.xmpp.model.stanza.Message;
+import im.conversations.android.xmpp.model.state.ChatStateNotification;
+
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +61,10 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
         if (isRealtimeProcessor()) {
             final var requests = message.getExtensions(DeliveryReceiptRequest.class);
             getManager(ReceiptManager.class).received(from, id, requests);
+            final var chatState = message.getExtension(ChatStateNotification.class);
+            if (chatState != null) {
+                getManager(ChatStateManager.class).handle(from, chatState);
+            }
         }
 
         // TODO parse chat states
