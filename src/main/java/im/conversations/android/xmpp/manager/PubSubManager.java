@@ -20,6 +20,7 @@ import im.conversations.android.xmpp.model.pubsub.Items;
 import im.conversations.android.xmpp.model.pubsub.PubSub;
 import im.conversations.android.xmpp.model.pubsub.Publish;
 import im.conversations.android.xmpp.model.pubsub.PublishOptions;
+import im.conversations.android.xmpp.model.pubsub.Retract;
 import im.conversations.android.xmpp.model.pubsub.error.PubSubError;
 import im.conversations.android.xmpp.model.pubsub.event.Event;
 import im.conversations.android.xmpp.model.pubsub.event.Purge;
@@ -232,12 +233,12 @@ public class PubSubManager extends AbstractManager {
         final var iq = new Iq(Iq.Type.SET);
         iq.setTo(address);
         final var pubSub = iq.addExtension(new PubSub());
-        pubSub.addExtension(PublishOptions.of(nodeConfiguration));
         final var publish = pubSub.addExtension(new Publish());
         publish.setNode(node);
         final var item = publish.addExtension(new PubSub.Item());
         item.setId(itemId);
         item.addExtension(itemPayload);
+        pubSub.addExtension(PublishOptions.of(nodeConfiguration));
         final ListenableFuture<Void> iqFuture =
                 Futures.transform(
                         connection.sendIqPacket(iq),
@@ -277,7 +278,6 @@ public class PubSubManager extends AbstractManager {
 
     private ListenableFuture<Void> setNodeConfiguration(
             final Jid address, final String node, final Data data) {
-        LOGGER.info("Trying to set node configuration to {}", data.toString());
         final Iq iq = new Iq(Iq.Type.SET);
         iq.setTo(address);
         final var pubSub = iq.addExtension(new PubSubOwner());
@@ -291,6 +291,18 @@ public class PubSubManager extends AbstractManager {
                     return null;
                 },
                 MoreExecutors.directExecutor());
+    }
+
+    public ListenableFuture<Iq> retract(final Jid address, final String itemId, final String node) {
+        final var iq = new Iq(Iq.Type.SET);
+        iq.setTo(address);
+        final var pubSub = iq.addExtension(new PubSub());
+        final var retract = pubSub.addExtension(new Retract());
+        retract.setNode(node);
+        retract.setNotify(true);
+        final var item = retract.addExtension(new PubSub.Item());
+        item.setId(itemId);
+        return connection.sendIqPacket(iq);
     }
 
     private static class PubSubExceptionTransformer<V>

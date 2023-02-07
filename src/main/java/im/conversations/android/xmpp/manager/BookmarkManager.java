@@ -5,9 +5,12 @@ import androidx.annotation.NonNull;
 import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.BookmarkEntity;
+import im.conversations.android.xmpp.NodeConfiguration;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.bookmark.Conference;
 import im.conversations.android.xmpp.model.pubsub.Items;
@@ -70,5 +73,28 @@ public class BookmarkManager extends AbstractManager {
         if (itemMap.size() > 0) {
             updateItems(itemMap);
         }
+    }
+
+    public ListenableFuture<Void> publishBookmark(final Jid address) {
+        final var itemId = address.toEscapedString();
+        final var conference = new Conference();
+        return Futures.transform(
+                getManager(PubSubManager.class)
+                        .publish(
+                                getAccount().address,
+                                conference,
+                                itemId,
+                                NodeConfiguration.WHITELIST_MAX_ITEMS),
+                result -> null,
+                MoreExecutors.directExecutor());
+    }
+
+    public ListenableFuture<Void> retractBookmark(final Jid address) {
+        final var itemId = address.toEscapedString();
+        return Futures.transform(
+                getManager(PubSubManager.class)
+                        .retract(getAccount().address, itemId, Namespace.BOOKMARKS2),
+                result -> null,
+                MoreExecutors.directExecutor());
     }
 }

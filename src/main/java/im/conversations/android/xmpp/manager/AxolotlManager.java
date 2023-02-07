@@ -18,6 +18,7 @@ import im.conversations.android.xmpp.model.axolotl.Bundle;
 import im.conversations.android.xmpp.model.axolotl.DeviceList;
 import im.conversations.android.xmpp.model.pubsub.Items;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
@@ -194,8 +195,18 @@ public class AxolotlManager extends AbstractManager {
 
     private ListenableFuture<Void> publishDeviceId() {
         final var currentDeviceIdsFuture = fetchDeviceIds(getAccount().address);
+        final ListenableFuture<Set<Integer>> currentDeviceIdsWithFallback =
+                Futures.catching(
+                        currentDeviceIdsFuture,
+                        Throwable.class,
+                        throwable -> {
+                            LOGGER.info(
+                                    "No current device list found. Defaulting to empty", throwable);
+                            return Collections.emptySet();
+                        },
+                        MoreExecutors.directExecutor());
         return Futures.transformAsync(
-                currentDeviceIdsFuture,
+                currentDeviceIdsWithFallback,
                 currentDeviceIds -> {
                     final var myDeviceId = getAccount().getPublicDeviceIdInt();
                     if (currentDeviceIds.contains(myDeviceId)) {

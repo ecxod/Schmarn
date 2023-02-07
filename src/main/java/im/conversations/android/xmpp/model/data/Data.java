@@ -61,7 +61,7 @@ public class Data extends Extension {
             } else if (value instanceof Integer) {
                 valueExtension.setContent(String.valueOf(value));
             } else if (value instanceof Boolean) {
-                valueExtension.setContent(Boolean.TRUE.equals(value) ? "true" : "false");
+                valueExtension.setContent(Boolean.TRUE.equals(value) ? "1" : "0");
             } else {
                 throw new IllegalArgumentException(
                         String.format(
