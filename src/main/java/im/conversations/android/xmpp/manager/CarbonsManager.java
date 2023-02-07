@@ -20,7 +20,8 @@ public class CarbonsManager extends AbstractManager {
 
     public CarbonsManager(Context context, XmppConnection connection) {
         super(context, connection);
-        this.messageProcessor = new MessageProcessor(context, connection, false);
+        this.messageProcessor =
+                new MessageProcessor(context, connection, MessageProcessor.Level.CARBON);
     }
 
     public void enable() {
