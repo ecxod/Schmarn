@@ -30,8 +30,7 @@ public class BookmarkManager extends AbstractManager {
     }
 
     public void fetch() {
-        final var future =
-                getManager(PubSubManager.class).fetchItems(getAccount().address, Conference.class);
+        final var future = getManager(PepManager.class).fetchItems(Conference.class);
         Futures.addCallback(
                 future,
                 new FutureCallback<>() {
@@ -79,12 +78,8 @@ public class BookmarkManager extends AbstractManager {
         final var itemId = address.toEscapedString();
         final var conference = new Conference();
         return Futures.transform(
-                getManager(PubSubManager.class)
-                        .publish(
-                                getAccount().address,
-                                conference,
-                                itemId,
-                                NodeConfiguration.WHITELIST_MAX_ITEMS),
+                getManager(PepManager.class)
+                        .publish(conference, itemId, NodeConfiguration.WHITELIST_MAX_ITEMS),
                 result -> null,
                 MoreExecutors.directExecutor());
     }
@@ -92,8 +87,7 @@ public class BookmarkManager extends AbstractManager {
     public ListenableFuture<Void> retractBookmark(final Jid address) {
         final var itemId = address.toEscapedString();
         return Futures.transform(
-                getManager(PubSubManager.class)
-                        .retract(getAccount().address, itemId, Namespace.BOOKMARKS2),
+                getManager(PepManager.class).retract(itemId, Namespace.BOOKMARKS2),
                 result -> null,
                 MoreExecutors.directExecutor());
     }

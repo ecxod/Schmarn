@@ -194,7 +194,13 @@ public class AxolotlManager extends AbstractManager {
     }
 
     private ListenableFuture<Void> publishDeviceId() {
-        final var currentDeviceIdsFuture = fetchDeviceIds(getAccount().address);
+        final var currentDeviceIdsFuture =
+                Futures.transform(
+                        getManager(PepManager.class)
+                                .fetchMostRecentItem(
+                                        Namespace.AXOLOTL_DEVICE_LIST, DeviceList.class),
+                        DeviceList::getDeviceIds,
+                        MoreExecutors.directExecutor());
         final ListenableFuture<Set<Integer>> currentDeviceIdsWithFallback =
                 Futures.catching(
                         currentDeviceIdsFuture,
@@ -226,12 +232,9 @@ public class AxolotlManager extends AbstractManager {
     private ListenableFuture<Void> publishDeviceIds(final Collection<Integer> deviceIds) {
         final var deviceList = new DeviceList();
         deviceList.setDeviceIds(deviceIds);
-        return getManager(PubSubManager.class)
+        return getManager(PepManager.class)
                 .publishSingleton(
-                        getAccount().address,
-                        deviceList,
-                        Namespace.AXOLOTL_DEVICE_LIST,
-                        NodeConfiguration.OPEN);
+                        deviceList, Namespace.AXOLOTL_DEVICE_LIST, NodeConfiguration.OPEN);
     }
 
     private ListenableFuture<Void> publishBundle() {
@@ -246,9 +249,8 @@ public class AxolotlManager extends AbstractManager {
                                     "%s:%d",
                                     Namespace.AXOLOTL_BUNDLES,
                                     signalProtocolStore.getLocalRegistrationId());
-                    return getManager(PubSubManager.class)
-                            .publishSingleton(
-                                    getAccount().address, bundle, node, NodeConfiguration.OPEN);
+                    return getManager(PepManager.class)
+                            .publishSingleton(bundle, node, NodeConfiguration.OPEN);
                 },
                 MoreExecutors.directExecutor());
     }

@@ -2298,6 +2298,10 @@ public class XmppConnection implements Runnable {
         return this.streamFeatures != null && this.streamFeatures.clientStateIndication();
     }
 
+    public Jid getBoundAddress() {
+        return this.connectionAddress;
+    }
+
     private static class MyKeyManager implements X509KeyManager {
 
         private final Context context;

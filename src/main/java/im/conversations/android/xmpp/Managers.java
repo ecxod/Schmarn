@@ -11,6 +11,7 @@ import im.conversations.android.xmpp.manager.BookmarkManager;
 import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.manager.NickManager;
+import im.conversations.android.xmpp.manager.PepManager;
 import im.conversations.android.xmpp.manager.PresenceManager;
 import im.conversations.android.xmpp.manager.PubSubManager;
 import im.conversations.android.xmpp.manager.RosterManager;
@@ -29,6 +30,7 @@ public final class Managers {
                 .put(CarbonsManager.class, new CarbonsManager(context, connection))
                 .put(DiscoManager.class, new DiscoManager(context, connection))
                 .put(NickManager.class, new NickManager(context, connection))
+                .put(PepManager.class, new PepManager(context, connection))
                 .put(PresenceManager.class, new PresenceManager(context, connection))
                 .put(PubSubManager.class, new PubSubManager(context, connection))
                 .put(RosterManager.class, new RosterManager(context, connection))
