@@ -18,6 +18,7 @@ import im.conversations.android.xmpp.manager.PresenceManager;
 import im.conversations.android.xmpp.manager.PubSubManager;
 import im.conversations.android.xmpp.manager.ReceiptManager;
 import im.conversations.android.xmpp.manager.RosterManager;
+import im.conversations.android.xmpp.manager.StanzaIdManager;
 
 public final class Managers {
 
@@ -40,6 +41,7 @@ public final class Managers {
                 .put(PubSubManager.class, new PubSubManager(context, connection))
                 .put(ReceiptManager.class, new ReceiptManager(context, connection))
                 .put(RosterManager.class, new RosterManager(context, connection))
+                .put(StanzaIdManager.class, new StanzaIdManager(context, connection))
                 .build();
     }
 }

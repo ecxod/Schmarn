@@ -9,6 +9,7 @@ import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.ChatStateManager;
 import im.conversations.android.xmpp.manager.PubSubManager;
 import im.conversations.android.xmpp.manager.ReceiptManager;
+import im.conversations.android.xmpp.manager.StanzaIdManager;
 import im.conversations.android.xmpp.model.DeliveryReceiptRequest;
 import im.conversations.android.xmpp.model.carbons.Received;
 import im.conversations.android.xmpp.model.carbons.Sent;
@@ -59,9 +60,10 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
         }
 
         final String id = message.getId();
+        final String stanzaId = getManager(StanzaIdManager.class).getStanzaId(message);
         final Jid from = message.getFrom();
 
-        LOGGER.info("Message received {}", message.getExtensionIds());
+        LOGGER.info("Message with stanza-id {} received: {}", stanzaId, message.getExtensionIds());
 
         // TODO only do this if transformation was successful or nothing to transform
         final var requests = message.getExtensions(DeliveryReceiptRequest.class);
@@ -72,8 +74,7 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
             getManager(ChatStateManager.class).handle(from, chatState);
         }
 
-        // TODO parse and validate stanza-id
-
+        
         // TODO collect Extensions that require transformation (everything that will end up in the
         // message tables)
 
