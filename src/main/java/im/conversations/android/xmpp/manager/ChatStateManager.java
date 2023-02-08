@@ -1,15 +1,13 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.state.ChatStateNotification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ChatStateManager extends AbstractManager{
+public class ChatStateManager extends AbstractManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatStateManager.class);
 

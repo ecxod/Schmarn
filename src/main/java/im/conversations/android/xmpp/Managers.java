@@ -4,6 +4,7 @@ import android.content.Context;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.ImmutableClassToInstanceMap;
 import im.conversations.android.xmpp.manager.AbstractManager;
+import im.conversations.android.xmpp.manager.ArchiveManager;
 import im.conversations.android.xmpp.manager.AvatarManager;
 import im.conversations.android.xmpp.manager.AxolotlManager;
 import im.conversations.android.xmpp.manager.BlockingManager;
@@ -25,6 +26,7 @@ public final class Managers {
     public static ClassToInstanceMap<AbstractManager> initialize(
             final Context context, final XmppConnection connection) {
         return new ImmutableClassToInstanceMap.Builder<AbstractManager>()
+                .put(ArchiveManager.class, new ArchiveManager(context, connection))
                 .put(AvatarManager.class, new AvatarManager(context, connection))
                 .put(AxolotlManager.class, new AxolotlManager(context, connection))
                 .put(BlockingManager.class, new BlockingManager(context, connection))

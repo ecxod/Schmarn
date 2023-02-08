@@ -91,6 +91,7 @@ public final class Namespace {
     public static final String SASL_2 = "urn:xmpp:sasl:2";
     public static final String STANZAS = "urn:ietf:params:xml:ns:xmpp-stanzas";
     public static final String STANZA_IDS = "urn:xmpp:sid:0";
+    public static final String MESSAGE_ARCHIVE_MANAGEMENT = "urn:xmpp:mam:2";
     public static final String STREAMS = "http://etherx.jabber.org/streams";
     public static final String STREAM_MANAGEMENT = "urn:xmpp:sm:3";
     public static final String SYNCHRONIZATION = "im.quicksy.synchronization:0";
