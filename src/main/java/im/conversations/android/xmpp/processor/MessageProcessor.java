@@ -1,7 +1,8 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
-import eu.siacs.conversations.xmpp.Jid;
+import im.conversations.android.transformer.Transformation;
+import im.conversations.android.transformer.Transformer;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.mam.Result;
 import im.conversations.android.xmpp.manager.ArchiveManager;
@@ -10,7 +11,6 @@ import im.conversations.android.xmpp.manager.ChatStateManager;
 import im.conversations.android.xmpp.manager.PubSubManager;
 import im.conversations.android.xmpp.manager.ReceiptManager;
 import im.conversations.android.xmpp.manager.StanzaIdManager;
-import im.conversations.android.xmpp.model.DeliveryReceiptRequest;
 import im.conversations.android.xmpp.model.carbons.Received;
 import im.conversations.android.xmpp.model.carbons.Sent;
 import im.conversations.android.xmpp.model.pubsub.event.Event;
@@ -59,24 +59,25 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
             return;
         }
 
-        final String id = message.getId();
-        final String stanzaId = getManager(StanzaIdManager.class).getStanzaId(message);
-        final Jid from = message.getFrom();
-
-        LOGGER.info("Message with stanza-id {} received: {}", stanzaId, message.getExtensionIds());
-
-        // TODO only do this if transformation was successful or nothing to transform
-        final var requests = message.getExtensions(DeliveryReceiptRequest.class);
-        getManager(ReceiptManager.class).received(from, id, requests);
-
+        final var from = message.getFrom();
+        final var id = message.getId();
+        final var stanzaId = getManager(StanzaIdManager.class).getStanzaId(message);
+        final var transformation = Transformation.of(message, stanzaId);
+        final boolean sendReceipts;
+        if (transformation.isAnythingToTransform()) {
+            final var transformer = new Transformer(context, getAccount());
+            sendReceipts = transformer.transform(transformation);
+        } else {
+            sendReceipts = true;
+        }
+        if (sendReceipts) {
+            getManager(ReceiptManager.class)
+                    .received(from, id, transformation.deliveryReceiptRequests);
+        }
         final var chatState = message.getExtension(ChatStateNotification.class);
         if (chatState != null) {
             getManager(ChatStateManager.class).handle(from, chatState);
         }
-
-        
-        // TODO collect Extensions that require transformation (everything that will end up in the
-        // message tables)
 
         // TODO pass JMI to JingleManager
     }
