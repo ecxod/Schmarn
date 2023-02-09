@@ -26,6 +26,8 @@ public class MessageEntity {
     public Instant receivedAt;
     public Instant sentAt;
 
+    public boolean outgoing;
+
     public String bareTo;
     public String toResource;
     public String bareFrom;
@@ -35,6 +37,8 @@ public class MessageEntity {
 
     public String messageId;
     public String stanzaId;
+    // the stanza id might not be verified if this MessageEntity was created as a stub parent to attach reactions to or new versions (created by LMC etc)
+    public String stanzaIdVerified;
 
     public boolean acknowledged = false;
 }
