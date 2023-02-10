@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "2972255ca35c75ece48909471313d20a",
+    "identityHash": "03075d3509cc0d79cf5e733cff6b71fd",
     "entities": [
       {
         "tableName": "account",
@@ -1420,7 +1420,7 @@
       },
       {
         "tableName": "message",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `chatId` INTEGER NOT NULL, `receivedAt` INTEGER, `sentAt` INTEGER, `bareTo` TEXT, `toResource` TEXT, `bareFrom` TEXT, `fromResource` TEXT, `occupantId` TEXT, `messageId` TEXT, `stanzaId` TEXT, `acknowledged` INTEGER NOT NULL, FOREIGN KEY(`chatId`) REFERENCES `chat`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `chatId` INTEGER NOT NULL, `receivedAt` INTEGER, `sentAt` INTEGER, `outgoing` INTEGER NOT NULL, `toBare` TEXT, `toResource` TEXT, `fromBare` TEXT, `fromResource` TEXT, `occupantId` TEXT, `messageId` TEXT, `stanzaId` TEXT, `stanzaIdVerified` INTEGER NOT NULL, `latestVersion` INTEGER, `acknowledged` INTEGER NOT NULL, FOREIGN KEY(`chatId`) REFERENCES `chat`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`latestVersion`) REFERENCES `message_version`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1447,8 +1447,14 @@
             "notNull": false
           },
           {
-            "fieldPath": "bareTo",
-            "columnName": "bareTo",
+            "fieldPath": "outgoing",
+            "columnName": "outgoing",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "toBare",
+            "columnName": "toBare",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -1459,8 +1465,8 @@
             "notNull": false
           },
           {
-            "fieldPath": "bareFrom",
-            "columnName": "bareFrom",
+            "fieldPath": "fromBare",
+            "columnName": "fromBare",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -1489,6 +1495,18 @@
             "notNull": false
           },
           {
+            "fieldPath": "stanzaIdVerified",
+            "columnName": "stanzaIdVerified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latestVersion",
+            "columnName": "latestVersion",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
             "fieldPath": "acknowledged",
             "columnName": "acknowledged",
             "affinity": "INTEGER",
@@ -1510,6 +1528,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_message_chatId` ON `${TABLE_NAME}` (`chatId`)"
+          },
+          {
+            "name": "index_message_latestVersion",
+            "unique": false,
+            "columnNames": [
+              "latestVersion"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_message_latestVersion` ON `${TABLE_NAME}` (`latestVersion`)"
           }
         ],
         "foreignKeys": [
@@ -1523,11 +1550,22 @@
             "referencedColumns": [
               "id"
             ]
+          },
+          {
+            "table": "message_version",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "latestVersion"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
           }
         ]
       },
       {
-        "tableName": "message_part",
+        "tableName": "message_content",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `messageVersionId` INTEGER NOT NULL, `language` TEXT, `type` TEXT, `body` TEXT, `url` TEXT, FOREIGN KEY(`messageVersionId`) REFERENCES `message_version`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
@@ -1575,13 +1613,13 @@
         },
         "indices": [
           {
-            "name": "index_message_part_messageVersionId",
+            "name": "index_message_content_messageVersionId",
             "unique": false,
             "columnNames": [
               "messageVersionId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_message_part_messageVersionId` ON `${TABLE_NAME}` (`messageVersionId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_message_content_messageVersionId` ON `${TABLE_NAME}` (`messageVersionId`)"
           }
         ],
         "foreignKeys": [
@@ -1600,7 +1638,7 @@
       },
       {
         "tableName": "message_version",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `messageEntityId` INTEGER NOT NULL, `messageId` TEXT, `stanzaId` TEXT, `modification` TEXT, `modifiedBy` TEXT, `modifiedByResource` TEXT, `occupantId` TEXT, `receivedAt` INTEGER, FOREIGN KEY(`messageId`) REFERENCES `message`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `messageEntityId` INTEGER NOT NULL, `messageId` TEXT, `stanzaId` TEXT, `modification` TEXT, `modifiedBy` TEXT, `modifiedByResource` TEXT, `occupantId` TEXT, `receivedAt` INTEGER, FOREIGN KEY(`messageEntityId`) REFERENCES `message`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1665,13 +1703,13 @@
         },
         "indices": [
           {
-            "name": "index_message_version_messageId",
+            "name": "index_message_version_messageEntityId",
             "unique": false,
             "columnNames": [
-              "messageId"
+              "messageEntityId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_message_version_messageId` ON `${TABLE_NAME}` (`messageId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_message_version_messageEntityId` ON `${TABLE_NAME}` (`messageEntityId`)"
           }
         ],
         "foreignKeys": [
@@ -1680,7 +1718,7 @@
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
-              "messageId"
+              "messageEntityId"
             ],
             "referencedColumns": [
               "id"
@@ -2112,7 +2150,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2972255ca35c75ece48909471313d20a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '03075d3509cc0d79cf5e733cff6b71fd')"
     ]
   }
 }

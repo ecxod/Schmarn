@@ -1,4 +1,4 @@
-package im.conversations.android.xmpp.mam;
+package im.conversations.android.xmpp.model.mam;
 
 import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.xmpp.model.Extension;

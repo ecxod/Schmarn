@@ -9,4 +9,8 @@ public class Encrypted extends Extension {
     public Encrypted() {
         super(Encrypted.class);
     }
+
+    public boolean hasPayload() {
+        return hasExtension(Payload.class);
+    }
 }

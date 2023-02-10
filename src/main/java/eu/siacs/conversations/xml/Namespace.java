@@ -24,6 +24,7 @@ public final class Namespace {
     public static final String CONFERENCE = "jabber:x:conference";
     public static final String CSI = "urn:xmpp:csi:0";
     public static final String DATA = "jabber:x:data";
+    public static final String DELAY = "urn:xmpp:delay";
     public static final String DELIVERY_RECEIPTS = "urn:xmpp:receipts";
     public static final String DISCO_INFO = "http://jabber.org/protocol/disco#info";
     public static final String DISCO_ITEMS = "http://jabber.org/protocol/disco#items";
@@ -65,6 +66,7 @@ public final class Namespace {
     public static final String JINGLE_TRANSPORTS_S5B = "urn:xmpp:jingle:transports:s5b:1";
     public static final String JINGLE_TRANSPORT_ICE_UDP = "urn:xmpp:jingle:transports:ice-udp:1";
     public static final String LAST_MESSAGE_CORRECTION = "urn:xmpp:message-correct:0";
+    public static final String MESSAGE_ARCHIVE_MANAGEMENT = "urn:xmpp:mam:2";
     public static final String MUC = "http://jabber.org/protocol/muc";
     public static final String MUC_USER = MUC + "#user";
     public static final String NICK = "http://jabber.org/protocol/nick";
@@ -74,9 +76,9 @@ public final class Namespace {
     public static final String PARS = "urn:xmpp:pars:0";
     public static final String PING = "urn:xmpp:ping";
     public static final String PUBSUB = "http://jabber.org/protocol/pubsub";
+    public static final String PUBSUB_ERROR = PUBSUB + "#errors";
     public static final String PUBSUB_OWNER = PUBSUB + "#owner";
     public static final String PUBSUB_PUBLISH_OPTIONS = PUBSUB + "#publish-options";
-    public static final String PUBSUB_ERROR = PUBSUB + "#errors";
     public static final String PUB_SUB = "http://jabber.org/protocol/pubsub";
     public static final String PUB_SUB_ERRORS = PUB_SUB + "#errors";
     public static final String PUB_SUB_EVENT = PUB_SUB + "#event";
@@ -91,7 +93,6 @@ public final class Namespace {
     public static final String SASL_2 = "urn:xmpp:sasl:2";
     public static final String STANZAS = "urn:ietf:params:xml:ns:xmpp-stanzas";
     public static final String STANZA_IDS = "urn:xmpp:sid:0";
-    public static final String MESSAGE_ARCHIVE_MANAGEMENT = "urn:xmpp:mam:2";
     public static final String STREAMS = "http://etherx.jabber.org/streams";
     public static final String STREAM_MANAGEMENT = "urn:xmpp:sm:3";
     public static final String SYNCHRONIZATION = "im.quicksy.synchronization:0";

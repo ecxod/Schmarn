@@ -10,6 +10,7 @@ import im.conversations.android.database.dao.AvatarDao;
 import im.conversations.android.database.dao.AxolotlDao;
 import im.conversations.android.database.dao.BlockingDao;
 import im.conversations.android.database.dao.BookmarkDao;
+import im.conversations.android.database.dao.ChatDao;
 import im.conversations.android.database.dao.DiscoDao;
 import im.conversations.android.database.dao.MessageDao;
 import im.conversations.android.database.dao.NickDao;
@@ -35,8 +36,8 @@ import im.conversations.android.database.entity.DiscoExtensionFieldValueEntity;
 import im.conversations.android.database.entity.DiscoFeatureEntity;
 import im.conversations.android.database.entity.DiscoIdentityEntity;
 import im.conversations.android.database.entity.DiscoItemEntity;
+import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
-import im.conversations.android.database.entity.MessagePartEntity;
 import im.conversations.android.database.entity.MessageVersionEntity;
 import im.conversations.android.database.entity.NickEntity;
 import im.conversations.android.database.entity.PresenceEntity;
@@ -67,7 +68,7 @@ import im.conversations.android.database.entity.RosterItemGroupEntity;
             DiscoIdentityEntity.class,
             DiscoItemEntity.class,
             MessageEntity.class,
-            MessagePartEntity.class,
+            MessageContentEntity.class,
             MessageVersionEntity.class,
             NickEntity.class,
             PresenceEntity.class,
@@ -106,6 +107,8 @@ public abstract class ConversationsDatabase extends RoomDatabase {
     public abstract BlockingDao blockingDao();
 
     public abstract BookmarkDao bookmarkDao();
+
+    public abstract ChatDao chatDao();
 
     public abstract DiscoDao discoDao();
 

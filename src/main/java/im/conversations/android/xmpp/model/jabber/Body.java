@@ -9,4 +9,8 @@ public class Body extends Extension {
     public Body() {
         super(Body.class);
     }
+
+    public String getLang() {
+        return this.getAttribute("xml:lang");
+    }
 }
