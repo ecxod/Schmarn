@@ -50,6 +50,7 @@ public abstract class RosterDao {
             }
             final RosterItemEntity entity = RosterItemEntity.of(account.id, item);
             final long id = insert(entity);
+            // TODO groups
         }
         setRosterVersion(account.id, version);
     }

@@ -38,11 +38,11 @@ import im.conversations.android.database.entity.DiscoIdentityEntity;
 import im.conversations.android.database.entity.DiscoItemEntity;
 import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
+import im.conversations.android.database.entity.MessageReactionEntity;
 import im.conversations.android.database.entity.MessageStateEntity;
 import im.conversations.android.database.entity.MessageVersionEntity;
 import im.conversations.android.database.entity.NickEntity;
 import im.conversations.android.database.entity.PresenceEntity;
-import im.conversations.android.database.entity.ReactionEntity;
 import im.conversations.android.database.entity.RosterItemEntity;
 import im.conversations.android.database.entity.RosterItemGroupEntity;
 
@@ -74,7 +74,7 @@ import im.conversations.android.database.entity.RosterItemGroupEntity;
             MessageVersionEntity.class,
             NickEntity.class,
             PresenceEntity.class,
-            ReactionEntity.class,
+            MessageReactionEntity.class,
             RosterItemEntity.class,
             RosterItemGroupEntity.class
         },

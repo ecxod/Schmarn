@@ -18,6 +18,7 @@ import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.markers.Displayed;
 import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
+import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,11 +71,16 @@ public class Transformer {
             return false;
         }
         final Replace messageCorrection = transformation.getExtension(Replace.class);
+        final Reactions reactions = transformation.getExtension(Reactions.class);
         final List<MessageContent> contents = parseContent(transformation);
 
         final boolean identifiableSender =
                 Arrays.asList(Message.Type.NORMAL, Message.Type.CHAT).contains(messageType)
                         || Objects.nonNull(transformation.occupantId);
+        final boolean isReaction =
+                Objects.nonNull(reactions)
+                        && Objects.nonNull(reactions.getId())
+                        && identifiableSender;
         final boolean isMessageCorrection =
                 Objects.nonNull(messageCorrection)
                         && messageCorrection.getId() != null
@@ -83,7 +89,9 @@ public class Transformer {
         if (contents.isEmpty()) {
             LOGGER.info("Received message from {} w/o contents", transformation.from);
             transformMessageState(chat, transformation);
-            // TODO apply reactions
+            if (isReaction) {
+                database.messageDao().insertReactions(chat, reactions, transformation);
+            }
         } else {
             final MessageIdentifier messageIdentifier;
             try {

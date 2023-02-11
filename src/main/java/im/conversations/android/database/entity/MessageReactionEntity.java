@@ -5,6 +5,8 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
+import eu.siacs.conversations.xmpp.Jid;
+import im.conversations.android.transformer.Transformation;
 import java.time.Instant;
 
 @Entity(
@@ -16,7 +18,7 @@ import java.time.Instant;
                         childColumns = {"messageEntityId"},
                         onDelete = ForeignKey.CASCADE),
         indices = {@Index(value = "messageEntityId")})
-public class ReactionEntity {
+public class MessageReactionEntity {
 
     @PrimaryKey(autoGenerate = true)
     public Long id;
@@ -25,11 +27,25 @@ public class ReactionEntity {
 
     public String stanzaId;
     public String messageId;
-    public String reactionBy;
+    public Jid reactionBy;
     public String reactionByResource;
     public String occupantId;
 
     public Instant receivedAt;
 
     public String reaction;
+
+    public static MessageReactionEntity of(
+            long messageEntityId, final String reaction, final Transformation transformation) {
+        final var entity = new MessageReactionEntity();
+        entity.messageEntityId = messageEntityId;
+        entity.reaction = reaction;
+        entity.stanzaId = transformation.stanzaId;
+        entity.messageId = transformation.messageId;
+        entity.reactionBy = transformation.fromBare();
+        entity.reactionByResource = transformation.fromResource();
+        entity.occupantId = transformation.occupantId;
+        entity.receivedAt = transformation.receivedAt;
+        return entity;
+    }
 }

@@ -81,4 +81,18 @@ public class MessageEntity {
         entity.stanzaIdVerified = false;
         return entity;
     }
+
+    public static MessageEntity stubOfStanzaId(final long chatId, String stanzaId) {
+        final var entity = new MessageEntity();
+        entity.stanzaIdVerified = false;
+        entity.stanzaId = stanzaId;
+        return entity;
+    }
+
+    public static MessageEntity stubOfMessageId(final long chatId, String messageId) {
+        final var entity = new MessageEntity();
+        entity.stanzaIdVerified = false;
+        entity.messageId = messageId;
+        return entity;
+    }
 }

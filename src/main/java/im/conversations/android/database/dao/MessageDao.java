@@ -6,10 +6,12 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
+import im.conversations.android.database.entity.MessageReactionEntity;
 import im.conversations.android.database.entity.MessageStateEntity;
 import im.conversations.android.database.entity.MessageVersionEntity;
 import im.conversations.android.database.model.Account;
@@ -19,6 +21,8 @@ import im.conversations.android.database.model.MessageIdentifier;
 import im.conversations.android.database.model.MessageState;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.Transformation;
+import im.conversations.android.xmpp.model.reactions.Reactions;
+import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Collection;
 import java.util.List;
 import org.slf4j.Logger;
@@ -105,12 +109,12 @@ public abstract class MessageDao {
     // when found by stanzaId the stanzaId must either by verified or belonging to a stub
     // when found by messageId the from must either match (for corrections) or not be set (null) and
     // we only look up stubs
-    // TODO the from matcher should be in the outer condition
     @Query(
             "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
-                + " chatId=:chatId AND (fromBare=:fromBare OR fromBare=NULL) AND ((stanzaId !="
-                + " NULL AND stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion=NULL)) OR"
-                + " (stanzaId = NULL AND messageId=:messageId AND latestVersion = NULL))")
+                + " chatId=:chatId AND (fromBare=:fromBare OR fromBare IS NULL) AND ((stanzaId IS"
+                + " NOT NULL AND stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion IS"
+                + " NULL)) OR (stanzaId IS NULL AND messageId=:messageId AND latestVersion IS"
+                + " NULL))")
     abstract MessageIdentifier get(long chatId, Jid fromBare, String stanzaId, String messageId);
 
     public MessageIdentifier getOrCreateVersion(
@@ -200,13 +204,38 @@ public abstract class MessageDao {
     protected abstract void setLatestMessageId(
             final long messageEntityId, final long messageVersionId);
 
-    public Long getOrCreateStub(final Transformation transformation) {
-        // TODO look up where parentId matches messageId (or stanzaId for group chats)
-
-        // when creating stub either set from (correction) or don’t (other attachment)
-
-        return null;
+    public MessageIdentifier getOrCreateStub(
+            final ChatIdentifier chat, final Message.Type messageType, final String parentId) {
+        final MessageIdentifier existing;
+        if (messageType == Message.Type.GROUPCHAT) {
+            existing = getByStanzaId(chat.id, parentId);
+        } else {
+            existing = getByMessageId(chat.id, parentId);
+        }
+        if (existing != null) {
+            return existing;
+        }
+        final MessageEntity messageEntity;
+        if (messageType == Message.Type.GROUPCHAT) {
+            LOGGER.info("Create stub for stanza id {}", parentId);
+            messageEntity = MessageEntity.stubOfStanzaId(chat.id, parentId);
+        } else {
+            LOGGER.info("Create stub for message id {}", parentId);
+            messageEntity = MessageEntity.stubOfMessageId(chat.id, parentId);
+        }
+        final long messageEntityId = insert(messageEntity);
+        return new MessageIdentifier(messageEntityId, null, null, null, null);
     }
+
+    @Query(
+            "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
+                    + " chatId=:chatId AND messageId=:messageId")
+    protected abstract MessageIdentifier getByMessageId(final long chatId, final String messageId);
+
+    @Query(
+            "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
+                    + " chatId=:chatId AND stanzaId=:stanzaId")
+    protected abstract MessageIdentifier getByStanzaId(final long chatId, final String stanzaId);
 
     public void insertMessageContent(Long latestVersion, List<MessageContent> contents) {
         Preconditions.checkNotNull(
@@ -245,4 +274,19 @@ public abstract class MessageDao {
 
     @Insert
     protected abstract void insert(MessageStateEntity messageStateEntity);
+
+    @Insert
+    protected abstract void insertReactions(Collection<MessageReactionEntity> reactionEntities);
+
+    public void insertReactions(
+            ChatIdentifier chat, Reactions reactions, Transformation transformation) {
+        final Message.Type messageType = transformation.type;
+        final MessageIdentifier messageIdentifier =
+                getOrCreateStub(chat, messageType, reactions.getId());
+        // TODO delete old reactions
+        insertReactions(
+                Collections2.transform(
+                        reactions.getReactions(),
+                        r -> MessageReactionEntity.of(messageIdentifier.id, r, transformation)));
+    }
 }

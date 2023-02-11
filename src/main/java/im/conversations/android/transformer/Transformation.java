@@ -16,6 +16,7 @@ import im.conversations.android.xmpp.model.jabber.Thread;
 import im.conversations.android.xmpp.model.markers.Displayed;
 import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
+import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
 import java.util.Arrays;
@@ -34,7 +35,8 @@ public class Transformation {
                     DeliveryReceipt.class,
                     MultiUserChat.class,
                     Displayed.class,
-                    Replace.class);
+                    Replace.class,
+                    Reactions.class);
 
     public final Instant receivedAt;
     public final Jid to;
