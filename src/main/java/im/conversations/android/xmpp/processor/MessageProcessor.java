@@ -1,6 +1,7 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
+import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.transformer.TransformationFactory;
 import im.conversations.android.transformer.Transformer;
 import im.conversations.android.xmpp.XmppConnection;
@@ -70,7 +71,8 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
         final var transformation = transformationFactory.create(message, stanzaId);
         final boolean sendReceipts;
         if (transformation.isAnythingToTransform()) {
-            final var transformer = new Transformer(context, getAccount());
+            final var database = ConversationsDatabase.getInstance(context);
+            final var transformer = new Transformer(database, getAccount());
             sendReceipts = transformer.transform(transformation);
         } else {
             sendReceipts = true;

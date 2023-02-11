@@ -1,6 +1,6 @@
 package im.conversations.android.transformer;
 
-import android.content.Context;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -31,16 +31,16 @@ public class Transformer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Transformer.class);
 
-    private final Context context;
+    private final ConversationsDatabase database;
     private final Account account;
 
-    public Transformer(final Context context, final Account account) {
-        this.context = context;
+    public Transformer(final ConversationsDatabase database, final Account account) {
+        Preconditions.checkArgument(account != null, "Account must not be null");
+        this.database = database;
         this.account = account;
     }
 
     public boolean transform(final Transformation transformation) {
-        final var database = ConversationsDatabase.getInstance(context);
         return database.runInTransaction(() -> transform(database, transformation));
     }
 
@@ -156,7 +156,6 @@ public class Transformer {
 
     private void transformMessageState(
             final ChatIdentifier chat, final Transformation transformation) {
-        final var database = ConversationsDatabase.getInstance(context);
         final var displayed = transformation.getExtension(Displayed.class);
         if (displayed != null) {
             if (transformation.outgoing()) {

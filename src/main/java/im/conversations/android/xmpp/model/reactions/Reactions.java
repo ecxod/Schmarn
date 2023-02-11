@@ -23,4 +23,8 @@ public class Reactions extends Extension {
     public String getId() {
         return this.getAttribute("id");
     }
+
+    public void setId(String id) {
+        this.setAttribute("id", id);
+    }
 }

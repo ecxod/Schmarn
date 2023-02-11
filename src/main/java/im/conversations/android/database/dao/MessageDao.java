@@ -76,6 +76,10 @@ public abstract class MessageDao {
                         transformation.messageId);
         if (messageIdentifier != null) {
             if (messageIdentifier.isStub()) {
+                LOGGER.info(
+                        "Found stub for stanzaId '{}' and messageId '{}'",
+                        transformation.stanzaId,
+                        transformation.messageId);
                 // TODO create version
                 // TODO fill up information
                 return messageIdentifier;
