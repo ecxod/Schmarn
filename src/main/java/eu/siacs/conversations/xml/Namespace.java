@@ -70,6 +70,7 @@ public final class Namespace {
     public static final String MUC = "http://jabber.org/protocol/muc";
     public static final String MUC_USER = MUC + "#user";
     public static final String NICK = "http://jabber.org/protocol/nick";
+    public static final String OCCUPANT_ID = "urn:xmpp:occupant-id:0";
     public static final String OMEMO_DTLS_SRTP_VERIFICATION =
             "http://gultsch.de/xmpp/drafts/omemo/dlts-srtp-verification";
     public static final String OOB = "jabber:x:oob";

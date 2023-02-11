@@ -8,7 +8,9 @@ import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.MessageContent;
+import im.conversations.android.database.model.MessageIdentifier;
 import im.conversations.android.database.model.MessageState;
+import im.conversations.android.database.model.Modification;
 import im.conversations.android.xmpp.model.DeliveryReceipt;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.correction.Replace;
@@ -17,6 +19,7 @@ import im.conversations.android.xmpp.model.markers.Displayed;
 import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
 import im.conversations.android.xmpp.model.stanza.Message;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -66,31 +69,43 @@ public class Transformer {
                             chat, transformation.messageId, MessageState.error(transformation));
             return false;
         }
-        final Replace lastMessageCorrection = transformation.getExtension(Replace.class);
+        final Replace messageCorrection = transformation.getExtension(Replace.class);
         final List<MessageContent> contents = parseContent(transformation);
 
-        // TODO this also needs to be true for retractions once we support those (anything that
-        // creates a new message version
-        // TODO a type=groupchat message correction is only valid with an occupant id
-        final boolean versionModification = Objects.nonNull(lastMessageCorrection);
+        final boolean identifiableSender =
+                Arrays.asList(Message.Type.NORMAL, Message.Type.CHAT).contains(messageType)
+                        || Objects.nonNull(transformation.occupantId);
+        final boolean isMessageCorrection =
+                Objects.nonNull(messageCorrection)
+                        && messageCorrection.getId() != null
+                        && identifiableSender;
 
         if (contents.isEmpty()) {
             LOGGER.info("Received message from {} w/o contents", transformation.from);
             transformMessageState(chat, transformation);
             // TODO apply reactions
         } else {
-            if (versionModification) {
-                // TODO use getOrStub
-                // TODO check if versionModification has already been applied
+            final MessageIdentifier messageIdentifier;
+            try {
+                if (isMessageCorrection) {
+                    messageIdentifier =
+                            database.messageDao()
+                                    .getOrCreateVersion(
+                                            chat,
+                                            transformation,
+                                            messageCorrection.getId(),
+                                            Modification.EDIT);
 
-                // TODO for replaced message create a new version; re-target latestVersion
-
-            } else {
-                final var messageIdentifier =
-                        database.messageDao().getOrCreateMessage(chat, transformation);
-                database.messageDao().insertMessageContent(messageIdentifier.version, contents);
-                return true;
+                } else {
+                    messageIdentifier =
+                            database.messageDao().getOrCreateMessage(chat, transformation);
+                }
+            } catch (final IllegalStateException e) {
+                LOGGER.warn("Could not get message identifier", e);
+                return false;
             }
+            database.messageDao().insertMessageContent(messageIdentifier.version, contents);
+            return true;
         }
         return true;
     }

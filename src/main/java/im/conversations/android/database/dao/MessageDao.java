@@ -57,6 +57,10 @@ public abstract class MessageDao {
         }
     }
 
+    // this method returns a MessageIdentifier (message + version) used to create ORIGINAL messages
+    // it might return something that was previously a stub (message that only has reactions or
+    // corrections but no original content). but in the process of invoking this method the stub
+    // will be upgraded to an original message (missing information filled in)
     @Transaction
     public MessageIdentifier getOrCreateMessage(
             ChatIdentifier chatIdentifier, final Transformation transformation) {
@@ -96,6 +100,96 @@ public abstract class MessageDao {
                 messageVersionId);
     }
 
+    // this gets either a message or a stub.
+    // stubs are recognized by latestVersion=NULL
+    // when found by stanzaId the stanzaId must either by verified or belonging to a stub
+    // when found by messageId the from must either match (for corrections) or not be set (null) and
+    // we only look up stubs
+    // TODO the from matcher should be in the outer condition
+    @Query(
+            "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
+                + " chatId=:chatId AND (fromBare=:fromBare OR fromBare=NULL) AND ((stanzaId !="
+                + " NULL AND stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion=NULL)) OR"
+                + " (stanzaId = NULL AND messageId=:messageId AND latestVersion = NULL))")
+    abstract MessageIdentifier get(long chatId, Jid fromBare, String stanzaId, String messageId);
+
+    public MessageIdentifier getOrCreateVersion(
+            ChatIdentifier chat,
+            Transformation transformation,
+            final String messageId,
+            final Modification modification) {
+        Preconditions.checkArgument(
+                messageId != null, "A modification must reference a message id");
+        final MessageIdentifier messageIdentifier;
+        if (transformation.occupantId == null) {
+            messageIdentifier = getByMessageId(chat.id, transformation.fromBare(), messageId);
+        } else {
+            messageIdentifier =
+                    getByOccupantIdAndMessageId(
+                            chat.id,
+                            transformation.fromBare(),
+                            transformation.occupantId,
+                            messageId);
+        }
+        if (messageIdentifier == null) {
+            LOGGER.info(
+                    "Create stub for {} because we could not find anything with id {} from {}",
+                    modification,
+                    messageId,
+                    transformation.fromBare());
+            final var messageEntity = MessageEntity.stub(chat.id, messageId, transformation);
+            final long messageEntityId = insert(messageEntity);
+            final long messageVersionId =
+                    insert(MessageVersionEntity.of(messageEntityId, modification, transformation));
+            // we do not point latestVersion to this newly created versions. We've only created a
+            // stub and are waiting for the original message to arrive
+            return new MessageIdentifier(
+                    messageEntityId, null, null, transformation.fromBare(), messageVersionId);
+        }
+        if (hasVersionWithMessageId(messageIdentifier.id, transformation.messageId)) {
+            throw new IllegalStateException(
+                    String.format(
+                            "A modification with messageId %s has already been applied",
+                            messageId));
+        }
+        final long messageVersionId =
+                insert(MessageVersionEntity.of(messageIdentifier.id, modification, transformation));
+        if (messageIdentifier.version != null) {
+            // if the existing message was not a stub we retarget the version
+            final long latestVersion = getLatestVersion(messageIdentifier.id);
+            setLatestMessageId(messageIdentifier.id, latestVersion);
+        }
+        return new MessageIdentifier(
+                messageIdentifier.id,
+                messageIdentifier.stanzaId,
+                messageIdentifier.messageId,
+                messageIdentifier.fromBare,
+                messageVersionId);
+    }
+
+    @Query(
+            "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
+                    + " chatId=:chatId AND (fromBare=:fromBare OR fromBare IS NULL) AND"
+                    + " (occupantId=:occupantId OR occupantId IS NULL) AND messageId=:messageId")
+    abstract MessageIdentifier getByOccupantIdAndMessageId(
+            long chatId, Jid fromBare, String occupantId, String messageId);
+
+    @Query(
+            "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
+                    + " chatId=:chatId AND (fromBare=:fromBare OR fromBare IS NULL) AND"
+                    + " messageId=:messageId")
+    abstract MessageIdentifier getByMessageId(long chatId, Jid fromBare, String messageId);
+
+    @Query(
+            "SELECT id FROM message_version WHERE messageEntityId=:messageEntityId ORDER BY (CASE"
+                    + " modification WHEN 'ORIGINAL' THEN 0 ELSE 1 END),receivedAt DESC LIMIT 1")
+    abstract Long getLatestVersion(long messageEntityId);
+
+    @Query(
+            "SELECT EXISTS (SELECT id FROM message_version WHERE messageEntityId=:messageEntityId"
+                    + " AND messageId=:messageId)")
+    abstract boolean hasVersionWithMessageId(long messageEntityId, String messageId);
+
     @Insert
     protected abstract long insert(MessageEntity messageEntity);
 
@@ -113,19 +207,6 @@ public abstract class MessageDao {
 
         return null;
     }
-
-    // this gets either a message or a stub.
-    // stubs are recognized by latestVersion=NULL
-    // when found by stanzaId the stanzaId must either by verified or belonging to a stub
-    // when found by messageId the from must either match (for corrections) or not be set (null) and
-    // we only look up stubs
-    // TODO the from matcher should be in the outer condition
-    @Query(
-            "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
-                + " chatId=:chatId AND (fromBare=:fromBare OR fromBare=NULL) AND ((stanzaId !="
-                + " NULL AND stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion=NULL)) OR"
-                + " (stanzaId = NULL AND messageId=:messageId AND latestVersion = NULL))")
-    abstract MessageIdentifier get(long chatId, Jid fromBare, String stanzaId, String messageId);
 
     public void insertMessageContent(Long latestVersion, List<MessageContent> contents) {
         Preconditions.checkNotNull(

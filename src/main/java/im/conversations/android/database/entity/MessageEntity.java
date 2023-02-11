@@ -65,9 +65,20 @@ public class MessageEntity {
         entity.toResource = transformation.toResource();
         entity.fromBare = transformation.fromBare();
         entity.fromResource = transformation.fromResource();
+        entity.occupantId = transformation.occupantId;
         entity.messageId = transformation.messageId;
         entity.stanzaId = transformation.stanzaId;
         entity.stanzaIdVerified = Objects.nonNull(transformation.stanzaId);
+        return entity;
+    }
+
+    public static MessageEntity stub(
+            final long chatId, String messageId, Transformation transformation) {
+        final var entity = new MessageEntity();
+        entity.chatId = chatId;
+        entity.fromBare = transformation.fromBare();
+        entity.messageId = messageId;
+        entity.stanzaIdVerified = false;
         return entity;
     }
 }

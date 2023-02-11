@@ -9,6 +9,8 @@ import im.conversations.android.xmpp.model.DeliveryReceipt;
 import im.conversations.android.xmpp.model.DeliveryReceiptRequest;
 import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
+import im.conversations.android.xmpp.model.correction.Replace;
+import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.jabber.Thread;
 import im.conversations.android.xmpp.model.markers.Displayed;
@@ -31,7 +33,8 @@ public class Transformation {
                     OutOfBandData.class,
                     DeliveryReceipt.class,
                     MultiUserChat.class,
-                    Displayed.class);
+                    Displayed.class,
+                    Replace.class);
 
     public final Instant receivedAt;
     public final Jid to;
@@ -40,6 +43,8 @@ public class Transformation {
     public final Message.Type type;
     public final String messageId;
     public final String stanzaId;
+
+    public final String occupantId;
 
     private final List<Extension> extensions;
 
@@ -53,6 +58,7 @@ public class Transformation {
             final Message.Type type,
             final String messageId,
             final String stanzaId,
+            final String occupantId,
             final List<Extension> extensions,
             final Collection<DeliveryReceiptRequest> deliveryReceiptRequests) {
         this.receivedAt = receivedAt;
@@ -62,6 +68,7 @@ public class Transformation {
         this.type = type;
         this.messageId = messageId;
         this.stanzaId = stanzaId;
+        this.occupantId = occupantId;
         this.extensions = extensions;
         this.deliveryReceiptRequests = deliveryReceiptRequests;
     }
@@ -97,11 +104,21 @@ public class Transformation {
     }
 
     public <E extends Extension> E getExtension(final Class<E> clazz) {
+        checkArgument(clazz);
         final var extension = Iterables.find(this.extensions, clazz::isInstance, null);
         return extension == null ? null : clazz.cast(extension);
     }
 
+    private void checkArgument(final Class<? extends Extension> clazz) {
+        if (EXTENSION_FOR_TRANSFORMATION.contains(clazz) || clazz == Error.class) {
+            return;
+        }
+        throw new IllegalArgumentException(
+                String.format("%s has not been registered for transformation", clazz.getName()));
+    }
+
     public <E extends Extension> Collection<E> getExtensions(final Class<E> clazz) {
+        checkArgument(clazz);
         return Collections2.transform(
                 Collections2.filter(this.extensions, clazz::isInstance), clazz::cast);
     }
@@ -110,7 +127,8 @@ public class Transformation {
             @NonNull final Message message,
             @NonNull final Instant receivedAt,
             @NonNull final Jid remote,
-            final String stanzaId) {
+            final String stanzaId,
+            final String occupantId) {
         final var to = message.getTo();
         final var from = message.getFrom();
         final var type = message.getType();
@@ -134,6 +152,7 @@ public class Transformation {
                 type,
                 messageId,
                 stanzaId,
+                occupantId,
                 extensionListBuilder.build(),
                 requests);
     }
