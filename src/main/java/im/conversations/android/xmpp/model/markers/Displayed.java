@@ -9,4 +9,8 @@ public class Displayed extends Extension {
     public Displayed() {
         super(Displayed.class);
     }
+
+    public String getId() {
+        return this.getAttribute("id");
+    }
 }

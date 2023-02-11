@@ -35,6 +35,7 @@ public abstract class ChatDao {
         if (existing != null) {
             return existing;
         }
+        // TODO do not create entity for 'error'
         final var entity = new ChatEntity();
         entity.accountId = account.id;
         entity.address = address.toEscapedString();

@@ -8,12 +8,15 @@ import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.MessageContent;
+import im.conversations.android.database.model.MessageState;
 import im.conversations.android.xmpp.model.DeliveryReceipt;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.correction.Replace;
 import im.conversations.android.xmpp.model.jabber.Body;
+import im.conversations.android.xmpp.model.markers.Displayed;
 import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
+import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -47,26 +50,33 @@ public class Transformer {
             final ConversationsDatabase database, final Transformation transformation) {
         final var remote = transformation.remote;
         final var messageType = transformation.type;
-        final var deliveryReceipt = transformation.getExtension(DeliveryReceipt.class);
-        final Replace lastMessageCorrection = transformation.getExtension(Replace.class);
         final var muc = transformation.getExtension(MultiUserChat.class);
-
-
-        final List<MessageContent> contents = parseContent(transformation);
-
-        // TODO this also needs to be true for retractions once we support those (anything that
-        // creates a new message version
-        final boolean versionModification = Objects.nonNull(lastMessageCorrection);
-
-        // TODO get or create Cha
 
         final ChatIdentifier chat =
                 database.chatDao()
                         .getOrCreateChat(account, remote, messageType, Objects.nonNull(muc));
 
+        if (messageType == Message.Type.ERROR) {
+            if (transformation.outgoing()) {
+                LOGGER.info("Ignoring outgoing error to {}", transformation.to);
+                return false;
+            }
+            database.messageDao()
+                    .insertMessageState(
+                            chat, transformation.messageId, MessageState.error(transformation));
+            return false;
+        }
+        final Replace lastMessageCorrection = transformation.getExtension(Replace.class);
+        final List<MessageContent> contents = parseContent(transformation);
+
+        // TODO this also needs to be true for retractions once we support those (anything that
+        // creates a new message version
+        // TODO a type=groupchat message correction is only valid with an occupant id
+        final boolean versionModification = Objects.nonNull(lastMessageCorrection);
+
         if (contents.isEmpty()) {
             LOGGER.info("Received message from {} w/o contents", transformation.from);
-            // TODO apply errors, displayed, received etc
+            transformMessageState(chat, transformation);
             // TODO apply reactions
         } else {
             if (versionModification) {
@@ -78,8 +88,7 @@ public class Transformer {
             } else {
                 final var messageIdentifier =
                         database.messageDao().getOrCreateMessage(chat, transformation);
-                database.messageDao()
-                        .insertMessageContent(messageIdentifier.latestVersion, contents);
+                database.messageDao().insertMessageContent(messageIdentifier.version, contents);
                 return true;
             }
         }
@@ -120,5 +129,32 @@ public class Transformer {
             messageContentBuilder.add(MessageContent.file(url));
         }
         return messageContentBuilder.build();
+    }
+
+    private void transformMessageState(
+            final ChatIdentifier chat, final Transformation transformation) {
+        final var database = ConversationsDatabase.getInstance(context);
+        final var displayed = transformation.getExtension(Displayed.class);
+        if (displayed != null) {
+            if (transformation.outgoing()) {
+                LOGGER.info(
+                        "Received outgoing displayed marker for chat with {}",
+                        transformation.remote);
+                return;
+            }
+            database.messageDao()
+                    .insertMessageState(
+                            chat, displayed.getId(), MessageState.displayed(transformation));
+        }
+        final var deliveryReceipt = transformation.getExtension(DeliveryReceipt.class);
+        if (deliveryReceipt != null) {
+            if (transformation.outgoing()) {
+                LOGGER.info("Ignoring outgoing delivery receipt to {}", transformation.to);
+                return;
+            }
+            database.messageDao()
+                    .insertMessageState(
+                            chat, deliveryReceipt.getId(), MessageState.delivered(transformation));
+        }
     }
 }

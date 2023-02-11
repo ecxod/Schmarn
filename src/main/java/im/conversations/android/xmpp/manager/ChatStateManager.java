@@ -16,6 +16,6 @@ public class ChatStateManager extends AbstractManager {
     }
 
     public void handle(final Jid from, final ChatStateNotification chatState) {
-        LOGGER.info("Received {} from {}", chatState, from);
+        // LOGGER.info("Received {} from {}", chatState, from);
     }
 }

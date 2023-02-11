@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "03075d3509cc0d79cf5e733cff6b71fd",
+    "identityHash": "b6a7be8218829fd38f51dcd76cb9cccd",
     "entities": [
       {
         "tableName": "account",
@@ -1565,6 +1565,84 @@
         ]
       },
       {
+        "tableName": "message_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `messageVersionId` INTEGER NOT NULL, `fromBare` TEXT NOT NULL, `fromResource` TEXT, `type` TEXT NOT NULL, `errorCondition` TEXT, `errorText` TEXT, FOREIGN KEY(`messageVersionId`) REFERENCES `message_version`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "messageVersionId",
+            "columnName": "messageVersionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fromBare",
+            "columnName": "fromBare",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fromResource",
+            "columnName": "fromResource",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "errorCondition",
+            "columnName": "errorCondition",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "errorText",
+            "columnName": "errorText",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_message_state_messageVersionId",
+            "unique": false,
+            "columnNames": [
+              "messageVersionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_message_state_messageVersionId` ON `${TABLE_NAME}` (`messageVersionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "message_version",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "messageVersionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
         "tableName": "message_content",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `messageVersionId` INTEGER NOT NULL, `language` TEXT, `type` TEXT, `body` TEXT, `url` TEXT, FOREIGN KEY(`messageVersionId`) REFERENCES `message_version`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
@@ -2150,7 +2228,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '03075d3509cc0d79cf5e733cff6b71fd')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b6a7be8218829fd38f51dcd76cb9cccd')"
     ]
   }
 }

@@ -38,6 +38,7 @@ import im.conversations.android.database.entity.DiscoIdentityEntity;
 import im.conversations.android.database.entity.DiscoItemEntity;
 import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
+import im.conversations.android.database.entity.MessageStateEntity;
 import im.conversations.android.database.entity.MessageVersionEntity;
 import im.conversations.android.database.entity.NickEntity;
 import im.conversations.android.database.entity.PresenceEntity;
@@ -68,6 +69,7 @@ import im.conversations.android.database.entity.RosterItemGroupEntity;
             DiscoIdentityEntity.class,
             DiscoItemEntity.class,
             MessageEntity.class,
+            MessageStateEntity.class,
             MessageContentEntity.class,
             MessageVersionEntity.class,
             NickEntity.class,

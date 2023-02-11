@@ -11,12 +11,14 @@ import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.jabber.Thread;
+import im.conversations.android.xmpp.model.markers.Displayed;
 import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class Transformation {
@@ -28,7 +30,8 @@ public class Transformation {
                     Encrypted.class,
                     OutOfBandData.class,
                     DeliveryReceipt.class,
-                    MultiUserChat.class);
+                    MultiUserChat.class,
+                    Displayed.class);
 
     public final Instant receivedAt;
     public final Jid to;
@@ -113,10 +116,16 @@ public class Transformation {
         final var type = message.getType();
         final var messageId = message.getId();
         final ImmutableList.Builder<Extension> extensionListBuilder = new ImmutableList.Builder<>();
-        for (final Class<? extends Extension> clazz : EXTENSION_FOR_TRANSFORMATION) {
-            extensionListBuilder.addAll(message.getExtensions(clazz));
+        final Collection<DeliveryReceiptRequest> requests;
+        if (type == Message.Type.ERROR) {
+            extensionListBuilder.add(message.getError());
+            requests = Collections.emptyList();
+        } else {
+            for (final Class<? extends Extension> clazz : EXTENSION_FOR_TRANSFORMATION) {
+                extensionListBuilder.addAll(message.getExtensions(clazz));
+            }
+            requests = message.getExtensions(DeliveryReceiptRequest.class);
         }
-        final var requests = message.getExtensions(DeliveryReceiptRequest.class);
         return new Transformation(
                 receivedAt,
                 to,

@@ -10,18 +10,24 @@ import com.google.common.collect.Lists;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
+import im.conversations.android.database.entity.MessageStateEntity;
 import im.conversations.android.database.entity.MessageVersionEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.MessageContent;
 import im.conversations.android.database.model.MessageIdentifier;
+import im.conversations.android.database.model.MessageState;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.Transformation;
 import java.util.Collection;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Dao
 public abstract class MessageDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageDao.class);
 
     @Query(
             "UPDATE message SET acknowledged=1 WHERE messageId=:messageId AND toBare=:toBare AND"
@@ -115,10 +121,10 @@ public abstract class MessageDao {
     // we only look up stubs
     // TODO the from matcher should be in the outer condition
     @Query(
-            "SELECT id,stanzaId,messageId,fromBare,latestVersion FROM message WHERE chatId=:chatId"
-                    + " AND (fromBare=:fromBare OR fromBare=NULL) AND ((stanzaId != NULL AND"
-                    + " stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion=NULL)) OR"
-                    + " (stanzaId = NULL AND messageId=:messageId AND latestVersion = NULL))")
+            "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
+                + " chatId=:chatId AND (fromBare=:fromBare OR fromBare=NULL) AND ((stanzaId !="
+                + " NULL AND stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion=NULL)) OR"
+                + " (stanzaId = NULL AND messageId=:messageId AND latestVersion = NULL))")
     abstract MessageIdentifier get(long chatId, Jid fromBare, String stanzaId, String messageId);
 
     public void insertMessageContent(Long latestVersion, List<MessageContent> contents) {
@@ -133,4 +139,29 @@ public abstract class MessageDao {
 
     @Insert
     protected abstract void insertMessageContent(Collection<MessageContentEntity> contentEntities);
+
+    public void insertMessageState(
+            ChatIdentifier chatIdentifier,
+            final String messageId,
+            final MessageState messageState) {
+        final Long versionId = getVersionIdForOutgoingMessage(chatIdentifier.id, messageId);
+        if (versionId == null) {
+            LOGGER.warn(
+                    "Can not find message {} in chat {} ({})",
+                    messageId,
+                    chatIdentifier.id,
+                    chatIdentifier.address);
+            return;
+        }
+        insert(MessageStateEntity.of(versionId, messageState));
+    }
+
+    @Query(
+            "SELECT message_version.id FROM message_version JOIN message ON"
+                    + " message.id=message_version.messageEntityId WHERE message.chatId=:chatId AND"
+                    + " message_version.messageId=:messageId AND message.outgoing=1")
+    protected abstract Long getVersionIdForOutgoingMessage(long chatId, final String messageId);
+
+    @Insert
+    protected abstract void insert(MessageStateEntity messageStateEntity);
 }

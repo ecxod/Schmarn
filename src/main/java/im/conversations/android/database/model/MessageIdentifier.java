@@ -1,6 +1,5 @@
 package im.conversations.android.database.model;
 
-import com.google.common.base.MoreObjects;
 import eu.siacs.conversations.xmpp.Jid;
 
 public class MessageIdentifier {
@@ -9,29 +8,18 @@ public class MessageIdentifier {
     public final String stanzaId;
     public final String messageId;
     public final Jid fromBare;
-    public final Long latestVersion;
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("id", id)
-                .add("stanzaId", stanzaId)
-                .add("messageId", messageId)
-                .add("fromBare", fromBare)
-                .add("latestVersion", latestVersion)
-                .toString();
-    }
+    public final Long version;
 
     public MessageIdentifier(
-            long id, String stanzaId, String messageId, Jid fromBare, Long latestVersion) {
+            long id, String stanzaId, String messageId, Jid fromBare, Long version) {
         this.id = id;
         this.stanzaId = stanzaId;
         this.messageId = messageId;
         this.fromBare = fromBare;
-        this.latestVersion = latestVersion;
+        this.version = version;
     }
 
     public boolean isStub() {
-        return this.latestVersion == null;
+        return this.version == null;
     }
 }
