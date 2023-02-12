@@ -5,6 +5,7 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
+import androidx.room.Update;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
@@ -19,6 +20,7 @@ import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.MessageContent;
 import im.conversations.android.database.model.MessageIdentifier;
 import im.conversations.android.database.model.MessageState;
+import im.conversations.android.database.model.MessageWithContentReactions;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.Transformation;
 import im.conversations.android.xmpp.model.reactions.Reactions;
@@ -80,9 +82,23 @@ public abstract class MessageDao {
                         "Found stub for stanzaId '{}' and messageId '{}'",
                         transformation.stanzaId,
                         transformation.messageId);
-                // TODO create version
-                // TODO fill up information
-                return messageIdentifier;
+                final long messageVersionId =
+                        insert(
+                                MessageVersionEntity.of(
+                                        messageIdentifier.id,
+                                        Modification.ORIGINAl,
+                                        transformation));
+                final MessageEntity updatedEntity =
+                        MessageEntity.of(chatIdentifier.id, transformation);
+                updatedEntity.id = messageIdentifier.id;
+                updatedEntity.latestVersion = messageVersionId;
+                update(updatedEntity);
+                return new MessageIdentifier(
+                        updatedEntity.id,
+                        transformation.stanzaId,
+                        transformation.messageId,
+                        transformation.fromBare(),
+                        messageVersionId);
             } else {
                 throw new IllegalStateException(
                         String.format(
@@ -201,6 +217,9 @@ public abstract class MessageDao {
     @Insert
     protected abstract long insert(MessageEntity messageEntity);
 
+    @Update
+    protected abstract void update(final MessageEntity messageEntity);
+
     @Insert
     protected abstract long insert(MessageVersionEntity messageVersionEntity);
 
@@ -293,4 +312,13 @@ public abstract class MessageDao {
                         reactions.getReactions(),
                         r -> MessageReactionEntity.of(messageIdentifier.id, r, transformation)));
     }
+
+    @Transaction
+    @Query(
+            "SELECT message.id as"
+                + " id,sentAt,outgoing,toBare,toResource,fromBare,fromResource,modification,latestVersion"
+                + " as version FROM message JOIN message_version ON"
+                + " message.latestVersion=message_version.id WHERE message.chatId=:chatId AND"
+                + " latestVersion IS NOT NULL ORDER BY message.receivedAt")
+    public abstract List<MessageWithContentReactions> getMessages(long chatId);
 }
