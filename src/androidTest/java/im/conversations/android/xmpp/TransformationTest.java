@@ -9,8 +9,10 @@ import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.IDs;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.entity.AccountEntity;
+import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.Transformation;
 import im.conversations.android.transformer.Transformer;
+import im.conversations.android.xmpp.model.correction.Replace;
 import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.reactions.Reaction;
 import im.conversations.android.xmpp.model.reactions.Reactions;
@@ -76,5 +78,74 @@ public class TransformationTest {
         final var onlyReaction = Iterables.getOnlyElement(message.reactions);
         Assert.assertEquals("Y", onlyReaction.reaction);
         Assert.assertEquals(REMOTE, onlyReaction.reactionBy);
+    }
+
+    @Test
+    public void correctionBeforeOriginal() {
+
+        final var messageCorrection = new Message();
+        messageCorrection.setId("2");
+        messageCorrection.setTo(ACCOUNT);
+        messageCorrection.setFrom(REMOTE.withResource("junit"));
+        messageCorrection.addExtension(new Body()).setContent("Hi example!");
+        messageCorrection.addExtension(new Replace()).setId("1");
+
+        this.transformer.transform(
+                Transformation.of(messageCorrection, Instant.now(), REMOTE, "stanza-a", null));
+
+        // the correction should not show up as a message
+        Assert.assertEquals(0, database.messageDao().getMessages(1L).size());
+
+        final var messageWithTypo = new Message();
+        messageWithTypo.setId("1");
+        messageWithTypo.setTo(ACCOUNT);
+        messageWithTypo.setFrom(REMOTE.withResource("junit"));
+        messageWithTypo.addExtension(new Body()).setContent("Hii example!");
+
+        this.transformer.transform(
+                Transformation.of(messageWithTypo, Instant.now(), REMOTE, "stanza-b", null));
+
+        final var messages = database.messageDao().getMessages(1L);
+
+        Assert.assertEquals(1, messages.size());
+
+        final var message = Iterables.getOnlyElement(messages);
+        final var onlyContent = Iterables.getOnlyElement(message.contents);
+        Assert.assertEquals(Modification.EDIT, message.modification);
+        Assert.assertEquals("Hi example!", onlyContent.body);
+    }
+
+    @Test
+    public void correctionAfterOriginal() {
+
+        final var messageWithTypo = new Message();
+        messageWithTypo.setId("1");
+        messageWithTypo.setTo(ACCOUNT);
+        messageWithTypo.setFrom(REMOTE.withResource("junit"));
+        messageWithTypo.addExtension(new Body()).setContent("Hii example!");
+
+        this.transformer.transform(
+                Transformation.of(messageWithTypo, Instant.now(), REMOTE, "stanza-a", null));
+
+        Assert.assertEquals(1, database.messageDao().getMessages(1L).size());
+
+        final var messageCorrection = new Message();
+        messageCorrection.setId("2");
+        messageCorrection.setTo(ACCOUNT);
+        messageCorrection.setFrom(REMOTE.withResource("junit"));
+        messageCorrection.addExtension(new Body()).setContent("Hi example!");
+        messageCorrection.addExtension(new Replace()).setId("1");
+
+        this.transformer.transform(
+                Transformation.of(messageCorrection, Instant.now(), REMOTE, "stanza-b", null));
+
+        final var messages = database.messageDao().getMessages(1L);
+
+        Assert.assertEquals(1, messages.size());
+
+        final var message = Iterables.getOnlyElement(messages);
+        final var onlyContent = Iterables.getOnlyElement(message.contents);
+        Assert.assertEquals(Modification.EDIT, message.modification);
+        Assert.assertEquals("Hi example!", onlyContent.body);
     }
 }

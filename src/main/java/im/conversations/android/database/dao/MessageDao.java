@@ -82,23 +82,27 @@ public abstract class MessageDao {
                         "Found stub for stanzaId '{}' and messageId '{}'",
                         transformation.stanzaId,
                         transformation.messageId);
-                final long messageVersionId =
+                final long originalVersionId =
                         insert(
                                 MessageVersionEntity.of(
                                         messageIdentifier.id,
-                                        Modification.ORIGINAl,
+                                        Modification.ORIGINAL,
                                         transformation));
                 final MessageEntity updatedEntity =
                         MessageEntity.of(chatIdentifier.id, transformation);
                 updatedEntity.id = messageIdentifier.id;
-                updatedEntity.latestVersion = messageVersionId;
+                updatedEntity.latestVersion = getLatestVersion(messageIdentifier.id);
+                LOGGER.info(
+                        "Created original version {} and updated latest version to {}",
+                        originalVersionId,
+                        updatedEntity.latestVersion);
                 update(updatedEntity);
                 return new MessageIdentifier(
                         updatedEntity.id,
                         transformation.stanzaId,
                         transformation.messageId,
                         transformation.fromBare(),
-                        messageVersionId);
+                        originalVersionId);
             } else {
                 throw new IllegalStateException(
                         String.format(
@@ -114,7 +118,7 @@ public abstract class MessageDao {
         final long messageVersionId =
                 insert(
                         MessageVersionEntity.of(
-                                messageEntityId, Modification.ORIGINAl, transformation));
+                                messageEntityId, Modification.ORIGINAL, transformation));
         setLatestMessageId(messageEntityId, messageVersionId);
         return new MessageIdentifier(
                 messageEntityId,
@@ -206,7 +210,7 @@ public abstract class MessageDao {
 
     @Query(
             "SELECT id FROM message_version WHERE messageEntityId=:messageEntityId ORDER BY (CASE"
-                    + " modification WHEN 'ORIGINAL' THEN 0 ELSE 1 END),receivedAt DESC LIMIT 1")
+                    + " modification WHEN 'ORIGINAL' THEN 1 ELSE 0 END),receivedAt DESC LIMIT 1")
     abstract Long getLatestVersion(long messageEntityId);
 
     @Query(

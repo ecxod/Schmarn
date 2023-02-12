@@ -1,5 +1,6 @@
 package im.conversations.android.xmpp.model.correction;
 
+import androidx.annotation.NonNull;
 import com.google.common.base.Strings;
 import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.annotation.XmlElement;
@@ -14,5 +15,9 @@ public class Replace extends Extension {
 
     public String getId() {
         return Strings.emptyToNull(this.getAttribute("id"));
+    }
+
+    public void setId(@NonNull final String id) {
+        this.setAttribute("id", id);
     }
 }
