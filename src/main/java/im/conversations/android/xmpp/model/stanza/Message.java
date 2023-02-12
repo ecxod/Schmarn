@@ -10,6 +10,11 @@ public class Message extends Stanza {
         super(Message.class);
     }
 
+    public Message(Type type) {
+        this();
+        this.setType(type);
+    }
+
     public String getBody() {
         return this.findChildContent("body");
     }
@@ -24,6 +29,14 @@ public class Message extends Stanza {
             } catch (final IllegalArgumentException e) {
                 return null;
             }
+        }
+    }
+
+    public void setType(final Type type) {
+        if (type == null || type == Type.NORMAL) {
+            this.removeAttribute("type");
+        } else {
+            this.setAttribute("type", type.toString().toLowerCase(Locale.ROOT));
         }
     }
 

@@ -27,4 +27,10 @@ public class Reactions extends Extension {
     public void setId(String id) {
         this.setAttribute("id", id);
     }
+
+    public static Reactions to(final String id) {
+        final var reactions = new Reactions();
+        reactions.setId(id);
+        return reactions;
+    }
 }

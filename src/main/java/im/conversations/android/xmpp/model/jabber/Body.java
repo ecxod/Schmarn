@@ -10,6 +10,11 @@ public class Body extends Extension {
         super(Body.class);
     }
 
+    public Body(final String content) {
+        this();
+        setContent(content);
+    }
+
     public String getLang() {
         return this.getAttribute("xml:lang");
     }

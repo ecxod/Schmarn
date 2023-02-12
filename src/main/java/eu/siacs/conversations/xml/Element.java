@@ -1,6 +1,7 @@
 package eu.siacs.conversations.xml;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
@@ -159,18 +160,18 @@ public class Element {
         return content;
     }
 
-    public Element setAttribute(String name, String value) {
-        if (name != null && value != null) {
+    public Element setAttribute(final String name, final String value) {
+        Preconditions.checkArgument(name != null, "The attribute must have a name");
+        if (value == null) {
+            this.attributes.remove(name);
+        } else {
             this.attributes.put(name, value);
         }
         return this;
     }
 
-    public Element setAttribute(String name, Jid value) {
-        if (name != null && value != null) {
-            this.attributes.put(name, value.toEscapedString());
-        }
-        return this;
+    public Element setAttribute(final String name, final Jid value) {
+        return this.setAttribute(name, value == null ? null : value.toEscapedString());
     }
 
     public void removeAttribute(final String name) {

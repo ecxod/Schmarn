@@ -9,4 +9,9 @@ public class Reaction extends Extension {
     public Reaction() {
         super(Reaction.class);
     }
+
+    public Reaction(final String reaction) {
+        this();
+        setContent(reaction);
+    }
 }

@@ -81,6 +81,48 @@ public class TransformationTest {
     }
 
     @Test
+    public void multipleReactions() {
+        final var group = Jid.ofEscaped("a@group.example.com");
+        final var message = new Message(Message.Type.GROUPCHAT);
+        message.addExtension(new Body("Please give me a thumbs up"));
+        message.setFrom(group.withResource("user-a"));
+        this.transformer.transform(
+                Transformation.of(message, Instant.now(), REMOTE, "stanza-a", "id-user-a"));
+
+        final var reactionA = new Message(Message.Type.GROUPCHAT);
+        reactionA.setFrom(group.withResource("user-b"));
+        reactionA.addExtension(Reactions.to("stanza-a")).addExtension(new Reaction("Y"));
+        this.transformer.transform(
+                Transformation.of(reactionA, Instant.now(), REMOTE, "stanza-b", "id-user-b"));
+
+        final var reactionB = new Message(Message.Type.GROUPCHAT);
+        reactionB.setFrom(group.withResource("user-c"));
+        reactionB.addExtension(Reactions.to("stanza-a")).addExtension(new Reaction("Y"));
+        this.transformer.transform(
+                Transformation.of(reactionB, Instant.now(), REMOTE, "stanza-c", "id-user-c"));
+
+        final var reactionC = new Message(Message.Type.GROUPCHAT);
+        reactionC.setFrom(group.withResource("user-d"));
+        final var reactions = reactionC.addExtension(Reactions.to("stanza-a"));
+        reactions.addExtension(new Reaction("Y"));
+        reactions.addExtension(new Reaction("Z"));
+        this.transformer.transform(
+                Transformation.of(reactionC, Instant.now(), REMOTE, "stanza-d", "id-user-d"));
+
+        final var messages = database.messageDao().getMessages(1L);
+        Assert.assertEquals(1, messages.size());
+        final var dbMessage = Iterables.getOnlyElement(messages);
+        Assert.assertEquals(4, dbMessage.reactions.size());
+        final var aggregated = dbMessage.getAggregatedReactions();
+        final var mostFrequentReaction = Iterables.get(aggregated, 0);
+        Assert.assertEquals("Y", mostFrequentReaction.getKey());
+        Assert.assertEquals(3L, (long) mostFrequentReaction.getValue());
+        final var secondReaction = Iterables.get(aggregated, 1);
+        Assert.assertEquals("Z", secondReaction.getKey());
+        Assert.assertEquals(1L, (long) secondReaction.getValue());
+    }
+
+    @Test
     public void correctionBeforeOriginal() {
 
         final var messageCorrection = new Message();
