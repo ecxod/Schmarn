@@ -70,7 +70,6 @@ public final class Namespace {
     public static final String MUC = "http://jabber.org/protocol/muc";
     public static final String MUC_USER = MUC + "#user";
     public static final String NICK = "http://jabber.org/protocol/nick";
-    public static final String REACTIONS = "urn:xmpp:reactions:0";
     public static final String OCCUPANT_ID = "urn:xmpp:occupant-id:0";
     public static final String OMEMO_DTLS_SRTP_VERIFICATION =
             "http://gultsch.de/xmpp/drafts/omemo/dlts-srtp-verification";
@@ -88,8 +87,10 @@ public final class Namespace {
     public static final String PUB_SUB_PERSISTENT_ITEMS = PUB_SUB + "#persistent-items";
     public static final String PUB_SUB_PUBLISH_OPTIONS = PUB_SUB + "#publish-options";
     public static final String PUSH = "urn:xmpp:push:0";
+    public static final String REACTIONS = "urn:xmpp:reactions:0";
     public static final String REGISTER = "jabber:iq:register";
     public static final String REGISTER_STREAM_FEATURE = "http://jabber.org/features/iq-register";
+    public static final String REPLY = "urn:xmpp:reply:0";
     public static final String ROSTER = "jabber:iq:roster";
     public static final String SASL = "urn:ietf:params:xml:ns:xmpp-sasl";
     public static final String SASL_2 = "urn:xmpp:sasl:2";

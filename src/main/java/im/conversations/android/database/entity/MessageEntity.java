@@ -24,8 +24,17 @@ import java.util.Objects;
                     parentColumns = {"id"},
                     childColumns = {"latestVersion"},
                     onDelete = ForeignKey.CASCADE),
+            @ForeignKey(
+                    entity = MessageEntity.class,
+                    parentColumns = {"id"},
+                    childColumns = {"inReplyToMessageEntityId"},
+                    onDelete = ForeignKey.SET_NULL),
         },
-        indices = {@Index(value = "chatId"), @Index(value = "latestVersion")})
+        indices = {
+            @Index(value = "chatId"),
+            @Index(value = "latestVersion"),
+            @Index("inReplyToMessageEntityId")
+        })
 public class MessageEntity {
 
     @PrimaryKey(autoGenerate = true)
@@ -54,6 +63,10 @@ public class MessageEntity {
     @Nullable public Long latestVersion;
 
     public boolean acknowledged = false;
+
+    public String inReplyToMessageId;
+    public String inReplyToStanzaId;
+    @Nullable public Long inReplyToMessageEntityId;
 
     public static MessageEntity of(final long chatId, final Transformation transformation) {
         final var entity = new MessageEntity();

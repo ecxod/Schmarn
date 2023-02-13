@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.MessageContentEntity;
+import im.conversations.android.database.entity.MessageEntity;
 import im.conversations.android.database.entity.MessageReactionEntity;
 import java.time.Instant;
 import java.util.Collection;
@@ -28,6 +29,13 @@ public class MessageWithContentReactions {
 
     public Modification modification;
     public long version;
+    public Long inReplyToMessageEntityId;
+
+    @Relation(
+            entity = MessageEntity.class,
+            parentColumn = "inReplyToMessageEntityId",
+            entityColumn = "id")
+    public EmbeddedMessage inReplyTo;
 
     @Relation(
             entity = MessageContentEntity.class,

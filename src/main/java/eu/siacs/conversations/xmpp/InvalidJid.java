@@ -135,7 +135,7 @@ public class InvalidJid implements Jid {
     }
 
     public static boolean isValid(Jid jid) {
-        return !(jid != null && jid instanceof InvalidJid);
+        return !(jid instanceof InvalidJid);
     }
 
     public static boolean invalid(final Jid jid) {

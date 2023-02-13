@@ -399,8 +399,45 @@ public abstract class MessageDao {
     @Query(
             "SELECT message.id as"
                 + " id,sentAt,outgoing,toBare,toResource,fromBare,fromResource,modification,latestVersion"
-                + " as version FROM message JOIN message_version ON"
+                + " as version,inReplyToMessageEntityId FROM message JOIN message_version ON"
                 + " message.latestVersion=message_version.id WHERE message.chatId=:chatId AND"
                 + " latestVersion IS NOT NULL ORDER BY message.receivedAt")
     public abstract List<MessageWithContentReactions> getMessages(long chatId);
+
+    public void setInReplyTo(
+            ChatIdentifier chat,
+            MessageIdentifier messageIdentifier,
+            Message.Type messageType,
+            final Jid to,
+            String inReplyTo) {
+        if (messageType == Message.Type.GROUPCHAT) {
+            final Long messageEntityId = getMessageByStanzaId(chat.id, inReplyTo);
+            setInReplyToStanzaId(messageIdentifier.id, inReplyTo, messageEntityId);
+        } else {
+            final Long messageEntityId = getMessageByMessageId(chat.id, to.asBareJid(), inReplyTo);
+            setInReplyToMessageId(messageIdentifier.id, inReplyTo, messageEntityId);
+        }
+    }
+
+    @Query(
+            "UPDATE message SET"
+                + " inReplyToMessageId=null,inReplyToStanzaId=:stanzaId,inReplyToMessageEntityId=:inReplyToMessageEntityId"
+                + " WHERE id=:id")
+    protected abstract void setInReplyToStanzaId(
+            final long id, String stanzaId, long inReplyToMessageEntityId);
+
+    @Query(
+            "UPDATE message SET"
+                + " inReplyToMessageId=:messageId,inReplyToStanzaId=null,inReplyToMessageEntityId=:inReplyToMessageEntityId"
+                + " WHERE id=:id")
+    protected abstract void setInReplyToMessageId(
+            final long id, String messageId, long inReplyToMessageEntityId);
+
+    @Query(
+            "SELECT id FROM message WHERE chatId=:chatId AND fromBare=:fromBare AND"
+                    + " messageId=:messageId")
+    protected abstract Long getMessageByMessageId(long chatId, Jid fromBare, String messageId);
+
+    @Query("SELECT id FROM message WHERE chatId=:chatId AND stanzaId=:stanzaId")
+    protected abstract Long getMessageByStanzaId(long chatId, String stanzaId);
 }

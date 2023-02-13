@@ -9,6 +9,7 @@ import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.IDs;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.entity.AccountEntity;
+import im.conversations.android.database.model.EmbeddedMessage;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.Transformation;
 import im.conversations.android.transformer.Transformer;
@@ -16,6 +17,7 @@ import im.conversations.android.xmpp.model.correction.Replace;
 import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.reactions.Reaction;
 import im.conversations.android.xmpp.model.reactions.Reactions;
+import im.conversations.android.xmpp.model.reply.Reply;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
@@ -370,5 +372,38 @@ public class TransformationTest {
         Assert.assertEquals(Modification.ORIGINAL, dbMessage.modification);
         Assert.assertEquals(
                 "Please give me a thumbs up", Iterables.getOnlyElement(dbMessage.contents).body);
+    }
+
+    @Test
+    public void inReplyTo() {
+        final var m1 = new Message();
+        m1.setId("1");
+        m1.setTo(ACCOUNT);
+        m1.setFrom(REMOTE.withResource("junit"));
+        m1.addExtension(new Body("Hi. How are you?"));
+
+        this.transformer.transform(Transformation.of(m1, Instant.now(), REMOTE, "stanza-a", null));
+
+        final var m2 = new Message();
+        m2.setId("2");
+        m2.setTo(REMOTE);
+        m2.setFrom(ACCOUNT);
+        m2.addExtension(new Body("I am fine."));
+        final var reply = m2.addExtension(new Reply());
+        reply.setId("1");
+        reply.setTo(REMOTE);
+
+        this.transformer.transform(Transformation.of(m2, Instant.now(), REMOTE, "stanza-b", null));
+
+        final var messages = database.messageDao().getMessages(1L);
+        Assert.assertEquals(2, messages.size());
+        final var response = Iterables.get(messages, 1);
+        Assert.assertNotNull(response.inReplyToMessageEntityId);
+        final EmbeddedMessage embeddedMessage = response.inReplyTo;
+        Assert.assertNotNull(embeddedMessage);
+        Assert.assertEquals(REMOTE, embeddedMessage.fromBare);
+        Assert.assertEquals(1L, embeddedMessage.contents.size());
+        Assert.assertEquals(
+                "Hi. How are you?", Iterables.getOnlyElement(embeddedMessage.contents).body);
     }
 }

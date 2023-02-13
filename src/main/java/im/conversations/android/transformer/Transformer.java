@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import eu.siacs.conversations.xmpp.InvalidJid;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
@@ -19,6 +20,7 @@ import im.conversations.android.xmpp.model.markers.Displayed;
 import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
 import im.conversations.android.xmpp.model.reactions.Reactions;
+import im.conversations.android.xmpp.model.reply.Reply;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Arrays;
 import java.util.Collection;
@@ -113,6 +115,14 @@ public class Transformer {
                 return false;
             }
             database.messageDao().insertMessageContent(messageIdentifier.version, contents);
+            final var reply = transformation.getExtension(Reply.class);
+            if (Objects.nonNull(reply)
+                    && Objects.nonNull(reply.getId())
+                    && InvalidJid.isValid(reply.getTo())) {
+                database.messageDao()
+                        .setInReplyTo(
+                                chat, messageIdentifier, messageType, reply.getTo(), reply.getId());
+            }
             return true;
         }
         return true;
