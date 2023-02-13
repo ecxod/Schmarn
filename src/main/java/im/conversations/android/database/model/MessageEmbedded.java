@@ -6,7 +6,7 @@ import im.conversations.android.database.entity.MessageContentEntity;
 import java.time.Instant;
 import java.util.List;
 
-public class EmbeddedMessage {
+public class MessageEmbedded {
 
     public long id;
     public Jid fromBare;

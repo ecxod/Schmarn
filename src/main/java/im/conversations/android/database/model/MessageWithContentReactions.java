@@ -8,6 +8,7 @@ import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
 import im.conversations.android.database.entity.MessageReactionEntity;
+import im.conversations.android.database.entity.MessageStateEntity;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -35,7 +36,7 @@ public class MessageWithContentReactions {
             entity = MessageEntity.class,
             parentColumn = "inReplyToMessageEntityId",
             entityColumn = "id")
-    public EmbeddedMessage inReplyTo;
+    public MessageEmbedded inReplyTo;
 
     @Relation(
             entity = MessageContentEntity.class,
@@ -48,6 +49,12 @@ public class MessageWithContentReactions {
             parentColumn = "id",
             entityColumn = "messageEntityId")
     public List<MessageReaction> reactions;
+
+    @Relation(
+            entity = MessageStateEntity.class,
+            parentColumn = "version",
+            entityColumn = "messageVersionId")
+    public List<MessageState> states;
 
     public Set<Map.Entry<String, Integer>> getAggregatedReactions() {
         final Map<String, Integer> aggregatedReactions =

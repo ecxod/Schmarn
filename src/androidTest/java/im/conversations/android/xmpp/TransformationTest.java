@@ -9,7 +9,7 @@ import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.IDs;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.entity.AccountEntity;
-import im.conversations.android.database.model.EmbeddedMessage;
+import im.conversations.android.database.model.MessageEmbedded;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.Transformation;
 import im.conversations.android.transformer.Transformer;
@@ -17,6 +17,7 @@ import im.conversations.android.xmpp.model.correction.Replace;
 import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.reactions.Reaction;
 import im.conversations.android.xmpp.model.reactions.Reactions;
+import im.conversations.android.xmpp.model.receipts.Received;
 import im.conversations.android.xmpp.model.reply.Reply;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
@@ -399,11 +400,34 @@ public class TransformationTest {
         Assert.assertEquals(2, messages.size());
         final var response = Iterables.get(messages, 1);
         Assert.assertNotNull(response.inReplyToMessageEntityId);
-        final EmbeddedMessage embeddedMessage = response.inReplyTo;
+        final MessageEmbedded embeddedMessage = response.inReplyTo;
         Assert.assertNotNull(embeddedMessage);
         Assert.assertEquals(REMOTE, embeddedMessage.fromBare);
         Assert.assertEquals(1L, embeddedMessage.contents.size());
         Assert.assertEquals(
                 "Hi. How are you?", Iterables.getOnlyElement(embeddedMessage.contents).body);
+    }
+
+    @Test
+    public void messageWithReceipt() {
+        final var m1 = new Message();
+        m1.setId("1");
+        m1.setTo(REMOTE);
+        m1.setFrom(ACCOUNT.withResource("junit"));
+        m1.addExtension(new Body("Hi. How are you?"));
+
+        this.transformer.transform(Transformation.of(m1, Instant.now(), REMOTE, null, null));
+
+        final var m2 = new Message();
+        m2.setTo(ACCOUNT.withResource("junit"));
+        m2.setFrom(REMOTE.withResource("junit"));
+        m2.addExtension(new Received()).setId("1");
+
+        this.transformer.transform(Transformation.of(m2, Instant.now(), REMOTE, null, null));
+
+        final var messages = database.messageDao().getMessages(1L);
+        final var message = Iterables.getOnlyElement(messages);
+
+        Assert.assertEquals(1L, message.states.size());
     }
 }
