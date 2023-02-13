@@ -91,6 +91,7 @@ public final class Namespace {
     public static final String REGISTER = "jabber:iq:register";
     public static final String REGISTER_STREAM_FEATURE = "http://jabber.org/features/iq-register";
     public static final String REPLY = "urn:xmpp:reply:0";
+    public static final String RETRACT = "urn:xmpp:message-retract:0";
     public static final String ROSTER = "jabber:iq:roster";
     public static final String SASL = "urn:ietf:params:xml:ns:xmpp-sasl";
     public static final String SASL_2 = "urn:xmpp:sasl:2";
