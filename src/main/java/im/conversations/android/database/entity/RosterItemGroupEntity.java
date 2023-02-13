@@ -23,4 +23,11 @@ public class RosterItemGroupEntity {
     @NonNull public Long rosterItemId;
 
     public String name;
+
+    public static RosterItemGroupEntity of(long rosterItemId, final String name) {
+        final var entity = new RosterItemGroupEntity();
+        entity.rosterItemId = rosterItemId;
+        entity.name = name;
+        return entity;
+    }
 }

@@ -6,8 +6,10 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
+import com.google.common.collect.Collections2;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.RosterItemEntity;
+import im.conversations.android.database.entity.RosterItemGroupEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.model.roster.Item;
 import java.util.Collection;
@@ -33,7 +35,9 @@ public abstract class RosterDao {
         clear(account.id);
         for (final Item item : rosterItems) {
             final long id = insert(RosterItemEntity.of(account.id, item));
-            // TODO insert groups
+            insertRosterGroups(
+                    Collections2.transform(
+                            item.getGroups(), name -> RosterItemGroupEntity.of(id, name)));
         }
         setRosterVersion(account.id, version);
     }
@@ -50,8 +54,13 @@ public abstract class RosterDao {
             }
             final RosterItemEntity entity = RosterItemEntity.of(account.id, item);
             final long id = insert(entity);
-            // TODO groups
+            insertRosterGroups(
+                    Collections2.transform(
+                            item.getGroups(), name -> RosterItemGroupEntity.of(id, name)));
         }
         setRosterVersion(account.id, version);
     }
+
+    @Insert
+    protected abstract void insertRosterGroups(Collection<RosterItemGroupEntity> entities);
 }
