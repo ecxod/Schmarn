@@ -153,7 +153,7 @@ public class TransformationTest {
 
         final var message = Iterables.getOnlyElement(messages);
         final var onlyContent = Iterables.getOnlyElement(message.contents);
-        Assert.assertEquals(Modification.EDIT, message.modification);
+        Assert.assertEquals(Modification.CORRECTION, message.modification);
         Assert.assertEquals("Hi example!", onlyContent.body);
     }
 
@@ -187,7 +187,188 @@ public class TransformationTest {
 
         final var message = Iterables.getOnlyElement(messages);
         final var onlyContent = Iterables.getOnlyElement(message.contents);
-        Assert.assertEquals(Modification.EDIT, message.modification);
+        Assert.assertEquals(Modification.CORRECTION, message.modification);
         Assert.assertEquals("Hi example!", onlyContent.body);
+    }
+
+    @Test
+    public void replacingReactions() {
+        final var group = Jid.ofEscaped("a@group.example.com");
+        final var message = new Message(Message.Type.GROUPCHAT);
+        message.addExtension(new Body("Please give me a thumbs up"));
+        message.setFrom(group.withResource("user-a"));
+        this.transformer.transform(
+                Transformation.of(message, Instant.now(), REMOTE, "stanza-a", "id-user-a"));
+
+        final var reactionA = new Message(Message.Type.GROUPCHAT);
+        reactionA.setFrom(group.withResource("user-b"));
+        reactionA.addExtension(Reactions.to("stanza-a")).addExtension(new Reaction("N"));
+        this.transformer.transform(
+                Transformation.of(reactionA, Instant.now(), REMOTE, "stanza-b", "id-user-b"));
+
+        final var reactionB = new Message(Message.Type.GROUPCHAT);
+        reactionB.setFrom(group.withResource("user-b"));
+        reactionB.addExtension(Reactions.to("stanza-a")).addExtension(new Reaction("Y"));
+        this.transformer.transform(
+                Transformation.of(reactionB, Instant.now(), REMOTE, "stanza-c", "id-user-b"));
+
+        final var messages = database.messageDao().getMessages(1L);
+        Assert.assertEquals(1, messages.size());
+        final var dbMessage = Iterables.getOnlyElement(messages);
+        Assert.assertEquals(1, dbMessage.reactions.size());
+    }
+
+    @Test
+    public void twoCorrectionsOneReactionBeforeOriginalInGroupChat() {
+        final var group = Jid.ofEscaped("a@group.example.com");
+        final var ogStanzaId = "og-stanza-id";
+        final var ogMessageId = "og-message-id";
+
+        // first correction
+        final var m1 = new Message(Message.Type.GROUPCHAT);
+        // m1.setId(ogMessageId);
+        m1.addExtension(new Body("Please give me an thumbs up"));
+        m1.addExtension(new Replace()).setId(ogMessageId);
+        m1.setFrom(group.withResource("user-a"));
+        this.transformer.transform(
+                Transformation.of(
+                        m1,
+                        Instant.ofEpochMilli(2000),
+                        REMOTE,
+                        "irrelevant-stanza-id1",
+                        "id-user-a"));
+
+        // second correction
+        final var m2 = new Message(Message.Type.GROUPCHAT);
+        // m2.setId(ogMessageId);
+        m2.addExtension(new Body("Please give me a thumbs up"));
+        m2.addExtension(new Replace()).setId(ogMessageId);
+        m2.setFrom(group.withResource("user-a"));
+        this.transformer.transform(
+                Transformation.of(
+                        m2,
+                        Instant.ofEpochMilli(3000),
+                        REMOTE,
+                        "irrelevant-stanza-id2",
+                        "id-user-a"));
+
+        // a reaction
+        final var reactionB = new Message(Message.Type.GROUPCHAT);
+        reactionB.setFrom(group.withResource("user-b"));
+        reactionB.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
+        this.transformer.transform(
+                Transformation.of(
+                        reactionB, Instant.now(), REMOTE, "irrelevant-stanza-id3", "id-user-b"));
+
+        // the original message
+        final var m4 = new Message(Message.Type.GROUPCHAT);
+        m4.setId(ogMessageId);
+        m4.addExtension(new Body("Please give me thumbs up"));
+        m4.setFrom(group.withResource("user-a"));
+        this.transformer.transform(
+                Transformation.of(m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
+
+        final var messages = database.messageDao().getMessages(1L);
+        Assert.assertEquals(1, messages.size());
+        final var dbMessage = Iterables.getOnlyElement(messages);
+        Assert.assertEquals(1, dbMessage.reactions.size());
+        Assert.assertEquals(Modification.CORRECTION, dbMessage.modification);
+        Assert.assertEquals(
+                "Please give me a thumbs up", Iterables.getOnlyElement(dbMessage.contents).body);
+    }
+
+    @Test
+    public void twoReactionsOneCorrectionBeforeOriginalInGroupChat() {
+        final var group = Jid.ofEscaped("a@group.example.com");
+        final var ogStanzaId = "og-stanza-id";
+        final var ogMessageId = "og-message-id";
+
+        // first reaction
+        final var reactionA = new Message(Message.Type.GROUPCHAT);
+        reactionA.setFrom(group.withResource("user-b"));
+        reactionA.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
+        this.transformer.transform(
+                Transformation.of(
+                        reactionA, Instant.now(), REMOTE, "irrelevant-stanza-id1", "id-user-b"));
+
+        // second reaction
+        final var reactionB = new Message(Message.Type.GROUPCHAT);
+        reactionB.setFrom(group.withResource("user-c"));
+        reactionB.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
+        this.transformer.transform(
+                Transformation.of(
+                        reactionB, Instant.now(), REMOTE, "irrelevant-stanza-id2", "id-user-c"));
+
+        // a correction
+        final var m1 = new Message(Message.Type.GROUPCHAT);
+        m1.addExtension(new Body("Please give me a thumbs up"));
+        m1.addExtension(new Replace()).setId(ogMessageId);
+        m1.setFrom(group.withResource("user-a"));
+        this.transformer.transform(
+                Transformation.of(
+                        m1,
+                        Instant.ofEpochMilli(2000),
+                        REMOTE,
+                        "irrelevant-stanza-id3",
+                        "id-user-a"));
+
+        // the original message
+        final var m4 = new Message(Message.Type.GROUPCHAT);
+        m4.setId(ogMessageId);
+        m4.addExtension(new Body("Please give me thumbs up (Typo)"));
+        m4.setFrom(group.withResource("user-a"));
+        this.transformer.transform(
+                Transformation.of(m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
+
+        final var messages = database.messageDao().getMessages(1L);
+        Assert.assertEquals(1, messages.size());
+        final var dbMessage = Iterables.getOnlyElement(messages);
+        Assert.assertEquals(2, dbMessage.reactions.size());
+        final var onlyReaction = Iterables.getOnlyElement(dbMessage.getAggregatedReactions());
+        Assert.assertEquals(2L, (long) onlyReaction.getValue());
+        Assert.assertEquals(Modification.CORRECTION, dbMessage.modification);
+        Assert.assertEquals(
+                "Please give me a thumbs up", Iterables.getOnlyElement(dbMessage.contents).body);
+    }
+
+    @Test
+    public void twoReactionsInGroupChat() {
+        final var group = Jid.ofEscaped("a@group.example.com");
+        final var ogStanzaId = "og-stanza-id";
+        final var ogMessageId = "og-message-id";
+
+        // the original message
+        final var m4 = new Message(Message.Type.GROUPCHAT);
+        m4.setId(ogMessageId);
+        m4.addExtension(new Body("Please give me a thumbs up"));
+        m4.setFrom(group.withResource("user-a"));
+        this.transformer.transform(
+                Transformation.of(m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
+
+        // first reaction
+        final var reactionA = new Message(Message.Type.GROUPCHAT);
+        reactionA.setFrom(group.withResource("user-b"));
+        reactionA.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
+        this.transformer.transform(
+                Transformation.of(
+                        reactionA, Instant.now(), REMOTE, "irrelevant-stanza-id1", "id-user-b"));
+
+        // second reaction
+        final var reactionB = new Message(Message.Type.GROUPCHAT);
+        reactionB.setFrom(group.withResource("user-c"));
+        reactionB.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
+        this.transformer.transform(
+                Transformation.of(
+                        reactionB, Instant.now(), REMOTE, "irrelevant-stanza-id2", "id-user-c"));
+
+        final var messages = database.messageDao().getMessages(1L);
+        Assert.assertEquals(1, messages.size());
+        final var dbMessage = Iterables.getOnlyElement(messages);
+        Assert.assertEquals(2, dbMessage.reactions.size());
+        final var onlyReaction = Iterables.getOnlyElement(dbMessage.getAggregatedReactions());
+        Assert.assertEquals(2L, (long) onlyReaction.getValue());
+        Assert.assertEquals(Modification.ORIGINAL, dbMessage.modification);
+        Assert.assertEquals(
+                "Please give me a thumbs up", Iterables.getOnlyElement(dbMessage.contents).body);
     }
 }

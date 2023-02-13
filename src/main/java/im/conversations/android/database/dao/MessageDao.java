@@ -74,10 +74,14 @@ public abstract class MessageDao {
                 get(
                         chatIdentifier.id,
                         transformation.fromBare(),
+                        transformation.occupantId,
                         transformation.stanzaId,
                         transformation.messageId);
         if (messageIdentifier != null) {
             if (messageIdentifier.isStub()) {
+                if (transformation.type == Message.Type.GROUPCHAT) {
+                    mergeMessageStubs(chatIdentifier, messageIdentifier, transformation);
+                }
                 LOGGER.info(
                         "Found stub for stanzaId '{}' and messageId '{}'",
                         transformation.stanzaId,
@@ -93,9 +97,11 @@ public abstract class MessageDao {
                 updatedEntity.id = messageIdentifier.id;
                 updatedEntity.latestVersion = getLatestVersion(messageIdentifier.id);
                 LOGGER.info(
-                        "Created original version {} and updated latest version to {}",
+                        "Created original version {} and updated latest version to {} for"
+                                + " messageEntityId {}",
                         originalVersionId,
-                        updatedEntity.latestVersion);
+                        updatedEntity.latestVersion,
+                        messageIdentifier.id);
                 update(updatedEntity);
                 return new MessageIdentifier(
                         updatedEntity.id,
@@ -128,6 +134,52 @@ public abstract class MessageDao {
                 messageVersionId);
     }
 
+    private void mergeMessageStubs(
+            ChatIdentifier chatIdentifier,
+            MessageIdentifier messageIdentifier,
+            final Transformation transformation) {
+        final Long stub;
+        if (messageIdentifier.messageId == null && transformation.messageId != null) {
+            stub = getMessageStubByMessageId(chatIdentifier.id, transformation.messageId);
+        } else if (messageIdentifier.stanzaId == null && transformation.stanzaId != null) {
+            stub = getMessageStubByStanzaId(chatIdentifier.id, transformation.stanzaId);
+        } else {
+            return;
+        }
+        if (stub == null) {
+            return;
+        }
+        LOGGER.info("Updating message.id in dangling stub {} => {}", stub, messageIdentifier.id);
+        updateMessageEntityIdInReactions(stub, messageIdentifier.id);
+        updateMessageEntityIdInVersions(stub, messageIdentifier.id);
+        deleteMessageEntity(stub);
+    }
+
+    @Query(
+            "UPDATE message_reaction SET messageEntityId=:newMessageEntityId WHERE"
+                    + " messageEntityId=:oldMessageEntityId")
+    protected abstract void updateMessageEntityIdInReactions(
+            long oldMessageEntityId, Long newMessageEntityId);
+
+    @Query(
+            "UPDATE message_version SET messageEntityId=:newMessageEntityId WHERE"
+                    + " messageEntityId=:oldMessageEntityId")
+    protected abstract void updateMessageEntityIdInVersions(
+            long oldMessageEntityId, Long newMessageEntityId);
+
+    @Query("DELETE FROM message WHERE id=:messageEntityId")
+    protected abstract void deleteMessageEntity(final long messageEntityId);
+
+    @Query(
+            "SELECT id FROM message WHERE chatId=:chatId AND messageId=:messageId AND stanzaId IS"
+                    + " NULL AND latestVersion IS NULL")
+    protected abstract Long getMessageStubByMessageId(long chatId, String messageId);
+
+    @Query(
+            "SELECT id FROM message WHERE chatId=:chatId AND stanzaId=:stanzaId AND messageId IS"
+                    + " NULL AND latestVersion IS NULL")
+    protected abstract Long getMessageStubByStanzaId(long chatId, String stanzaId);
+
     // this gets either a message or a stub.
     // stubs are recognized by latestVersion=NULL
     // when found by stanzaId the stanzaId must either by verified or belonging to a stub
@@ -135,11 +187,12 @@ public abstract class MessageDao {
     // we only look up stubs
     @Query(
             "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
-                + " chatId=:chatId AND (fromBare=:fromBare OR fromBare IS NULL) AND ((stanzaId IS"
-                + " NOT NULL AND stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion IS"
-                + " NULL)) OR (stanzaId IS NULL AND messageId=:messageId AND latestVersion IS"
-                + " NULL))")
-    abstract MessageIdentifier get(long chatId, Jid fromBare, String stanzaId, String messageId);
+                + " chatId=:chatId AND (fromBare=:fromBare OR fromBare IS NULL) AND"
+                + " (occupantId=:occupantId OR occupantId IS NULL) AND ((stanzaId IS NOT NULL AND"
+                + " stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion IS NULL)) OR"
+                + " (stanzaId IS NULL AND messageId=:messageId AND latestVersion IS NULL))")
+    abstract MessageIdentifier get(
+            long chatId, Jid fromBare, String occupantId, String stanzaId, String messageId);
 
     public MessageIdentifier getOrCreateVersion(
             ChatIdentifier chat,
@@ -149,15 +202,19 @@ public abstract class MessageDao {
         Preconditions.checkArgument(
                 messageId != null, "A modification must reference a message id");
         final MessageIdentifier messageIdentifier;
-        if (transformation.occupantId == null) {
-            messageIdentifier = getByMessageId(chat.id, transformation.fromBare(), messageId);
-        } else {
+        // TODO use type for condition and then null check occupantID
+        if (transformation.type == Message.Type.GROUPCHAT) {
+            Preconditions.checkNotNull(
+                    transformation.occupantId,
+                    "To create a version of a group chat message occupant id must be set");
             messageIdentifier =
                     getByOccupantIdAndMessageId(
                             chat.id,
                             transformation.fromBare(),
                             transformation.occupantId,
                             messageId);
+        } else {
+            messageIdentifier = getByMessageId(chat.id, transformation.fromBare(), messageId);
         }
         if (messageIdentifier == null) {
             LOGGER.info(
@@ -310,12 +367,33 @@ public abstract class MessageDao {
         final Message.Type messageType = transformation.type;
         final MessageIdentifier messageIdentifier =
                 getOrCreateStub(chat, messageType, reactions.getId());
-        // TODO delete old reactions
+        if (messageType == Message.Type.GROUPCHAT) {
+            Preconditions.checkNotNull(
+                    transformation.occupantId,
+                    "OccupantId must not be null when processing reactions in group chats");
+            deleteReactionsByOccupantId(messageIdentifier.id, transformation.occupantId);
+        } else {
+            deleteReactionsByFromBare(messageIdentifier.id, transformation.fromBare());
+        }
+        LOGGER.info(
+                "Inserting reaction from {} to messageEntityId {}",
+                transformation.from,
+                messageIdentifier.id);
         insertReactions(
                 Collections2.transform(
                         reactions.getReactions(),
                         r -> MessageReactionEntity.of(messageIdentifier.id, r, transformation)));
     }
+
+    @Query(
+            "DELETE FROM message_reaction WHERE messageEntityId=:messageEntityId AND"
+                    + " occupantId=:occupantId")
+    protected abstract void deleteReactionsByOccupantId(long messageEntityId, String occupantId);
+
+    @Query(
+            "DELETE FROM message_reaction WHERE messageEntityId=:messageEntityId AND"
+                    + " reactionBy=:fromBare")
+    protected abstract void deleteReactionsByFromBare(long messageEntityId, Jid fromBare);
 
     @Transaction
     @Query(

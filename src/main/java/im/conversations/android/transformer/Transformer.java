@@ -102,7 +102,7 @@ public class Transformer {
                                             chat,
                                             transformation,
                                             messageCorrection.getId(),
-                                            Modification.EDIT);
+                                            Modification.CORRECTION);
 
                 } else {
                     messageIdentifier =
