@@ -1,5 +1,8 @@
 package im.conversations.android.database.model;
 
+import com.google.common.collect.ImmutableList;
+import java.util.List;
+
 public class MessageContent {
 
     public final String language;
@@ -24,4 +27,7 @@ public class MessageContent {
     public static MessageContent file(final String url) {
         return new MessageContent(null, PartType.FILE, null, url);
     }
+
+    public static final List<MessageContent> RETRACTION =
+            ImmutableList.of(new MessageContent(null, PartType.RETRACTION, null, null));
 }

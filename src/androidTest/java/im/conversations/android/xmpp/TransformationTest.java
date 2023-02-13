@@ -11,6 +11,7 @@ import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.model.MessageEmbedded;
 import im.conversations.android.database.model.Modification;
+import im.conversations.android.database.model.PartType;
 import im.conversations.android.transformer.Transformation;
 import im.conversations.android.transformer.Transformer;
 import im.conversations.android.xmpp.model.correction.Replace;
@@ -19,6 +20,7 @@ import im.conversations.android.xmpp.model.reactions.Reaction;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.receipts.Received;
 import im.conversations.android.xmpp.model.reply.Reply;
+import im.conversations.android.xmpp.model.retract.Retract;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
@@ -429,5 +431,28 @@ public class TransformationTest {
         final var message = Iterables.getOnlyElement(messages);
 
         Assert.assertEquals(1L, message.states.size());
+    }
+
+    @Test
+    public void messageAndRetraction() {
+        final var m1 = new Message();
+        m1.setTo(ACCOUNT);
+        m1.setFrom(REMOTE.withResource("junit"));
+        m1.setId("m1");
+        m1.addExtension(new Body("It is raining outside"));
+
+        this.transformer.transform(Transformation.of(m1, Instant.now(), REMOTE, null, null));
+
+        final var m2 = new Message();
+        m2.setTo(ACCOUNT);
+        m2.setFrom(REMOTE.withResource("junit"));
+        m2.addExtension(new Retract()).setId("m1");
+
+        this.transformer.transform(Transformation.of(m2, Instant.now(), REMOTE, null, null));
+
+        final var messages = database.messageDao().getMessages(1L);
+        final var message = Iterables.getOnlyElement(messages);
+        Assert.assertEquals(Modification.RETRACTION, message.modification);
+        Assert.assertEquals(PartType.RETRACTION, Iterables.getOnlyElement(message.contents).type);
     }
 }

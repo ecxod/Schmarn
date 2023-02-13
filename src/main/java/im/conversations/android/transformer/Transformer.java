@@ -21,6 +21,7 @@ import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.reply.Reply;
+import im.conversations.android.xmpp.model.retract.Retract;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,6 +75,8 @@ public class Transformer {
         }
         final Replace messageCorrection = transformation.getExtension(Replace.class);
         final Reactions reactions = transformation.getExtension(Reactions.class);
+        final Retract retract = transformation.getExtension(Retract.class);
+        // TODO we need to remove fallbacks for reactions, retractions and potentially other things
         final List<MessageContent> contents = parseContent(transformation);
 
         final boolean identifiableSender =
@@ -85,10 +88,21 @@ public class Transformer {
                         && identifiableSender;
         final boolean isMessageCorrection =
                 Objects.nonNull(messageCorrection)
-                        && messageCorrection.getId() != null
+                        && Objects.nonNull(messageCorrection.getId())
                         && identifiableSender;
-
-        if (contents.isEmpty()) {
+        final boolean isRetraction =
+                Objects.nonNull(retract) && Objects.nonNull(retract.getId()) && identifiableSender;
+        // TODO in a way it would be more appropriate to move this into the contents.isEmpty block
+        // but for that to work we would need to properly ignore the fallback body
+        if (isRetraction) {
+            final var messageIdentifier =
+                    database.messageDao()
+                            .getOrCreateVersion(
+                                    chat, transformation, retract.getId(), Modification.RETRACTION);
+            database.messageDao()
+                    .insertMessageContent(messageIdentifier.version, MessageContent.RETRACTION);
+            return true;
+        } else if (contents.isEmpty()) {
             LOGGER.info("Received message from {} w/o contents", transformation.from);
             transformMessageState(chat, transformation);
             if (isReaction) {

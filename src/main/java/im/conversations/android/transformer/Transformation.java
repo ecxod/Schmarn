@@ -18,6 +18,7 @@ import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.reply.Reply;
+import im.conversations.android.xmpp.model.retract.Retract;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
 import java.util.Arrays;
@@ -38,7 +39,8 @@ public class Transformation {
                     Displayed.class,
                     Replace.class,
                     Reactions.class,
-                    Reply.class);
+                    Reply.class,
+                    Retract.class);
 
     public final Instant receivedAt;
     public final Jid to;
