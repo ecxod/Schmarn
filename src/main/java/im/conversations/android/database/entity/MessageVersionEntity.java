@@ -5,9 +5,11 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
+import com.google.common.base.Preconditions;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.Transformation;
+import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
 
 @Entity(
@@ -43,6 +45,12 @@ public class MessageVersionEntity {
             long messageEntityId,
             final Modification modification,
             final Transformation transformation) {
+        if (transformation.type == Message.Type.GROUPCHAT
+                && modification != Modification.ORIGINAL) {
+            Preconditions.checkState(
+                    transformation.occupantId != null,
+                    "Message versions other than original must have an occupantId in group chats");
+        }
         final var entity = new MessageVersionEntity();
         entity.messageEntityId = messageEntityId;
         entity.messageId = transformation.messageId;
@@ -50,6 +58,7 @@ public class MessageVersionEntity {
         entity.modification = modification;
         entity.modifiedBy = transformation.fromBare();
         entity.modifiedByResource = transformation.fromResource();
+        entity.occupantId = transformation.occupantId;
         entity.receivedAt = transformation.receivedAt;
         return entity;
     }

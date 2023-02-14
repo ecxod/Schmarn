@@ -92,6 +92,7 @@ public class MessageEntity {
         entity.fromBare = transformation.fromBare();
         entity.messageId = messageId;
         entity.stanzaIdVerified = false;
+        entity.occupantId = transformation.occupantId;
         return entity;
     }
 
