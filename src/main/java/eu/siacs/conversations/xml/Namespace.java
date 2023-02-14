@@ -16,6 +16,7 @@ public final class Namespace {
     public static final String BOOKMARKS2_COMPAT = BOOKMARKS2 + "#compat";
     public static final String BOOKMARKS_CONVERSION = "urn:xmpp:bookmarks-conversion:0";
     public static final String BYTE_STREAMS = "http://jabber.org/protocol/bytestreams";
+    public static final String CAPTCHA = "urn:xmpp:captcha";
     public static final String CARBONS = "urn:xmpp:carbons:2";
     public static final String CHANNEL_BINDING = "urn:xmpp:sasl-cb:0";
     public static final String CHAT_MARKERS = "urn:xmpp:chat-markers:0";

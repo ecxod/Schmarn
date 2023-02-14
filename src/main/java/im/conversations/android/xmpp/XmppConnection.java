@@ -118,9 +118,13 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.HttpUrl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 
 public class XmppConnection implements Runnable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(XmppConnection.class);
 
     protected final Account account;
     private final SparseArray<Stanza> mStanzaQueue = new SparseArray<>();
@@ -289,9 +293,9 @@ public class XmppConnection implements Runnable {
         try {
             Socket localSocket;
             shouldAuthenticate =
-                    !ConversationsDatabase.getInstance(context)
+                    ConversationsDatabase.getInstance(context)
                             .accountDao()
-                            .pendingRegistration(account.id);
+                            .loginAndBind(account.id);
             this.changeStatus(ConnectionState.CONNECTING);
             // TODO introduce proxy check
             final boolean useTor = /*fcontext.useTorToConnect() ||*/ account.isOnion();
@@ -1177,7 +1181,7 @@ public class XmppConnection implements Runnable {
         final SSLSocket sslSocket = upgradeSocketToTls(socket);
         tagReader.setInputStream(sslSocket.getInputStream());
         tagWriter.setOutputStream(sslSocket.getOutputStream());
-        Log.d(Config.LOGTAG, account.address + ": TLS connection established");
+        LOGGER.info("TLS connection established");
         final boolean quickStart;
         try {
             quickStart = establishStream(SSLSockets.version(sslSocket));
@@ -1234,13 +1238,10 @@ public class XmppConnection implements Runnable {
     }
 
     private void processStreamFeatures(final Tag currentTag) throws IOException {
-        final boolean pendingRegistration =
-                ConversationsDatabase.getInstance(context)
-                        .accountDao()
-                        .pendingRegistration(account.id);
+        final boolean loginAndBind =
+                ConversationsDatabase.getInstance(context).accountDao().loginAndBind(account.id);
         this.streamFeatures = tagReader.readElement(currentTag, Features.class);
-        final boolean isSecure = isSecure();
-        final boolean needsBinding = !isBound && !pendingRegistration;
+        final boolean needsBinding = !isBound && loginAndBind;
         if (this.quickStartInProgress) {
             if (this.streamFeatures.hasChild("authentication", Namespace.SASL_2)) {
                 Log.d(
@@ -1271,29 +1272,23 @@ public class XmppConnection implements Runnable {
             throw new StateChangingException(ConnectionState.INCOMPATIBLE_SERVER);
         }
         if (this.streamFeatures.hasChild("starttls", Namespace.TLS) && !this.encryptionEnabled) {
+            LOGGER.info("Negotiating TLS (STARTTLS)");
             sendStartTLS();
-        } else if (this.streamFeatures.hasChild("register", Namespace.REGISTER_STREAM_FEATURE)
-                && pendingRegistration) {
-            if (isSecure) {
-                register();
-            } else {
-                Log.d(
-                        Config.LOGTAG,
-                        account.address
-                                + ": unable to find STARTTLS for registration process "
-                                + XmlHelper.printElementNames(this.streamFeatures));
-                throw new StateChangingException(ConnectionState.INCOMPATIBLE_SERVER);
-            }
-        } else if (!this.streamFeatures.hasChild("register", Namespace.REGISTER_STREAM_FEATURE)
-                && pendingRegistration) {
-            throw new StateChangingException(ConnectionState.REGISTRATION_NOT_SUPPORTED);
+            return;
+        } else if (!isSecure()) {
+            LOGGER.error("Server does not support STARTTLS");
+            throw new StateChangingException(ConnectionState.INCOMPATIBLE_SERVER);
+        }
+
+        if (Boolean.FALSE.equals(loginAndBind)) {
+            LOGGER.info("No login and bind required. Connection is considered online");
+            this.lastPacketReceived = SystemClock.elapsedRealtime();
+            this.changeStatus(ConnectionState.ONLINE);
         } else if (this.streamFeatures.hasChild("authentication", Namespace.SASL_2)
-                && shouldAuthenticate
-                && isSecure) {
+                && shouldAuthenticate) {
             authenticate(SaslMechanism.Version.SASL_2);
         } else if (this.streamFeatures.hasChild("mechanisms", Namespace.SASL)
-                && shouldAuthenticate
-                && isSecure) {
+                && shouldAuthenticate) {
             authenticate(SaslMechanism.Version.SASL);
         } else if (this.streamFeatures.streamManagement() && streamId != null && !inSmacksSession) {
             if (Config.EXTENDED_SM_LOGGING) {
@@ -1306,7 +1301,7 @@ public class XmppConnection implements Runnable {
             this.mWaitingForSmCatchup.set(true);
             this.tagWriter.writeStanzaAsync(resume);
         } else if (needsBinding) {
-            if (this.streamFeatures.hasChild("bind", Namespace.BIND) && isSecure) {
+            if (this.streamFeatures.hasChild("bind", Namespace.BIND)) {
                 sendBindRequest();
             } else {
                 Log.d(
@@ -1516,7 +1511,7 @@ public class XmppConnection implements Runnable {
         }
         final Iq preAuthRequest = new Iq(Iq.Type.SET);
         preAuthRequest.addChild("preauth", Namespace.PARS).setAttribute("token", preAuth);
-        sendUnmodifiedIqPacket(
+        sendIqPacketUnbound(
                 preAuthRequest,
                 (response) -> {
                     if (response.getType() == Iq.Type.RESULT) {
@@ -1526,15 +1521,14 @@ public class XmppConnection implements Runnable {
                         Log.d(Config.LOGTAG, account.address + ": failed to pre auth. " + error);
                         throw new StateChangingError(ConnectionState.REGISTRATION_INVALID_TOKEN);
                     }
-                },
-                true);
+                });
     }
 
     private void sendRegistryRequest() {
         final Iq retrieveRegistration = new Iq(Iq.Type.GET);
         retrieveRegistration.addExtension(new Register());
         retrieveRegistration.setTo(account.address.getDomain());
-        sendUnmodifiedIqPacket(
+        sendIqPacketUnbound(
                 retrieveRegistration,
                 (packet) -> {
                     if (packet.getType() == Iq.Type.TIMEOUT) {
@@ -1562,8 +1556,7 @@ public class XmppConnection implements Runnable {
                         register.addChild(username);
                         register.addChild(password);
                         registrationRequest.setFrom(account.address);
-                        sendUnmodifiedIqPacket(
-                                registrationRequest, this::handleRegistrationResponse, true);
+                        sendIqPacketUnbound(registrationRequest, this::handleRegistrationResponse);
                     } else if (query.hasChild("x", Namespace.DATA)) {
                         final Data data = Data.parse(query.findChild("x", Namespace.DATA));
                         final Element blob = query.findChild("data", "urn:xmpp:bob");
@@ -1621,15 +1614,14 @@ public class XmppConnection implements Runnable {
                         }
                         throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
                     }
-                },
-                true);
+                });
     }
 
     private void handleRegistrationResponse(final Iq packet) {
         if (packet.getType() == Iq.Type.RESULT) {
             ConversationsDatabase.getInstance(context)
                     .accountDao()
-                    .setPendingRegistration(account.id, false);
+                    .setLoginAndBind(account.id, true);
             Log.d(
                     Config.LOGTAG,
                     account.address + ": successfully registered new account on server");
@@ -1693,7 +1685,7 @@ public class XmppConnection implements Runnable {
         }
         final Iq iq = new Iq(Iq.Type.SET);
         iq.addChild("bind", Namespace.BIND).addChild("resource").setContent(resource);
-        this.sendUnmodifiedIqPacket(
+        this.sendIqPacketUnbound(
                 iq,
                 (packet) -> {
                     if (packet.getType() == Iq.Type.TIMEOUT) {
@@ -1759,8 +1751,7 @@ public class XmppConnection implements Runnable {
                                         + ")");
                     }
                     throw new StateChangingError(ConnectionState.BIND_FAILURE);
-                },
-                true);
+                });
     }
 
     private void setConnectionAddress(final Jid jid) {
@@ -1813,7 +1804,7 @@ public class XmppConnection implements Runnable {
         Log.d(Config.LOGTAG, account.address + ": sending legacy session to outdated server");
         final Iq startSession = new Iq(Iq.Type.SET);
         startSession.addChild("session", "urn:ietf:params:xml:ns:xmpp-session");
-        this.sendUnmodifiedIqPacket(
+        this.sendIqPacketUnbound(
                 startSession,
                 (packet) -> {
                     if (packet.getType() == Iq.Type.RESULT) {
@@ -1822,8 +1813,7 @@ public class XmppConnection implements Runnable {
                     } else if (packet.getType() != Iq.Type.TIMEOUT) {
                         throw new StateChangingError(ConnectionState.SESSION_FAILURE);
                     }
-                },
-                true);
+                });
     }
 
     // TODO the return value is not used any more
@@ -2009,6 +1999,14 @@ public class XmppConnection implements Runnable {
     }
 
     public ListenableFuture<Iq> sendIqPacket(final Iq packet) {
+        return sendIqPacket(packet, false);
+    }
+
+    public ListenableFuture<Iq> sendIqPacketUnbound(final Iq packet) {
+        return sendIqPacket(packet, true);
+    }
+
+    private ListenableFuture<Iq> sendIqPacket(final Iq packet, final boolean sendToUnboundStream) {
         final SettableFuture<Iq> future = SettableFuture.create();
         sendIqPacket(
                 packet,
@@ -2021,17 +2019,21 @@ public class XmppConnection implements Runnable {
                     } else {
                         future.setException(new IqErrorException(result));
                     }
-                });
+                },
+                sendToUnboundStream);
         return future;
     }
 
-    public String sendIqPacket(final Iq packet, final Consumer<Iq> callback) {
-        packet.setFrom(account.address);
-        return this.sendUnmodifiedIqPacket(packet, callback, false);
+    public void sendIqPacket(final Iq packet, final Consumer<Iq> callback) {
+        this.sendIqPacket(packet, callback, false);
     }
 
-    public synchronized String sendUnmodifiedIqPacket(
-            final Iq packet, final Consumer<Iq> callback, boolean force) {
+    public void sendIqPacketUnbound(final Iq packet, final Consumer<Iq> callback) {
+        this.sendIqPacket(packet, callback, true);
+    }
+
+    private synchronized void sendIqPacket(
+            final Iq packet, final Consumer<Iq> callback, final boolean sendToUnboundStream) {
         if (Strings.isNullOrEmpty(packet.getId())) {
             packet.setId(IDs.medium());
         }
@@ -2040,8 +2042,7 @@ public class XmppConnection implements Runnable {
                 packetCallbacks.put(packet.getId(), new Pair<>(packet, callback));
             }
         }
-        this.sendPacket(packet, force);
-        return packet.getId();
+        this.sendPacket(packet, sendToUnboundStream);
     }
 
     public void sendResultFor(final Iq request, final Extension... extensions) {
@@ -2079,14 +2080,15 @@ public class XmppConnection implements Runnable {
         sendPacket(packet, false);
     }
 
-    private synchronized void sendPacket(final StreamElement packet, final boolean force) {
+    private synchronized void sendPacket(
+            final StreamElement packet, final boolean sendToUnboundStream) {
         if (stanzasSent == Integer.MAX_VALUE) {
             resetStreamId();
             disconnect(true);
             return;
         }
         synchronized (this.mStanzaQueue) {
-            if (force || isBound) {
+            if (sendToUnboundStream || isBound) {
                 tagWriter.writeStanzaAsync(packet);
             } else {
                 Log.d(
@@ -2131,11 +2133,17 @@ public class XmppConnection implements Runnable {
     }
 
     public void sendPing() {
-        if (!r()) {
+        if (this.inSmacksSession) {
+            this.tagWriter.writeStanzaAsync(new Request());
+        } else {
             final Iq iq = new Iq(Iq.Type.GET);
             iq.setFrom(account.address);
             iq.addExtension(new Ping());
-            this.sendIqPacket(iq, null);
+            this.sendIqPacket(
+                    iq,
+                    response -> {
+                        LOGGER.info("Server responded to ping");
+                    });
         }
         this.lastPingSent = SystemClock.elapsedRealtime();
     }
@@ -2211,15 +2219,6 @@ public class XmppConnection implements Runnable {
 
     private void resetStreamId() {
         this.streamId = null;
-    }
-
-    public boolean r() {
-        if (this.inSmacksSession) {
-            this.tagWriter.writeStanzaAsync(new Request());
-            return true;
-        } else {
-            return false;
-        }
     }
 
     public int getTimeToNextAttempt() {

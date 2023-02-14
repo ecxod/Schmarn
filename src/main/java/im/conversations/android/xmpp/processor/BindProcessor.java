@@ -24,14 +24,6 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
         final var account = getAccount();
         final var database = getDatabase();
 
-        final boolean firstLogin =
-                database.accountDao().setLoggedInSuccessfully(account.id, true) > 0;
-
-        if (firstLogin) {
-            // TODO publish display name if this is the first attempt
-            // IIRC this is used when the display name is set from a certificate or something
-        }
-
         database.presenceDao().deletePresences(account.id);
 
         getManager(RosterManager.class).fetch();

@@ -2,6 +2,7 @@ package im.conversations.android.database.dao;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import com.google.common.util.concurrent.ListenableFuture;
 import eu.siacs.conversations.xmpp.Jid;
@@ -13,7 +14,7 @@ import java.util.List;
 @Dao
 public interface AccountDao {
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(final AccountEntity account);
 
     @Query("SELECT id,address,randomSeed FROM account WHERE enabled = 1")
@@ -37,11 +38,8 @@ public interface AccountDao {
     @Query("SELECT quickStartAvailable FROM account where id=:id")
     boolean quickStartAvailable(long id);
 
-    @Query("SELECT pendingRegistration FROM account where id=:id")
-    boolean pendingRegistration(long id);
-
-    @Query("SELECT loggedInSuccessfully == 0 FROM account where id=:id")
-    boolean isInitialLogin(long id);
+    @Query("SELECT loginAndBind FROM account where id=:id")
+    boolean loginAndBind(long id);
 
     @Query(
             "UPDATE account set quickStartAvailable=:available WHERE id=:id AND"
@@ -49,14 +47,9 @@ public interface AccountDao {
     void setQuickStartAvailable(long id, boolean available);
 
     @Query(
-            "UPDATE account set pendingRegistration=:pendingRegistration WHERE id=:id AND"
-                    + " pendingRegistration != :pendingRegistration")
-    void setPendingRegistration(long id, boolean pendingRegistration);
-
-    @Query(
-            "UPDATE account set loggedInSuccessfully=:loggedInSuccessfully WHERE id=:id AND"
-                    + " loggedInSuccessfully != :loggedInSuccessfully")
-    int setLoggedInSuccessfully(long id, boolean loggedInSuccessfully);
+            "UPDATE account set loginAndBind=:loginAndBind WHERE id=:id AND"
+                    + " loginAndBind != :loginAndBind")
+    void setLoginAndBind(long id, boolean loginAndBind);
 
     @Query(
             "UPDATE account set showErrorNotification=:showErrorNotification WHERE id=:id AND"

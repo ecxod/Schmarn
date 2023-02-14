@@ -10,15 +10,22 @@ import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.data.Data;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
+import im.conversations.android.xmpp.model.pars.PreAuth;
 import im.conversations.android.xmpp.model.register.Instructions;
 import im.conversations.android.xmpp.model.register.Password;
 import im.conversations.android.xmpp.model.register.Register;
 import im.conversations.android.xmpp.model.register.Remove;
 import im.conversations.android.xmpp.model.register.Username;
 import im.conversations.android.xmpp.model.stanza.Iq;
+import java.util.Arrays;
 import java.util.regex.Matcher;
+import okhttp3.HttpUrl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RegistrationManager extends AbstractManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegistrationManager.class);
 
     public RegistrationManager(Context context, XmppConnection connection) {
         super(context, connection);
@@ -27,6 +34,7 @@ public class RegistrationManager extends AbstractManager {
     public ListenableFuture<Void> setPassword(final String password) {
         final var account = getAccount();
         final var iq = new Iq(Iq.Type.SET);
+        iq.setTo(account.address.getDomain());
         final var register = iq.addExtension(new Register());
         register.addUsername(account.address.getEscapedLocal());
         register.addPassword(password);
@@ -36,6 +44,7 @@ public class RegistrationManager extends AbstractManager {
 
     public ListenableFuture<Void> unregister() {
         final var iq = new Iq(Iq.Type.SET);
+        iq.setTo(getAccount().address.getDomain());
         final var register = iq.addExtension(new Register());
         register.addExtension(new Remove());
         return Futures.transform(
@@ -43,10 +52,11 @@ public class RegistrationManager extends AbstractManager {
     }
 
     public ListenableFuture<Registration> getRegistration() {
-        final var iq = new Iq(Iq.Type.SET);
+        final var iq = new Iq(Iq.Type.GET);
+        iq.setTo(getAccount().address.getDomain());
         iq.addExtension(new Register());
         return Futures.transform(
-                connection.sendIqPacket(iq),
+                connection.sendIqPacketUnbound(iq),
                 result -> {
                     final var register = result.getExtension(Register.class);
                     if (register == null) {
@@ -58,7 +68,11 @@ public class RegistrationManager extends AbstractManager {
                         return new SimpleRegistration();
                     }
                     final var data = register.getExtension(Data.class);
-                    if (data != null && Namespace.REGISTER.equals(data.getFormType())) {
+                    // note that the captcha namespace is incorrect here. That namespace is only
+                    // used in message challenges. ejabberd uses the incorrect namespace though
+                    if (data != null
+                            && Arrays.asList(Namespace.REGISTER, Namespace.CAPTCHA)
+                                    .contains(data.getFormType())) {
                         return new ExtendedRegistration(data);
                     }
                     final var oob = register.getExtension(OutOfBandData.class);
@@ -67,14 +81,14 @@ public class RegistrationManager extends AbstractManager {
                             instructions == null ? null : instructions.getContent();
                     final String redirectUrl = oob == null ? null : oob.getURL();
                     if (redirectUrl != null) {
-                        return new RedirectRegistration(redirectUrl);
+                        return RedirectRegistration.ifValid(redirectUrl);
                     }
                     if (instructionsText != null) {
                         final Matcher matcher = Patterns.WEB_URL.matcher(instructionsText);
                         if (matcher.find()) {
                             final String instructionsUrl =
                                     instructionsText.substring(matcher.start(), matcher.end());
-                            return new RedirectRegistration(instructionsUrl);
+                            return RedirectRegistration.ifValid(instructionsUrl);
                         }
                     }
                     throw new IllegalStateException("No supported registration method found");
@@ -82,7 +96,16 @@ public class RegistrationManager extends AbstractManager {
                 MoreExecutors.directExecutor());
     }
 
-    private abstract static class Registration {}
+    public ListenableFuture<Void> sendPreAuthentication(final String token) {
+        final var iq = new Iq(Iq.Type.GET);
+        iq.setTo(getAccount().address.getDomain());
+        final var preAuthentication = iq.addExtension(new PreAuth());
+        preAuthentication.setToken(token);
+        return Futures.transform(
+                connection.sendIqPacketUnbound(iq), result -> null, MoreExecutors.directExecutor());
+    }
+
+    public abstract static class Registration {}
 
     // only requires Username + Password
     public static class SimpleRegistration extends Registration {}
@@ -102,14 +125,23 @@ public class RegistrationManager extends AbstractManager {
 
     // Redirection as show here: https://xmpp.org/extensions/xep-0077.html#redirect
     public static class RedirectRegistration extends Registration {
-        private final String url;
+        private final HttpUrl url;
 
-        public RedirectRegistration(@NonNull final String url) {
+        private RedirectRegistration(@NonNull HttpUrl url) {
             this.url = url;
         }
 
-        public @NonNull String getURL() {
+        public @NonNull HttpUrl getURL() {
             return this.url;
+        }
+
+        public static RedirectRegistration ifValid(final String url) {
+            final HttpUrl httpUrl = HttpUrl.parse(url);
+            if (httpUrl != null && httpUrl.isHttps()) {
+                return new RedirectRegistration(httpUrl);
+            }
+            throw new IllegalStateException(
+                    "A URL found the registration instructions is not valid");
         }
     }
 }

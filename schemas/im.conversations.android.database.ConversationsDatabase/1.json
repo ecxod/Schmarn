@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "219a451e9a1889222b7549c8b3c0a5b3",
+    "identityHash": "1952101c2c0d439fcd6c9d417f126a54",
     "entities": [
       {
         "tableName": "account",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `address` TEXT NOT NULL, `resource` TEXT, `randomSeed` BLOB, `enabled` INTEGER NOT NULL, `quickStartAvailable` INTEGER NOT NULL, `pendingRegistration` INTEGER NOT NULL, `loggedInSuccessfully` INTEGER NOT NULL, `showErrorNotification` INTEGER NOT NULL, `rosterVersion` TEXT, `hostname` TEXT, `port` INTEGER, `directTls` INTEGER, `proxytype` TEXT, `proxyhostname` TEXT, `proxyport` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `address` TEXT NOT NULL, `resource` TEXT, `randomSeed` BLOB, `enabled` INTEGER NOT NULL, `quickStartAvailable` INTEGER NOT NULL, `loginAndBind` INTEGER NOT NULL, `showErrorNotification` INTEGER NOT NULL, `rosterVersion` TEXT, `hostname` TEXT, `port` INTEGER, `directTls` INTEGER, `proxytype` TEXT, `proxyhostname` TEXT, `proxyport` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -45,14 +45,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "pendingRegistration",
-            "columnName": "pendingRegistration",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "loggedInSuccessfully",
-            "columnName": "loggedInSuccessfully",
+            "fieldPath": "loginAndBind",
+            "columnName": "loginAndBind",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -2266,7 +2260,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '219a451e9a1889222b7549c8b3c0a5b3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1952101c2c0d439fcd6c9d417f126a54')"
     ]
   }
 }
