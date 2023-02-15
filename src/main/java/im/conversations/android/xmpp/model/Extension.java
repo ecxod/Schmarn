@@ -1,7 +1,7 @@
 package im.conversations.android.xmpp.model;
 
 import com.google.common.base.Preconditions;
-import eu.siacs.conversations.xml.Element;
+import im.conversations.android.xml.Element;
 import im.conversations.android.xmpp.ExtensionFactory;
 
 public class Extension extends Element {

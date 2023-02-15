@@ -1,8 +1,8 @@
 package im.conversations.android.xmpp.model.data;
 
 import com.google.common.collect.Collections2;
-import eu.siacs.conversations.xml.Element;
 import im.conversations.android.annotation.XmlElement;
+import im.conversations.android.xml.Element;
 import im.conversations.android.xmpp.model.Extension;
 import java.util.Collection;
 

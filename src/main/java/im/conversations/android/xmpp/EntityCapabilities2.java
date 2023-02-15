@@ -8,7 +8,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Bytes;
-import eu.siacs.conversations.xml.Namespace;
+import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.model.Hash;
 import im.conversations.android.xmpp.model.data.Data;
 import im.conversations.android.xmpp.model.data.Field;

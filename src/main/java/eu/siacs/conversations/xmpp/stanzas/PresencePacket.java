@@ -1,8 +1,6 @@
 package eu.siacs.conversations.xmpp.stanzas;
 
-import im.conversations.android.xmpp.model.capabilties.EntityCapabilities;
-
-public class PresencePacket extends AbstractAcknowledgeableStanza implements EntityCapabilities {
+public class PresencePacket extends AbstractAcknowledgeableStanza {
 
     public PresencePacket() {
         super("presence");

@@ -1,7 +1,7 @@
 package im.conversations.android.xmpp.model.avatar;
 
-import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.annotation.XmlElement;
+import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.model.Extension;
 
 @XmlElement(namespace = Namespace.AVATAR_METADATA)

@@ -2,8 +2,8 @@ package im.conversations.android.xmpp.model.capabilties;
 
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.annotation.XmlElement;
+import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.model.Extension;
 

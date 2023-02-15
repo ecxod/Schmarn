@@ -1,7 +1,7 @@
 package im.conversations.android.xmpp.model.forward;
 
-import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.annotation.XmlElement;
+import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.stanza.Message;
 

@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Strings;
-import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.annotation.XmlElement;
+import im.conversations.android.xml.Namespace;
 
 @XmlElement(namespace = Namespace.HASHES)
 public class Hash extends Extension {

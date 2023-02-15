@@ -2,8 +2,8 @@ package im.conversations.android.xmpp.model.correction;
 
 import androidx.annotation.NonNull;
 import com.google.common.base.Strings;
-import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.annotation.XmlElement;
+import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.model.Extension;
 
 @XmlElement(namespace = Namespace.LAST_MESSAGE_CORRECTION)

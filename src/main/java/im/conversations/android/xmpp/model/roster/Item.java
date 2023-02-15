@@ -1,9 +1,9 @@
 package im.conversations.android.xmpp.model.roster;
 
 import com.google.common.collect.Collections2;
-import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.annotation.XmlElement;
+import im.conversations.android.xml.Element;
 import im.conversations.android.xmpp.model.Extension;
 import java.util.Arrays;
 import java.util.Collection;

@@ -1,8 +1,8 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
-import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.Jid;
+import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.AxolotlManager;

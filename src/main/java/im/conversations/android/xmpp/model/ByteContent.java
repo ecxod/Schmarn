@@ -3,7 +3,7 @@ package im.conversations.android.xmpp.model;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-import eu.siacs.conversations.xml.Element;
+import im.conversations.android.xml.Element;
 
 public interface ByteContent {
 

@@ -3,8 +3,8 @@ package im.conversations.android.xmpp;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import eu.siacs.conversations.xml.Element;
-import eu.siacs.conversations.xml.XmlElementReader;
+import im.conversations.android.xml.Element;
+import im.conversations.android.xml.XmlElementReader;
 import im.conversations.android.xmpp.model.bookmark.Conference;
 import im.conversations.android.xmpp.model.pubsub.PubSub;
 import im.conversations.android.xmpp.model.stanza.Iq;

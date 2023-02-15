@@ -1,8 +1,8 @@
 package im.conversations.android.xmpp.model.occupant;
 
 import com.google.common.base.Strings;
-import eu.siacs.conversations.xml.Namespace;
 import im.conversations.android.annotation.XmlElement;
+import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.model.Extension;
 
 @XmlElement(namespace = Namespace.OCCUPANT_ID)

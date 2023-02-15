@@ -1,7 +1,5 @@
 package im.conversations.android.xmpp;
 
-import static eu.siacs.conversations.utils.Random.SECURE_RANDOM;
-
 import android.content.Context;
 import android.os.SystemClock;
 import com.google.common.base.Optional;
@@ -17,6 +15,7 @@ import eu.siacs.conversations.Config;
 import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.PhoneHelper;
 import eu.siacs.conversations.xmpp.Jid;
+import im.conversations.android.Conversations;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 import java.util.ArrayList;
@@ -132,6 +131,7 @@ public class ConnectionPool {
 
     private void onStatusChanged(final XmppConnection connection) {
         final Account account = connection.getAccount();
+        LOGGER.info("{} is {}", account.address, connection.getStatus());
         if (connection.getStatus() == ConnectionState.ONLINE || connection.getStatus().isError()) {
             // TODO notify QuickConversationsService of account state change
             // mQuickConversationsService.signalAccountStateChange();
@@ -162,7 +162,7 @@ public class ConnectionPool {
                         account.address);
                 reconnectAccount(connection);
             } else {
-                final int timeToReconnect = SECURE_RANDOM.nextInt(10) + 2;
+                final int timeToReconnect = Conversations.SECURE_RANDOM.nextInt(10) + 2;
                 scheduleWakeUpCall(timeToReconnect);
             }
         } else if (connection.getStatus() == ConnectionState.REGISTRATION_SUCCESSFUL) {

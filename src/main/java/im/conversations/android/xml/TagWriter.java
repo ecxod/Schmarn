@@ -1,7 +1,5 @@
 package im.conversations.android.xml;
 
-import eu.siacs.conversations.xml.Element;
-import eu.siacs.conversations.xml.Tag;
 import im.conversations.android.xmpp.model.StreamElement;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -83,7 +81,7 @@ public class TagWriter {
         outputStream.flush();
     }
 
-    public void writeStanzaAsync(StreamElement stanza) {
+    public void writeStanzaAsync(final StreamElement stanza) {
         if (finished) {
             LOGGER.info("attempting to write stanza to finished TagWriter");
         } else {

@@ -2,7 +2,7 @@ package im.conversations.android.xmpp;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import eu.siacs.conversations.xml.Element;
+import im.conversations.android.xml.Element;
 import im.conversations.android.xmpp.model.Extension;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

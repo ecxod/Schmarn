@@ -4,8 +4,8 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
-import eu.siacs.conversations.xml.Element;
-import eu.siacs.conversations.xml.XmlElementReader;
+import im.conversations.android.xml.Element;
+import im.conversations.android.xml.XmlElementReader;
 import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.roster.Item;

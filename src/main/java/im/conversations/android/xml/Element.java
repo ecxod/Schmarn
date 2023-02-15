@@ -1,18 +1,23 @@
-package eu.siacs.conversations.xml;
+package im.conversations.android.xml;
+
+import androidx.annotation.NonNull;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import eu.siacs.conversations.utils.XmlHelper;
 import eu.siacs.conversations.xmpp.InvalidJid;
 import eu.siacs.conversations.xmpp.Jid;
-import eu.siacs.conversations.xmpp.stanzas.MessagePacket;
+import im.conversations.android.xmpp.ExtensionFactory;
+import im.conversations.android.xmpp.model.Extension;
+import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
 
 public class Element {
     private final String name;
@@ -33,6 +38,17 @@ public class Element {
         this.content = null;
         children.add(child);
         return child;
+    }
+
+    public <T extends Extension> T addExtension(T child) {
+        this.addChild(child);
+        return child;
+    }
+
+    public void addExtensions(final Collection<? extends Extension> extensions) {
+        for (final Extension extension : extensions) {
+            addExtension(extension);
+        }
     }
 
     public Element addChild(String name) {
@@ -65,13 +81,31 @@ public class Element {
         return null;
     }
 
+    public <E extends Extension> boolean hasExtension(final Class<E> clazz) {
+        return Iterables.any(this.children, clazz::isInstance);
+    }
+
+    public <E extends Extension> E getExtension(final Class<E> clazz) {
+        final var extension = Iterables.find(this.children, clazz::isInstance, null);
+        if (extension == null) {
+            return null;
+        }
+        return clazz.cast(extension);
+    }
+
+    public <E extends Extension> Collection<E> getExtensions(final Class<E> clazz) {
+        return Collections2.transform(
+                Collections2.filter(this.children, clazz::isInstance), clazz::cast);
+    }
+
+    public Collection<ExtensionFactory.Id> getExtensionIds() {
+        return Collections2.transform(
+                this.children, c -> new ExtensionFactory.Id(c.getName(), c.getNamespace()));
+    }
+
     public String findChildContent(String name) {
         Element element = findChild(name);
         return element == null ? null : element.getContent();
-    }
-
-    public LocalizedContent findInternationalizedChildContentInDefaultNamespace(String name) {
-        return LocalizedContent.get(this, name);
     }
 
     public Element findChild(String name, String xmlns) {
@@ -79,19 +113,6 @@ public class Element {
             if (name.equals(child.getName()) && xmlns.equals(child.getAttribute("xmlns"))) {
                 return child;
             }
-        }
-        return null;
-    }
-
-    public Element findChildEnsureSingle(String name, String xmlns) {
-        final List<Element> results = new ArrayList<>();
-        for (Element child : this.children) {
-            if (name.equals(child.getName()) && xmlns.equals(child.getAttribute("xmlns"))) {
-                results.add(child);
-            }
-        }
-        if (results.size() == 1) {
-            return results.get(0);
         }
         return null;
     }
@@ -174,7 +195,7 @@ public class Element {
         try {
             return Jid.ofEscaped(jid);
         } catch (final IllegalArgumentException e) {
-            return InvalidJid.of(jid, this instanceof MessagePacket);
+            return InvalidJid.of(jid, this instanceof Message);
         }
     }
 
@@ -182,7 +203,7 @@ public class Element {
         return this.attributes;
     }
 
-    @NotNull
+    @NonNull
     public String toString() {
         final StringBuilder elementOutput = new StringBuilder();
         if ((content == null) && (children.size() == 0)) {
@@ -194,7 +215,7 @@ public class Element {
             startTag.setAttributes(this.attributes);
             elementOutput.append(startTag);
             if (content != null) {
-                elementOutput.append(XmlHelper.encodeEntities(content));
+                elementOutput.append(Entities.encode(content));
             } else {
                 for (final Element child : children) {
                     elementOutput.append(child.toString());

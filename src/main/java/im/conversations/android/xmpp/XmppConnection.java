@@ -1,10 +1,6 @@
 package im.conversations.android.xmpp;
 
-import static eu.siacs.conversations.utils.Random.SECURE_RANDOM;
-
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.SystemClock;
 import android.security.KeyChain;
@@ -25,7 +21,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.XmppDomainVerifier;
-import eu.siacs.conversations.http.HttpConnectionManager;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.MemorizingTrustManager;
 import eu.siacs.conversations.services.NotificationService;
@@ -35,25 +30,22 @@ import eu.siacs.conversations.utils.PhoneHelper;
 import eu.siacs.conversations.utils.Resolver;
 import eu.siacs.conversations.utils.SSLSockets;
 import eu.siacs.conversations.utils.SocksSocketFactory;
-import eu.siacs.conversations.utils.XmlHelper;
-import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xml.LocalizedContent;
-import eu.siacs.conversations.xml.Namespace;
-import eu.siacs.conversations.xml.Tag;
-import eu.siacs.conversations.xml.XmlReader;
 import eu.siacs.conversations.xmpp.InvalidJid;
 import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.bind.Bind2;
-import eu.siacs.conversations.xmpp.forms.Data;
-import eu.siacs.conversations.xmpp.stanzas.streammgmt.EnablePacket;
-import eu.siacs.conversations.xmpp.stanzas.streammgmt.ResumePacket;
+import im.conversations.android.Conversations;
 import im.conversations.android.IDs;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.CredentialStore;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.database.model.Credential;
+import im.conversations.android.xml.Element;
+import im.conversations.android.xml.Namespace;
+import im.conversations.android.xml.Tag;
 import im.conversations.android.xml.TagWriter;
+import im.conversations.android.xml.XmlReader;
 import im.conversations.android.xmpp.manager.AbstractManager;
 import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
@@ -64,7 +56,6 @@ import im.conversations.android.xmpp.model.csi.Inactive;
 import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.ping.Ping;
-import im.conversations.android.xmpp.model.register.Register;
 import im.conversations.android.xmpp.model.sm.Ack;
 import im.conversations.android.xmpp.model.sm.Enable;
 import im.conversations.android.xmpp.model.sm.Request;
@@ -82,9 +73,7 @@ import im.conversations.android.xmpp.processor.PresenceProcessor;
 import im.conversations.android.xmpp.sasl.ChannelBinding;
 import im.conversations.android.xmpp.sasl.HashedToken;
 import im.conversations.android.xmpp.sasl.SaslMechanism;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.IDN;
 import java.net.InetAddress;
@@ -97,8 +86,8 @@ import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -542,7 +531,7 @@ public class XmppConnection implements Runnable {
         sc.init(
                 keyManager,
                 new X509TrustManager[] {trustManager.getInteractive(domain)},
-                SECURE_RANDOM);
+                Conversations.SECURE_RANDOM);
         return sc.getSocketFactory();
     }
 
@@ -874,11 +863,9 @@ public class XmppConnection implements Runnable {
         final Tag tag = tagReader.readTag();
         if (tag != null && tag.isStart("features", Namespace.STREAMS)) {
             this.streamFeatures = tagReader.readElement(tag, Features.class);
-            Log.d(
-                    Config.LOGTAG,
-                    account.address
-                            + ": processed NOP stream features after success: "
-                            + XmlHelper.printElementNames(this.streamFeatures));
+            LOGGER.info(
+                    "Processed NOP stream features after success {}",
+                    this.streamFeatures.getExtensionIds());
         } else {
             Log.d(Config.LOGTAG, account.address + ": received " + tag);
             Log.d(
@@ -1244,11 +1231,9 @@ public class XmppConnection implements Runnable {
         final boolean needsBinding = !isBound && loginAndBind;
         if (this.quickStartInProgress) {
             if (this.streamFeatures.hasChild("authentication", Namespace.SASL_2)) {
-                Log.d(
-                        Config.LOGTAG,
-                        account.address
-                                + ": quick start in progress. ignoring features: "
-                                + XmlHelper.printElementNames(this.streamFeatures));
+                LOGGER.info(
+                        "Quick start in progress. ignoring features: {}",
+                        this.streamFeatures.getExtensionIds());
                 if (SaslMechanism.hashedToken(this.saslMechanism)) {
                     return;
                 }
@@ -1304,19 +1289,13 @@ public class XmppConnection implements Runnable {
             if (this.streamFeatures.hasChild("bind", Namespace.BIND)) {
                 sendBindRequest();
             } else {
-                Log.d(
-                        Config.LOGTAG,
-                        account.address
-                                + ": unable to find bind feature "
-                                + XmlHelper.printElementNames(this.streamFeatures));
+                LOGGER.info(
+                        "Could not find bind feature. Found {}",
+                        this.streamFeatures.getExtensionIds());
                 throw new StateChangingException(ConnectionState.INCOMPATIBLE_SERVER);
             }
         } else {
-            Log.d(
-                    Config.LOGTAG,
-                    account.address
-                            + ": received NOP stream features: "
-                            + XmlHelper.printElementNames(this.streamFeatures));
+            LOGGER.info("Received NOP stream features: {}", this.streamFeatures.getExtensionIds());
         }
     }
 
@@ -1377,7 +1356,9 @@ public class XmppConnection implements Runnable {
                 hashTokenRequest =
                         HashedToken.Mechanism.best(fastMechanisms, SSLSockets.version(this.socket));
             }
-            final Collection<String> bindFeatures = Bind2.features(inline);
+            // TODO fix me. properly parse bind2 features
+            final Collection<String> bindFeatures =
+                    Collections.emptyList(); // Bind2.features(inline);
             quickStartAvailable =
                     sm
                             && bindFeatures != null
@@ -1473,10 +1454,9 @@ public class XmppConnection implements Runnable {
             authenticate.addChild(generateBindRequest(bind));
         }
         if (inlineStreamManagement && streamId != null) {
-            final ResumePacket resume = new ResumePacket(this.streamId, stanzasReceived);
             this.mSmCatchupMessageCounter.set(0);
             this.mWaitingForSmCatchup.set(true);
-            authenticate.addChild(resume);
+            authenticate.addExtension(new Resume(this.streamId, this.stanzasReceived));
         }
         if (hashedTokenRequest != null) {
             authenticate
@@ -1497,153 +1477,9 @@ public class XmppConnection implements Runnable {
             bind.addChild("enable", Namespace.CARBONS);
         }
         if (bindFeatures.contains(Namespace.STREAM_MANAGEMENT)) {
-            bind.addChild(new EnablePacket());
+            bind.addExtension(new Enable());
         }
         return bind;
-    }
-
-    private void register() {
-        final Credential credential = CredentialStore.getInstance(context).get(account);
-        final String preAuth = credential.preAuthRegistrationToken;
-        if (Strings.isNullOrEmpty(preAuth) || !streamFeatures.invite()) {
-            sendRegistryRequest();
-            return;
-        }
-        final Iq preAuthRequest = new Iq(Iq.Type.SET);
-        preAuthRequest.addChild("preauth", Namespace.PARS).setAttribute("token", preAuth);
-        sendIqPacketUnbound(
-                preAuthRequest,
-                (response) -> {
-                    if (response.getType() == Iq.Type.RESULT) {
-                        sendRegistryRequest();
-                    } else {
-                        final String error = ""; // response.getErrorCondition();
-                        Log.d(Config.LOGTAG, account.address + ": failed to pre auth. " + error);
-                        throw new StateChangingError(ConnectionState.REGISTRATION_INVALID_TOKEN);
-                    }
-                });
-    }
-
-    private void sendRegistryRequest() {
-        final Iq retrieveRegistration = new Iq(Iq.Type.GET);
-        retrieveRegistration.addExtension(new Register());
-        retrieveRegistration.setTo(account.address.getDomain());
-        sendIqPacketUnbound(
-                retrieveRegistration,
-                (packet) -> {
-                    if (packet.getType() == Iq.Type.TIMEOUT) {
-                        return;
-                    }
-                    if (packet.getType() == Iq.Type.ERROR) {
-                        throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
-                    }
-                    final Register query = packet.getExtension(Register.class);
-                    if (query == null) {
-                        throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
-                    }
-                    if (query.hasChild("username") && (query.hasChild("password"))) {
-                        final Credential credential =
-                                CredentialStore.getInstance(context).get(account);
-                        final Iq registrationRequest = new Iq(Iq.Type.SET);
-                        final Element username =
-                                new Element("username")
-                                        .setContent(account.address.getEscapedLocal());
-                        final Element password =
-                                new Element("password").setContent(credential.password);
-
-                        final var register = registrationRequest.addExtension(new Register());
-
-                        register.addChild(username);
-                        register.addChild(password);
-                        registrationRequest.setFrom(account.address);
-                        sendIqPacketUnbound(registrationRequest, this::handleRegistrationResponse);
-                    } else if (query.hasChild("x", Namespace.DATA)) {
-                        final Data data = Data.parse(query.findChild("x", Namespace.DATA));
-                        final Element blob = query.findChild("data", "urn:xmpp:bob");
-                        final String id = packet.getId();
-                        InputStream is;
-                        if (blob != null) {
-                            try {
-                                final String base64Blob = blob.getContent();
-                                final byte[] strBlob = Base64.decode(base64Blob, Base64.DEFAULT);
-                                is = new ByteArrayInputStream(strBlob);
-                            } catch (Exception e) {
-                                is = null;
-                            }
-                        } else {
-                            // TODO this too needs fixing
-                            final boolean useTor = /*context.useTorToConnect() ||*/
-                                    account.isOnion();
-                            try {
-                                final String url = data.getValue("url");
-                                final String fallbackUrl = data.getValue("captcha-fallback-url");
-                                if (url != null) {
-                                    is = HttpConnectionManager.open(url, useTor);
-                                } else if (fallbackUrl != null) {
-                                    is = HttpConnectionManager.open(fallbackUrl, useTor);
-                                } else {
-                                    is = null;
-                                }
-                            } catch (final IOException e) {
-                                Log.d(
-                                        Config.LOGTAG,
-                                        account.address + ": unable to fetch captcha",
-                                        e);
-                                is = null;
-                            }
-                        }
-
-                        if (is != null) {
-                            Bitmap captcha = BitmapFactory.decodeStream(is);
-                            throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
-                        }
-                        throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
-                    } else if (query.hasChild("instructions")
-                            || query.hasChild("x", Namespace.OOB)) {
-                        final String instructions = query.findChildContent("instructions");
-                        final Element oob = query.findChild("x", Namespace.OOB);
-                        final String url = oob == null ? null : oob.findChildContent("url");
-                        if (url != null) {
-                            setAccountCreationFailed(url);
-                        } else if (instructions != null) {
-                            final Matcher matcher = Patterns.AUTOLINK_WEB_URL.matcher(instructions);
-                            if (matcher.find()) {
-                                setAccountCreationFailed(
-                                        instructions.substring(matcher.start(), matcher.end()));
-                            }
-                        }
-                        throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
-                    }
-                });
-    }
-
-    private void handleRegistrationResponse(final Iq packet) {
-        if (packet.getType() == Iq.Type.RESULT) {
-            ConversationsDatabase.getInstance(context)
-                    .accountDao()
-                    .setLoginAndBind(account.id, true);
-            Log.d(
-                    Config.LOGTAG,
-                    account.address + ": successfully registered new account on server");
-            throw new StateChangingError(ConnectionState.REGISTRATION_SUCCESSFUL);
-        } else {
-            final List<String> PASSWORD_TOO_WEAK_MSGS =
-                    Arrays.asList("The password is too weak", "Please use a longer password.");
-            Element error = packet.findChild("error");
-            ConnectionState state = ConnectionState.REGISTRATION_FAILED;
-            if (error != null) {
-                if (error.hasChild("conflict")) {
-                    state = ConnectionState.REGISTRATION_CONFLICT;
-                } else if (error.hasChild("resource-constraint")
-                        && "wait".equals(error.getAttribute("type"))) {
-                    state = ConnectionState.REGISTRATION_PLEASE_WAIT;
-                } else if (error.hasChild("not-acceptable")
-                        && PASSWORD_TOO_WEAK_MSGS.contains(error.findChildContent("text"))) {
-                    state = ConnectionState.REGISTRATION_PASSWORD_TOO_WEAK;
-                }
-            }
-            throw new StateChangingError(state);
-        }
     }
 
     private void setAccountCreationFailed(final String url) {
