@@ -85,7 +85,7 @@
         android:networkSecurityConfig="@xml/network_security_configuration"
         android:preserveLegacyExternalStorage="true"
         android:requestLegacyExternalStorage="true"
-        android:theme="@style/ConversationsTheme"
+        android:theme="@style/Conversations3Theme"
         tools:replace="android:label"
         tools:targetApi="q">
 
@@ -121,6 +121,14 @@
             </intent-filter>
         </receiver>
 
+        <activity android:exported="true" android:name="im.conversations.android.ui.activity.SetupActivity"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".ui.ShareLocationActivity"
             android:label="@string/title_activity_share_location" />
@@ -138,10 +146,7 @@
             android:name=".ui.ConversationActivity"
             android:exported="true"
             android:theme="@style/SplashTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+
         </activity>
         <activity
             android:name=".ui.ConversationsActivity"

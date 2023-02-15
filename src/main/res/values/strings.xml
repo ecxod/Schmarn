@@ -1005,5 +1005,11 @@
     <string name="pref_up_push_server_title">Push Server</string>
     <string name="pref_up_push_server_summary">A user-chosen push server to relay push messages via XMPP to your device.</string>
     <string name="no_account_deactivated">None (deactivated)</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_in_instruction">with your XMPP account.</string>
+    <string name="enter_your_password">Type in your password</string>
+    <string name="welcome">Welcome</string>
+    <string name="no_account_register">No account? Register</string>
+    <string name="account_settings">Account settings</string>
 
 </resources>
