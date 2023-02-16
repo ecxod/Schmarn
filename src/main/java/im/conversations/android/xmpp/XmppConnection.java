@@ -21,11 +21,9 @@ import com.google.common.util.concurrent.SettableFuture;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.XmppDomainVerifier;
-import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.MemorizingTrustManager;
 import eu.siacs.conversations.services.NotificationService;
 import eu.siacs.conversations.ui.util.PendingItem;
-import eu.siacs.conversations.utils.Patterns;
 import eu.siacs.conversations.utils.PhoneHelper;
 import eu.siacs.conversations.utils.Resolver;
 import eu.siacs.conversations.utils.SocksSocketFactory;
@@ -96,7 +94,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -422,7 +419,7 @@ public class XmppConnection implements Runnable {
                             }
                             break; // successfully connected to server that speaks xmpp
                         } else {
-                            FileBackend.close(localSocket);
+                            Closables.close(localSocket);
                             throw new StateChangingException(ConnectionState.STREAM_OPENING_ERROR);
                         }
                     } catch (final StateChangingException e) {
@@ -895,24 +892,6 @@ public class XmppConnection implements Runnable {
         }
         if (failure.hasChild("temporary-auth-failure")) {
             throw new StateChangingException(ConnectionState.TEMPORARY_AUTH_FAILURE);
-        } else if (failure.hasChild("account-disabled")) {
-            final String text = failure.findChildContent("text");
-            if (Strings.isNullOrEmpty(text)) {
-                throw new StateChangingException(ConnectionState.UNAUTHORIZED);
-            }
-            final Matcher matcher = Patterns.AUTOLINK_WEB_URL.matcher(text);
-            if (matcher.find()) {
-                final HttpUrl url;
-                try {
-                    url = HttpUrl.get(text.substring(matcher.start(), matcher.end()));
-                } catch (final IllegalArgumentException e) {
-                    throw new StateChangingException(ConnectionState.UNAUTHORIZED);
-                }
-                if (url.isHttps()) {
-                    this.redirectionUrl = url;
-                    throw new StateChangingException(ConnectionState.PAYMENT_REQUIRED);
-                }
-            }
         }
         if (SaslMechanism.hashedToken(this.saslMechanism)) {
             Log.d(
@@ -1193,11 +1172,11 @@ public class XmppConnection implements Runnable {
                 Log.d(
                         Config.LOGTAG,
                         account.address + ": TLS certificate domain verification failed");
-                FileBackend.close(sslSocket);
+                Closables.close(sslSocket);
                 throw new StateChangingException(ConnectionState.TLS_ERROR_DOMAIN);
             }
         } catch (final SSLPeerUnverifiedException e) {
-            FileBackend.close(sslSocket);
+            Closables.close(sslSocket);
             throw new StateChangingException(ConnectionState.TLS_ERROR);
         }
         return sslSocket;
@@ -1978,8 +1957,8 @@ public class XmppConnection implements Runnable {
     }
 
     private void forceCloseSocket() {
-        FileBackend.close(this.socket);
-        FileBackend.close(this.tagReader);
+        Closables.close(this.socket);
+        Closables.close(this.tagReader);
     }
 
     public void interrupt() {
@@ -2025,7 +2004,7 @@ public class XmppConnection implements Runnable {
                                     + e.getMessage()
                                     + ")");
                 } finally {
-                    FileBackend.close(currentSocket);
+                    Closables.close(currentSocket);
                 }
             } else {
                 forceCloseSocket();

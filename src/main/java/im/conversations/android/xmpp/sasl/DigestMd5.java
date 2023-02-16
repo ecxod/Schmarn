@@ -1,18 +1,14 @@
 package im.conversations.android.xmpp.sasl;
 
 import android.util.Base64;
-
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-
 import im.conversations.android.IDs;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Credential;
-
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
 import javax.net.ssl.SSLSocket;
 
 public class DigestMd5 extends SaslMechanism {
@@ -71,14 +67,11 @@ public class DigestMd5 extends SaslMechanism {
                                             .getBytes(Charset.defaultCharset()));
                     final String a2 = "AUTHENTICATE:" + digestUri;
                     final String ha1 = bytesToHex(md.digest(a1));
-                    final String ha2 =
-                            bytesToHex(
-                                    md.digest(a2.getBytes(Charset.defaultCharset())));
+                    final String ha2 = bytesToHex(md.digest(a2.getBytes(Charset.defaultCharset())));
                     final String kd =
                             ha1 + ":" + nonce + ":" + nonceCount + ":" + cNonce + ":auth:" + ha2;
                     final String response =
-                            bytesToHex(
-                                    md.digest(kd.getBytes(Charset.defaultCharset())));
+                            bytesToHex(md.digest(kd.getBytes(Charset.defaultCharset())));
                     final String saslString =
                             "username=\""
                                     + account.address.getLocalpartOrThrow().toString()
