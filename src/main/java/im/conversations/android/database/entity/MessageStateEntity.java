@@ -6,9 +6,10 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.model.MessageState;
 import im.conversations.android.database.model.StateType;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 @Entity(
         tableName = "message_state",
@@ -26,9 +27,9 @@ public class MessageStateEntity {
 
     @NonNull public Long messageVersionId;
 
-    @NonNull public Jid fromBare;
+    @NonNull public BareJid fromBare;
 
-    @Nullable public String fromResource;
+    @Nullable public Resourcepart fromResource;
 
     @NonNull public StateType type;
 

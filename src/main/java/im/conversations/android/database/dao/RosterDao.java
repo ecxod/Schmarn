@@ -7,12 +7,12 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
 import com.google.common.collect.Collections2;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.RosterItemEntity;
 import im.conversations.android.database.entity.RosterItemGroupEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.model.roster.Item;
 import java.util.Collection;
+import org.jxmpp.jid.Jid;
 
 @Dao
 public abstract class RosterDao {

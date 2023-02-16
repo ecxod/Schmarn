@@ -6,7 +6,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.IDs;
 import im.conversations.android.database.CredentialStore;
 import im.conversations.android.database.entity.AccountEntity;
@@ -14,6 +13,7 @@ import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.RegistrationManager;
+import org.jxmpp.jid.BareJid;
 
 public class AccountRepository extends AbstractRepository {
 
@@ -22,9 +22,7 @@ public class AccountRepository extends AbstractRepository {
     }
 
     private Account createAccount(
-            @NonNull final Jid address, final String password, final boolean loginAndBind) {
-        Preconditions.checkArgument(
-                address.isBareJid(), "Account should be specified without resource");
+            @NonNull final BareJid address, final String password, final boolean loginAndBind) {
         Preconditions.checkArgument(password != null, "Missing password");
         final byte[] randomSeed = IDs.seed();
         final var entity = new AccountEntity();
@@ -44,12 +42,12 @@ public class AccountRepository extends AbstractRepository {
     }
 
     public ListenableFuture<Account> createAccountAsync(
-            final @NonNull Jid address, final String password, final boolean loginAndBind) {
+            final @NonNull BareJid address, final String password, final boolean loginAndBind) {
         return Futures.submit(() -> createAccount(address, password, loginAndBind), IO_EXECUTOR);
     }
 
     public ListenableFuture<Account> createAccountAsync(
-            final @NonNull Jid address, final String password) {
+            final @NonNull BareJid address, final String password) {
         return createAccountAsync(address, password, true);
     }
 

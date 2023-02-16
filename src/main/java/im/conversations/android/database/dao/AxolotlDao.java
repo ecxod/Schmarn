@@ -6,7 +6,6 @@ import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Transaction;
 import com.google.common.collect.Collections2;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.AxolotlDeviceListEntity;
 import im.conversations.android.database.entity.AxolotlDeviceListItemEntity;
 import im.conversations.android.database.entity.AxolotlIdentityEntity;
@@ -19,6 +18,7 @@ import im.conversations.android.xmpp.model.error.Condition;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import org.jxmpp.jid.BareJid;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.ecc.Curve;
@@ -36,7 +36,7 @@ public abstract class AxolotlDao {
     protected abstract void insert(Collection<AxolotlDeviceListItemEntity> entities);
 
     @Transaction
-    public void setDeviceList(Account account, Jid from, Set<Integer> deviceIds) {
+    public void setDeviceList(Account account, BareJid from, Set<Integer> deviceIds) {
         final var listId = insert(AxolotlDeviceListEntity.of(account.id, from));
         insert(
                 Collections2.transform(
@@ -47,15 +47,17 @@ public abstract class AxolotlDao {
             "SELECT EXISTS(SELECT deviceId FROM axolotl_device_list JOIN axolotl_device_list_item"
                     + " ON axolotl_device_list.id=axolotl_device_list_item.deviceListId WHERE"
                     + " accountId=:account AND address=:address AND deviceId=:deviceId)")
-    public abstract boolean hasDeviceId(final long account, final Jid address, final int deviceId);
+    public abstract boolean hasDeviceId(
+            final long account, final BareJid address, final int deviceId);
 
     @Transaction
-    public void setDeviceListError(final Account account, final Jid address, Condition condition) {
+    public void setDeviceListError(
+            final Account account, final BareJid address, Condition condition) {
         insert(AxolotlDeviceListEntity.of(account.id, address, condition.getName()));
     }
 
     @Transaction
-    public void setDeviceListParsingError(final Account account, final Jid address) {
+    public void setDeviceListParsingError(final Account account, final BareJid address) {
         insert(AxolotlDeviceListEntity.ofParsingIssue(account.id, address));
     }
 
@@ -96,7 +98,7 @@ public abstract class AxolotlDao {
 
     @Transaction
     public boolean setIdentity(
-            Account account, Jid address, int deviceId, IdentityKey identityKey) {
+            Account account, BareJid address, int deviceId, IdentityKey identityKey) {
         final var existing = getIdentityKey(account.id, address, deviceId);
         if (existing == null || !existing.equals(identityKey)) {
             insert(AxolotlIdentityEntity.of(account, address, deviceId, identityKey));
@@ -112,7 +114,7 @@ public abstract class AxolotlDao {
     @Query(
             "SELECT identityKey FROM AXOLOTL_IDENTITY WHERE accountId=:account AND"
                     + " address=:address AND deviceId=:deviceId")
-    protected abstract IdentityKey getIdentityKey(long account, Jid address, int deviceId);
+    protected abstract IdentityKey getIdentityKey(long account, BareJid address, int deviceId);
 
     @Query(
             "SELECT preKeyRecord FROM axolotl_pre_key WHERE accountId=:account AND"
@@ -165,24 +167,25 @@ public abstract class AxolotlDao {
     @Query(
             "SELECT sessionRecord FROM axolotl_session WHERE accountId=:account AND"
                     + " address=:address AND deviceId=:deviceId")
-    public abstract SessionRecord getSessionRecord(long account, Jid address, int deviceId);
+    public abstract SessionRecord getSessionRecord(long account, BareJid address, int deviceId);
 
     @Query("SELECT deviceId FROM axolotl_session WHERE accountId=:account AND address=:address")
     public abstract List<Integer> getSessionDeviceIds(long account, String address);
 
-    public void setSessionRecord(Account account, Jid address, int deviceId, SessionRecord record) {
+    public void setSessionRecord(
+            Account account, BareJid address, int deviceId, SessionRecord record) {
         insert(AxolotlSessionEntity.of(account, address, deviceId, record));
     }
 
     @Query(
             "SELECT EXISTS(SELECT id FROM axolotl_session WHERE accountId=:account AND"
                     + " address=:address AND deviceId=:deviceId)")
-    public abstract boolean hasSession(long account, Jid address, int deviceId);
+    public abstract boolean hasSession(long account, BareJid address, int deviceId);
 
     @Query(
             "DELETE FROM axolotl_session WHERE accountId=:account AND address=:address AND"
                     + " deviceId=:deviceId")
-    public abstract void deleteSession(long account, Jid address, int deviceId);
+    public abstract void deleteSession(long account, BareJid address, int deviceId);
 
     @Query("DELETE FROM axolotl_session WHERE accountId=:account AND address=:address")
     public abstract void deleteSessions(long account, String address);

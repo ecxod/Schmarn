@@ -1,13 +1,13 @@
 package im.conversations.android.transformer;
 
 import android.content.Context;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.model.occupant.OccupantId;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
+import org.jxmpp.jid.Jid;
 
 public class TransformationFactory extends XmppConnection.Delegate {
 

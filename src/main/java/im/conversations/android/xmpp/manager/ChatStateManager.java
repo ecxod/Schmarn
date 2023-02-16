@@ -1,9 +1,9 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.state.ChatStateNotification;
+import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

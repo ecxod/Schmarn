@@ -7,11 +7,12 @@ import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.HashFunction;
-import eu.siacs.conversations.utils.CryptoHelper;
+import im.conversations.android.IDs;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Credential;
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
+import java.text.Normalizer;
 import java.util.concurrent.ExecutionException;
 import javax.crypto.SecretKey;
 import javax.net.ssl.SSLSocket;
@@ -35,6 +36,8 @@ abstract class ScramMechanism extends SaslMechanism {
                     return new byte[0];
                 }
             };
+
+    private static final byte[] ONE = new byte[] {0, 0, 0, 1};
 
     private static final byte[] CLIENT_KEY_BYTES = "Client Key".getBytes();
     private static final byte[] SERVER_KEY_BYTES = "Server Key".getBytes();
@@ -67,7 +70,7 @@ abstract class ScramMechanism extends SaslMechanism {
                                     .convert(channelBinding.toString()));
         }
         // This nonce should be different for each authentication attempt.
-        this.clientNonce = CryptoHelper.random(100);
+        this.clientNonce = IDs.huge();
         clientFirstMessageBare = "";
     }
 
@@ -107,7 +110,7 @@ abstract class ScramMechanism extends SaslMechanism {
      */
     private byte[] hi(final byte[] key, final byte[] salt, final int iterations)
             throws InvalidKeyException {
-        byte[] u = hmac(key, CryptoHelper.concatenateByteArrays(salt, CryptoHelper.ONE));
+        byte[] u = hmac(key, concatenate(salt, ONE));
         byte[] out = u.clone();
         for (int i = 1; i < iterations; i++) {
             u = hmac(key, u);
@@ -123,8 +126,7 @@ abstract class ScramMechanism extends SaslMechanism {
         if (clientFirstMessageBare.isEmpty() && state == State.INITIAL) {
             clientFirstMessageBare =
                     "n="
-                            + CryptoHelper.saslEscape(
-                                    CryptoHelper.saslPrep(account.address.getEscapedLocal()))
+                            + escape(prep(account.address.getLocalpartOrThrow().toString()))
                             + ",r="
                             + this.clientNonce;
             state = State.AUTH_TEXT_SENT;
@@ -216,7 +218,7 @@ abstract class ScramMechanism extends SaslMechanism {
                 try {
                     keys =
                             getKeyPair(
-                                    CryptoHelper.saslPrep(Strings.nullToEmpty(credential.password)),
+                                    prep(Strings.nullToEmpty(credential.password)),
                                     salt,
                                     iterationCount);
                 } catch (ExecutionException e) {
@@ -267,6 +269,29 @@ abstract class ScramMechanism extends SaslMechanism {
             default:
                 throw new InvalidStateException(state);
         }
+    }
+
+    public static String escape(final String s) {
+        final StringBuilder sb = new StringBuilder((int) (s.length() * 1.1));
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case ',':
+                    sb.append("=2C");
+                    break;
+                case '=':
+                    sb.append("=3D");
+                    break;
+                default:
+                    sb.append(c);
+                    break;
+            }
+        }
+        return sb.toString();
+    }
+
+    public static String prep(final String s) {
+        return Normalizer.normalize(s, Normalizer.Form.NFKC);
     }
 
     protected byte[] getChannelBindingData(final SSLSocket sslSocket)

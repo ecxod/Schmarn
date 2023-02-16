@@ -8,7 +8,6 @@ import androidx.room.Query;
 import androidx.room.Transaction;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.DiscoEntity;
 import im.conversations.android.database.entity.DiscoExtensionEntity;
 import im.conversations.android.database.entity.DiscoExtensionFieldEntity;
@@ -27,6 +26,8 @@ import im.conversations.android.xmpp.model.disco.info.Identity;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import java.util.Collection;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 @Dao
 public abstract class DiscoDao {
@@ -56,7 +57,7 @@ public abstract class DiscoDao {
             "UPDATE presence SET discoId=:discoId WHERE accountId=:account AND address=:address"
                     + " AND resource=:resource")
     protected abstract void updateDiscoIdInPresence(
-            long account, Jid address, String resource, long discoId);
+            long account, Jid address, Resourcepart resource, long discoId);
 
     @Query(
             "UPDATE disco_item SET discoId=:discoId WHERE accountId=:account AND address=:address"
@@ -131,7 +132,7 @@ public abstract class DiscoDao {
             updateDiscoIdInPresence(
                     account,
                     entity.address.asBareJid(),
-                    Strings.nullToEmpty(entity.address.getResource()),
+                    entity.address.getResourceOrEmpty(),
                     discoId);
         }
     }

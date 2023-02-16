@@ -1,11 +1,11 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.stanza.Message;
 import im.conversations.android.xmpp.model.unique.StanzaId;
+import org.jxmpp.jid.Jid;
 
 public class StanzaIdManager extends AbstractManager {
 

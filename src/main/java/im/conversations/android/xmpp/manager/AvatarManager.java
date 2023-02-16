@@ -9,7 +9,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.avatar.Data;
 import im.conversations.android.xmpp.model.avatar.Info;
@@ -21,6 +20,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,7 @@ public class AvatarManager extends AbstractManager {
         super(context, connection);
     }
 
-    public void handleItems(final Jid from, final Items items) {
+    public void handleItems(final BareJid from, final Items items) {
         final var itemsMap = items.getItemMap(Metadata.class);
         final var firstEntry = Iterables.getFirst(itemsMap.entrySet(), null);
         if (firstEntry == null) {
@@ -142,7 +143,7 @@ public class AvatarManager extends AbstractManager {
                 new File(
                         accountCacheDirectory,
                         Hashing.sha256()
-                                .hashString(address.toEscapedString(), StandardCharsets.UTF_8)
+                                .hashString(address.toString(), StandardCharsets.UTF_8)
                                 .toString());
         if (userCacheDirectory.mkdirs()) {
             LOGGER.debug("Created directory {}", userCacheDirectory.getAbsolutePath());

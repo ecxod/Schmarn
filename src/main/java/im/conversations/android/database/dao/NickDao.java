@@ -3,9 +3,9 @@ package im.conversations.android.database.dao;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.NickEntity;
 import im.conversations.android.database.model.Account;
+import org.jxmpp.jid.Jid;
 
 @Dao
 public abstract class NickDao {

@@ -30,9 +30,6 @@ import eu.siacs.conversations.utils.PhoneHelper;
 import eu.siacs.conversations.utils.Resolver;
 import eu.siacs.conversations.utils.SSLSockets;
 import eu.siacs.conversations.utils.SocksSocketFactory;
-import eu.siacs.conversations.xml.LocalizedContent;
-import eu.siacs.conversations.xmpp.InvalidJid;
-import eu.siacs.conversations.xmpp.Jid;
 import eu.siacs.conversations.xmpp.bind.Bind2;
 import im.conversations.android.Conversations;
 import im.conversations.android.IDs;
@@ -91,6 +88,7 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -107,6 +105,9 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.HttpUrl;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.stringprep.XmppStringprepException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -293,7 +294,7 @@ public class XmppConnection implements Runnable {
                 final int port;
                 final boolean directTls;
                 if (connection == null || account.isOnion()) {
-                    destination = account.address.getDomain().toEscapedString();
+                    destination = account.address.getDomain().toString();
                     port = 5222;
                     directTls = false;
                 } else {
@@ -328,7 +329,7 @@ public class XmppConnection implements Runnable {
                     throw new IOException("Could not start stream", e);
                 }
             } else {
-                final String domain = account.address.getDomain().toEscapedString();
+                final String domain = account.address.getDomain().toString();
                 final List<Resolver.Result> results;
                 if (connection != null) {
                     results = Resolver.fromHardCoded(connection.hostname, connection.port);
@@ -497,7 +498,7 @@ public class XmppConnection implements Runnable {
         final boolean quickStart;
         if (socket instanceof SSLSocket) {
             final SSLSocket sslSocket = (SSLSocket) socket;
-            SSLSockets.log(account.address, sslSocket);
+            logTlsCipher(sslSocket);
             quickStart = establishStream(SSLSockets.version(sslSocket));
         } else {
             quickStart = establishStream(SSLSockets.Version.NONE);
@@ -524,7 +525,7 @@ public class XmppConnection implements Runnable {
         } else {
             keyManager = new KeyManager[] {new MyKeyManager(context, credential)};
         }
-        final String domain = account.address.getDomain().toEscapedString();
+        final String domain = account.address.getDomain().toString();
         // TODO we used to use two different trust managers; interactive and non interactive (to
         // trigger SSL cert prompts)
         // we need a better solution for this using live data or similar
@@ -719,8 +720,8 @@ public class XmppConnection implements Runnable {
                 authorizationJid =
                         Strings.isNullOrEmpty(authorizationIdentifier)
                                 ? null
-                                : Jid.ofEscaped(authorizationIdentifier);
-            } catch (final IllegalArgumentException e) {
+                                : JidCreate.from(authorizationIdentifier);
+            } catch (final XmppStringprepException e) {
                 Log.d(
                         Config.LOGTAG,
                         account.address
@@ -993,7 +994,9 @@ public class XmppConnection implements Runnable {
     private void changeStatusToOnline() {
         Log.d(
                 Config.LOGTAG,
-                account.address + ": online with resource " + connectionAddress.getResource());
+                account.address
+                        + ": online with resource "
+                        + connectionAddress.getResourceOrNull());
         changeStatus(ConnectionState.ONLINE);
     }
 
@@ -1058,7 +1061,7 @@ public class XmppConnection implements Runnable {
         final S stanza = tagReader.readElement(currentTag, clazz);
         if (stanzasReceived == Integer.MAX_VALUE) {
             resetStreamId();
-            throw new IOException("time to restart the session. cant handle >2 billion pcks");
+            throw new IOException("time to restart the session. cant handle >2 billion stanzas");
         }
         if (inSmacksSession) {
             ++stanzasReceived;
@@ -1071,25 +1074,12 @@ public class XmppConnection implements Runnable {
                             + "). Not in smacks session.");
         }
         lastPacketReceived = SystemClock.elapsedRealtime();
-        if (InvalidJid.invalid(stanza.getTo()) || InvalidJid.invalid(stanza.getFrom())) {
-            Log.e(
-                    Config.LOGTAG,
-                    "encountered invalid stanza from "
-                            + stanza.getFrom()
-                            + " to "
-                            + stanza.getTo());
-        }
+        // TODO validate to and from
         return stanza;
     }
 
     private void processIq(final Tag currentTag) throws IOException {
         final Iq packet = processStanza(currentTag, Iq.class);
-        if (InvalidJid.invalid(packet.getTo()) || InvalidJid.invalid(packet.getFrom())) {
-            Log.e(
-                    Config.LOGTAG,
-                    "encountered invalid IQ from " + packet.getFrom() + " to " + packet.getTo());
-            return;
-        }
         final Consumer<Iq> callback;
         synchronized (this.packetCallbacks) {
             final Pair<Iq, Consumer<Iq>> packetCallbackDuple = packetCallbacks.get(packet.getId());
@@ -1130,29 +1120,11 @@ public class XmppConnection implements Runnable {
 
     private void processMessage(final Tag currentTag) throws IOException {
         final var message = processStanza(currentTag, Message.class);
-        if (InvalidJid.invalid(message.getTo()) || InvalidJid.invalid(message.getFrom())) {
-            Log.e(
-                    Config.LOGTAG,
-                    "encountered invalid Message from "
-                            + message.getFrom()
-                            + " to "
-                            + message.getTo());
-            return;
-        }
         this.messagePacketConsumer.accept(message);
     }
 
     private void processPresence(final Tag currentTag) throws IOException {
         final var presence = processStanza(currentTag, Presence.class);
-        if (InvalidJid.invalid(presence.getTo()) || InvalidJid.invalid(presence.getFrom())) {
-            Log.e(
-                    Config.LOGTAG,
-                    "encountered invalid Presence from "
-                            + presence.getFrom()
-                            + " to "
-                            + presence.getTo());
-            return;
-        }
         this.presencePacketConsumer.accept(presence);
     }
 
@@ -1181,12 +1153,20 @@ public class XmppConnection implements Runnable {
         this.encryptionEnabled = true;
         final Tag tag = tagReader.readTag();
         if (tag != null && tag.isStart("stream", Namespace.STREAMS)) {
-            SSLSockets.log(account.address, sslSocket);
+            logTlsCipher(sslSocket);
             processStream();
         } else {
             throw new StateChangingException(ConnectionState.STREAM_OPENING_ERROR);
         }
         sslSocket.close();
+    }
+
+    private void logTlsCipher(final SSLSocket sslSocket) {
+        final var session = sslSocket.getSession();
+        LOGGER.info(
+                "TLS session protocol {} cipher {}",
+                session.getProtocol(),
+                session.getCipherSuite());
     }
 
     private SSLSocket upgradeSocketToTls(final Socket socket) throws IOException {
@@ -1202,13 +1182,12 @@ public class XmppConnection implements Runnable {
                         sslSocketFactory.createSocket(
                                 socket, address.getHostAddress(), socket.getPort(), true);
         SSLSockets.setSecurity(sslSocket);
-        SSLSockets.setHostname(
-                sslSocket, IDN.toASCII(account.address.getDomain().toEscapedString()));
+        SSLSockets.setHostname(sslSocket, IDN.toASCII(account.address.getDomain().toString()));
         SSLSockets.setApplicationProtocol(sslSocket, "xmpp-client");
         final XmppDomainVerifier xmppDomainVerifier = new XmppDomainVerifier();
         try {
             if (!xmppDomainVerifier.verify(
-                    account.address.getDomain().toEscapedString(),
+                    account.address.getDomain().toString(),
                     this.verifiedHostname,
                     sslSocket.getSession())) {
                 Log.d(
@@ -1536,8 +1515,8 @@ public class XmppConnection implements Runnable {
                         }
                         final Jid assignedJid;
                         try {
-                            assignedJid = Jid.ofEscaped(jid);
-                        } catch (final IllegalArgumentException e) {
+                            assignedJid = JidCreate.from(jid);
+                        } catch (final XmppStringprepException e) {
                             Log.d(
                                     Config.LOGTAG,
                                     account.address
@@ -1675,7 +1654,7 @@ public class XmppConnection implements Runnable {
         final var discoManager = getManager(DiscoManager.class);
 
         final var nodeHash = this.streamFeatures.getCapabilities();
-        final var domainDiscoItem = Entity.discoItem(account.address.getDomain());
+        final var domainDiscoItem = Entity.discoItem(account.address.asDomainBareJid());
         if (nodeHash != null) {
             discoFutures.add(
                     discoManager.infoOrCache(domainDiscoItem, nodeHash.node, nodeHash.hash));
@@ -1819,12 +1798,13 @@ public class XmppConnection implements Runnable {
 
     private void sendStartStream(final boolean from, final boolean flush) throws IOException {
         final Tag stream = Tag.start("stream:stream");
-        stream.setAttribute("to", account.address.getDomain());
+        stream.setAttribute("to", account.address.asDomainBareJid());
         if (from) {
             stream.setAttribute("from", account.address);
         }
         stream.setAttribute("version", "1.0");
-        stream.setAttribute("xml:lang", LocalizedContent.STREAM_LANGUAGE);
+        // TODO use 'en' when privacy mode is enabled
+        stream.setAttribute("xml:lang", Locale.getDefault().getLanguage());
         stream.setAttribute("xmlns", "jabber:client");
         stream.setAttribute("xmlns:stream", Namespace.STREAMS);
         tagWriter.writeTag(stream, flush);

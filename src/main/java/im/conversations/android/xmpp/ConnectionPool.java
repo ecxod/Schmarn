@@ -12,9 +12,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.PhoneHelper;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.Conversations;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
@@ -26,6 +24,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +66,7 @@ public class ConnectionPool {
         return setupXmppConnection(context, account);
     }
 
-    public synchronized ListenableFuture<XmppConnection> get(final Jid address) {
+    public synchronized ListenableFuture<XmppConnection> get(final BareJid address) {
         final var configured =
                 Iterables.tryFind(this.connections, c -> address.equals(c.getAccount().address));
         if (configured.isPresent()) {
@@ -78,8 +78,7 @@ public class ConnectionPool {
                     if (account == null) {
                         throw new IllegalStateException(
                                 String.format(
-                                        "No enabled account with address %s",
-                                        address.toEscapedString()));
+                                        "No enabled account with address %s", address.toString()));
                     }
                     return reconfigure(account);
                 },
@@ -231,9 +230,8 @@ public class ConnectionPool {
         final String androidId = PhoneHelper.getAndroidId(context);
         for (final XmppConnection xmppConnection : this.connections) {
             final Account account = xmppConnection.getAccount();
-            final boolean pushWasMeantForThisAccount =
-                    CryptoHelper.getFingerprint(account.address, androidId)
-                            .equals(pushedAccountHash);
+            // TODO fix me if we bring back FCM push support
+            final boolean pushWasMeantForThisAccount = false;
             if (processAccountState(xmppConnection, pushWasMeantForThisAccount, pingCandidates)) {
                 pingNow++;
             }

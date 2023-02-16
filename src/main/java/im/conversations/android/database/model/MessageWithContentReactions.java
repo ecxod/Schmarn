@@ -4,7 +4,6 @@ import androidx.room.Relation;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
 import im.conversations.android.database.entity.MessageReactionEntity;
@@ -14,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jxmpp.jid.Jid;
 
 public class MessageWithContentReactions {
 

@@ -1,8 +1,8 @@
 package im.conversations.android.xmpp.model.unique;
 
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.xmpp.model.Extension;
+import org.jxmpp.jid.Jid;
 
 @XmlElement
 public class StanzaId extends Extension {

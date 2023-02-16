@@ -159,14 +159,14 @@ public class CredentialStore {
 
     private Credential getOrEmpty(final Account account) {
         final Map<String, Credential> store = loadOrEmpty();
-        final Credential credential = store.get(account.address.toEscapedString());
+        final Credential credential = store.get(account.address.toString());
         return credential == null ? Credential.empty() : credential;
     }
 
     private void set(@NonNull final Account account, @NonNull final Credential credential)
             throws GeneralSecurityException, IOException {
         final HashMap<String, Credential> credentialStore = new HashMap<>(loadOrEmpty());
-        credentialStore.put(account.address.toEscapedString(), credential);
+        credentialStore.put(account.address.toString(), credential);
         store(credentialStore);
     }
 

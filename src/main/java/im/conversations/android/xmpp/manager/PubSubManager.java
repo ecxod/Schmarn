@@ -6,7 +6,6 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.ExtensionFactory;
 import im.conversations.android.xmpp.IqErrorException;
@@ -29,6 +28,7 @@ import im.conversations.android.xmpp.model.pubsub.owner.PubSubOwner;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Map;
+import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,6 +147,7 @@ public class PubSubManager extends AbstractManager {
 
     private void handleItems(final Message message) {
         final var from = message.getFrom();
+        final var bareFrom = from == null ? null : from.asBareJid();
         final var event = message.getExtension(Event.class);
         final Items items = event.getItems();
         final var node = items.getNode();
@@ -155,15 +156,15 @@ public class PubSubManager extends AbstractManager {
             return;
         }
         if (Namespace.AVATAR_METADATA.equals(node)) {
-            getManager(AvatarManager.class).handleItems(from, items);
+            getManager(AvatarManager.class).handleItems(bareFrom, items);
             return;
         }
         if (Namespace.NICK.equals(node)) {
-            getManager(NickManager.class).handleItems(from, items);
+            getManager(NickManager.class).handleItems(bareFrom, items);
             return;
         }
         if (Namespace.AXOLOTL_DEVICE_LIST.equals(node)) {
-            getManager(AxolotlManager.class).handleItems(from, items);
+            getManager(AxolotlManager.class).handleItems(bareFrom, items);
         }
     }
 

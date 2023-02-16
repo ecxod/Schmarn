@@ -1,9 +1,13 @@
 package im.conversations.android.database;
 
 import androidx.room.TypeConverter;
-import eu.siacs.conversations.xmpp.Jid;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.time.Instant;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.jid.parts.Resourcepart;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -26,13 +30,35 @@ public final class Converters {
     }
 
     @TypeConverter
-    public static Jid toJid(final String input) {
-        return input == null ? null : Jid.ofEscaped(input);
+    public static BareJid toBareJid(final String input) {
+        return input == null ? null : JidCreate.bareFromOrThrowUnchecked(input);
+    }
+
+    @TypeConverter
+    public static String fromBareJid(final BareJid jid) {
+        return jid == null ? null : jid.toString();
     }
 
     @TypeConverter
     public static String fromJid(final Jid jid) {
-        return jid == null ? null : jid.toEscapedString();
+        return jid == null ? null : jid.toString();
+    }
+
+    @TypeConverter
+    public static Jid toJid(final String input) {
+        return input == null ? null : JidCreate.fromOrThrowUnchecked(input);
+    }
+
+    @TypeConverter
+    public static Resourcepart toResourcePart(final String input) {
+        return Strings.isNullOrEmpty(input)
+                ? Resourcepart.EMPTY
+                : Resourcepart.fromOrThrowUnchecked(input);
+    }
+
+    @TypeConverter
+    public static String fromResourcePart(final Resourcepart resourcepart) {
+        return resourcepart == null ? null : resourcepart.toString();
     }
 
     @TypeConverter

@@ -10,6 +10,12 @@ public class IDs {
 
     private static final long UUID_VERSION_MASK = 4 << 12;
 
+    public static String huge() {
+        final var random = new byte[96];
+        Conversations.SECURE_RANDOM.nextBytes(random);
+        return BaseEncoding.base64Url().encode(random);
+    }
+
     public static String medium() {
         final var random = new byte[9];
         Conversations.SECURE_RANDOM.nextBytes(random);

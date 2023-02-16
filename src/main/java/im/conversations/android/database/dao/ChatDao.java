@@ -4,13 +4,13 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.ChatEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.ChatType;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Arrays;
+import org.jxmpp.jid.Jid;
 
 @Dao
 public abstract class ChatDao {
@@ -38,7 +38,7 @@ public abstract class ChatDao {
         // TODO do not create entity for 'error'
         final var entity = new ChatEntity();
         entity.accountId = account.id;
-        entity.address = address.toEscapedString();
+        entity.address = address.toString();
         entity.type = chatType;
         entity.archived = true;
         final long id = insert(entity);

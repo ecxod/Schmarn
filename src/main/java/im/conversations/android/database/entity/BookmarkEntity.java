@@ -5,9 +5,10 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.model.bookmark.Conference;
 import java.util.Map;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
 
 @Entity(
         tableName = "bookmark",
@@ -41,7 +42,7 @@ public class BookmarkEntity {
 
     public static BookmarkEntity of(
             final long accountId, final Map.Entry<String, Conference> entry) {
-        final var address = jidOrNull(entry.getKey());
+        final var address = JidCreate.fromOrNull(entry.getKey());
         final var conference = entry.getValue();
         if (address == null) {
             return null;
@@ -52,13 +53,5 @@ public class BookmarkEntity {
         entity.autoJoin = conference.isAutoJoin();
         entity.name = conference.getConferenceName();
         return entity;
-    }
-
-    public static Jid jidOrNull(final String address) {
-        try {
-            return address == null ? null : Jid.ofEscaped(address);
-        } catch (final IllegalArgumentException e) {
-            return null;
-        }
     }
 }

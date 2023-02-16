@@ -33,6 +33,7 @@ public class Plain extends SaslMechanism {
     @Override
     public String getClientFirstMessage(final SSLSocket sslSocket) {
         return getMessage(
-                account.address.getEscapedLocal(), Strings.nullToEmpty(credential.password));
+                account.address.getLocalpartOrThrow().toString(),
+                Strings.nullToEmpty(credential.password));
     }
 }

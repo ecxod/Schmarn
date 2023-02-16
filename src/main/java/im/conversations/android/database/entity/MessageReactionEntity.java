@@ -5,9 +5,10 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.transformer.Transformation;
 import java.time.Instant;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 @Entity(
         tableName = "message_reaction",
@@ -27,8 +28,8 @@ public class MessageReactionEntity {
 
     public String stanzaId;
     public String messageId;
-    public Jid reactionBy;
-    public String reactionByResource;
+    public BareJid reactionBy;
+    public Resourcepart reactionByResource;
     public String occupantId;
 
     public Instant receivedAt;

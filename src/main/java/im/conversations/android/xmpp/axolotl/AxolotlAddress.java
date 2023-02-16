@@ -1,20 +1,18 @@
 package im.conversations.android.xmpp.axolotl;
 
-import com.google.common.base.Preconditions;
-import eu.siacs.conversations.xmpp.Jid;
+import org.jxmpp.jid.BareJid;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 
 public class AxolotlAddress extends SignalProtocolAddress {
 
-    private final Jid jid;
+    private final BareJid jid;
 
-    public AxolotlAddress(final Jid jid, int deviceId) {
-        super(jid.toEscapedString(), deviceId);
-        Preconditions.checkArgument(jid.isBareJid(), "AxolotlAddresses must use bare JIDs");
+    public AxolotlAddress(final BareJid jid, int deviceId) {
+        super(jid.toString(), deviceId);
         this.jid = jid;
     }
 
-    public Jid getJid() {
+    public BareJid getJid() {
         return this.jid;
     }
 

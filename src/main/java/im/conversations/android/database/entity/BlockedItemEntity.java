@@ -5,7 +5,7 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
+import org.jxmpp.jid.Jid;
 
 @Entity(
         tableName = "blocked",

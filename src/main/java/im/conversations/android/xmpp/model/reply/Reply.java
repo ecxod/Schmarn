@@ -1,9 +1,9 @@
 package im.conversations.android.xmpp.model.reply;
 
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.model.Extension;
+import org.jxmpp.jid.Jid;
 
 @XmlElement(namespace = Namespace.REPLY)
 public class Reply extends Extension {

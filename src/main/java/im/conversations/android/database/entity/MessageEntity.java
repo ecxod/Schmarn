@@ -6,10 +6,11 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.transformer.Transformation;
 import java.time.Instant;
 import java.util.Objects;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 @Entity(
         tableName = "message",
@@ -47,10 +48,10 @@ public class MessageEntity {
 
     public boolean outgoing;
 
-    public Jid toBare;
-    public String toResource;
-    public Jid fromBare;
-    public String fromResource;
+    public BareJid toBare;
+    public Resourcepart toResource;
+    public BareJid fromBare;
+    public Resourcepart fromResource;
 
     public String occupantId;
 

@@ -1,9 +1,9 @@
 package im.conversations.android.xmpp.model.disco.items;
 
 import androidx.annotation.Nullable;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.xmpp.model.Extension;
+import org.jxmpp.jid.Jid;
 
 @XmlElement
 public class Item extends Extension {

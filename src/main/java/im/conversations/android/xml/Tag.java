@@ -1,10 +1,10 @@
 package im.conversations.android.xml;
 
-import eu.siacs.conversations.xmpp.Jid;
 import java.util.Hashtable;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
+import org.jxmpp.jid.Jid;
 
 public class Tag {
     public static final int NO = -1;
@@ -52,7 +52,7 @@ public class Tag {
 
     public Tag setAttribute(final String attrName, final Jid attrValue) {
         if (attrValue != null) {
-            this.attributes.put(attrName, attrValue.toEscapedString());
+            this.attributes.put(attrName, attrValue.toString());
         }
         return this;
     }

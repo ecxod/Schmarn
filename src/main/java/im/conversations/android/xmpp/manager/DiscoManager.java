@@ -13,7 +13,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import eu.siacs.conversations.BuildConfig;
 import eu.siacs.conversations.R;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.EntityCapabilities;
@@ -32,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,7 +249,7 @@ public class DiscoManager extends AbstractManager {
     }
 
     public boolean hasServerFeature(final String feature) {
-        return hasFeature(getAccount().address.getDomain(), feature);
+        return hasFeature(getAccount().address.asDomainBareJid(), feature);
     }
 
     public ServiceDescription getServiceDescription() {

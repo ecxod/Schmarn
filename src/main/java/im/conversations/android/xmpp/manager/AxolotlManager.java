@@ -7,7 +7,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.AxolotlDatabaseStore;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.IqErrorException;
@@ -22,6 +21,8 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whispersystems.libsignal.IdentityKey;
@@ -47,7 +48,7 @@ public class AxolotlManager extends AbstractManager {
         this.signalProtocolStore = new AxolotlDatabaseStore(context, connection.getAccount());
     }
 
-    public void handleItems(final Jid from, final Items items) {
+    public void handleItems(final BareJid from, final Items items) {
         final var deviceList = items.getFirstItem(DeviceList.class);
         if (from == null || deviceList == null) {
             return;
@@ -57,7 +58,7 @@ public class AxolotlManager extends AbstractManager {
         getDatabase().axolotlDao().setDeviceList(getAccount(), from, deviceIds);
     }
 
-    public ListenableFuture<Set<Integer>> fetchDeviceIds(final Jid address) {
+    public ListenableFuture<Set<Integer>> fetchDeviceIds(final BareJid address) {
         final var deviceIdsFuture =
                 Futures.transform(
                         getManager(PubSubManager.class)

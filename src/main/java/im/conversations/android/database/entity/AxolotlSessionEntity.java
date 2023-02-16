@@ -5,8 +5,8 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.model.Account;
+import org.jxmpp.jid.BareJid;
 import org.whispersystems.libsignal.state.SessionRecord;
 
 @Entity(
@@ -29,14 +29,14 @@ public class AxolotlSessionEntity {
 
     @NonNull public Long accountId;
 
-    @NonNull public Jid address;
+    @NonNull public BareJid address;
 
     @NonNull public Integer deviceId;
 
     @NonNull public SessionRecord sessionRecord;
 
     public static AxolotlSessionEntity of(
-            Account account, Jid address, int deviceId, SessionRecord record) {
+            Account account, BareJid address, int deviceId, SessionRecord record) {
         final var entity = new AxolotlSessionEntity();
         entity.accountId = account.id;
         entity.address = address;

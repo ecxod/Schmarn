@@ -2,12 +2,12 @@ package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
 import com.google.common.util.concurrent.ListenableFuture;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.NodeConfiguration;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import java.util.Map;
+import org.jxmpp.jid.Jid;
 
 public class PepManager extends AbstractManager {
 

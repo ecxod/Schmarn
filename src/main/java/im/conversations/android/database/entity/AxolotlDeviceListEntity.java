@@ -5,8 +5,8 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import java.time.Instant;
+import org.jxmpp.jid.BareJid;
 
 @Entity(
         tableName = "axolotl_device_list",
@@ -28,7 +28,7 @@ public class AxolotlDeviceListEntity {
 
     @NonNull public Long accountId;
 
-    @NonNull public Jid address;
+    @NonNull public BareJid address;
 
     @NonNull public Instant receivedAt;
 
@@ -36,7 +36,7 @@ public class AxolotlDeviceListEntity {
 
     public boolean isParsingIssue;
 
-    public static AxolotlDeviceListEntity of(long accountId, final Jid address) {
+    public static AxolotlDeviceListEntity of(long accountId, final BareJid address) {
         final var entity = new AxolotlDeviceListEntity();
         entity.accountId = accountId;
         entity.address = address;
@@ -46,7 +46,7 @@ public class AxolotlDeviceListEntity {
     }
 
     public static AxolotlDeviceListEntity of(
-            final long accountId, final Jid address, final String errorCondition) {
+            final long accountId, final BareJid address, final String errorCondition) {
         final var entity = new AxolotlDeviceListEntity();
         entity.accountId = accountId;
         entity.address = address;
@@ -55,7 +55,7 @@ public class AxolotlDeviceListEntity {
         return entity;
     }
 
-    public static AxolotlDeviceListEntity ofParsingIssue(final long account, Jid address) {
+    public static AxolotlDeviceListEntity ofParsingIssue(final long account, BareJid address) {
         final var entity = new AxolotlDeviceListEntity();
         entity.accountId = account;
         entity.address = address;

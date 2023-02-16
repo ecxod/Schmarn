@@ -233,4 +233,11 @@ public abstract class SaslMechanism {
     public static boolean pin(final SaslMechanism saslMechanism) {
         return !hashedToken(saslMechanism);
     }
+
+    protected static byte[] concatenate(byte[] a, byte[] b) {
+        byte[] result = new byte[a.length + b.length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
+    }
 }

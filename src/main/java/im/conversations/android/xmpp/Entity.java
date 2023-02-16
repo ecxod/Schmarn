@@ -1,6 +1,6 @@
 package im.conversations.android.xmpp;
 
-import eu.siacs.conversations.xmpp.Jid;
+import org.jxmpp.jid.Jid;
 
 public abstract class Entity {
 

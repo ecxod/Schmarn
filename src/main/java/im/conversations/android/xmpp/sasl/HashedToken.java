@@ -49,9 +49,10 @@ public abstract class HashedToken extends SaslMechanism implements ChannelBindin
         final byte[] cbData = getChannelBindingData(sslSocket);
         final byte[] initiatorHashedToken =
                 hashing.hashBytes(Bytes.concat(INITIATOR, cbData)).asBytes();
+        final String username = account.address.getLocalpartOrThrow().toString();
         final byte[] firstMessage =
                 Bytes.concat(
-                        account.address.getEscapedLocal().getBytes(StandardCharsets.UTF_8),
+                        username.getBytes(StandardCharsets.UTF_8),
                         new byte[] {0x00},
                         initiatorHashedToken);
         return Base64.encodeToString(firstMessage, Base64.NO_WRAP);

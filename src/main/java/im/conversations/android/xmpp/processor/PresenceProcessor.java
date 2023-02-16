@@ -19,7 +19,7 @@ public class PresenceProcessor extends XmppConnection.Delegate implements Consum
     public void accept(final Presence presencePacket) {
         final var from = presencePacket.getFrom();
         final var address = from == null ? null : from.asBareJid();
-        final var resource = from == null ? null : from.getResource();
+        final var resource = from == null ? null : from.getResourceOrEmpty();
         final var typeAttribute = presencePacket.getAttribute("type");
         final PresenceType type;
         try {

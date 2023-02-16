@@ -1,6 +1,6 @@
 package im.conversations.android.database.model;
 
-import eu.siacs.conversations.xmpp.Jid;
+import org.jxmpp.jid.Jid;
 
 public class ChatIdentifier {
 

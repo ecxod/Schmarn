@@ -5,9 +5,10 @@ import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.database.model.Proxy;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 @Entity(
         tableName = "account",
@@ -21,8 +22,8 @@ public class AccountEntity {
     @PrimaryKey(autoGenerate = true)
     public Long id;
 
-    @NonNull public Jid address;
-    public String resource;
+    @NonNull public BareJid address;
+    public Resourcepart resource;
     public byte[] randomSeed;
 
     public boolean enabled;

@@ -6,10 +6,10 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.AvatarThumbnail;
 import im.conversations.android.xmpp.model.avatar.Info;
+import org.jxmpp.jid.BareJid;
 
 @Entity(
         tableName = "avatar",
@@ -31,13 +31,13 @@ public class AvatarEntity {
 
     @NonNull public Long accountId;
 
-    @NonNull public Jid address;
+    @NonNull public BareJid address;
 
     @Embedded(prefix = "thumb_")
     @NonNull
     public AvatarThumbnail thumbnail;
 
-    public static AvatarEntity of(final Account account, final Jid address, final Info info) {
+    public static AvatarEntity of(final Account account, final BareJid address, final Info info) {
         final var entity = new AvatarEntity();
         entity.accountId = account.id;
         entity.address = address;

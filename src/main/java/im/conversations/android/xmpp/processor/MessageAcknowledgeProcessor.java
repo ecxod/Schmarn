@@ -1,9 +1,9 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.XmppConnection;
 import java.util.function.BiFunction;
+import org.jxmpp.jid.Jid;
 
 public class MessageAcknowledgeProcessor extends XmppConnection.Delegate
         implements BiFunction<Jid, String, Boolean> {

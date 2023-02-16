@@ -34,9 +34,9 @@ public class RegistrationManager extends AbstractManager {
     public ListenableFuture<Void> setPassword(final String password) {
         final var account = getAccount();
         final var iq = new Iq(Iq.Type.SET);
-        iq.setTo(account.address.getDomain());
+        iq.setTo(account.address.asDomainBareJid());
         final var register = iq.addExtension(new Register());
-        register.addUsername(account.address.getEscapedLocal());
+        register.addUsername(account.address.getLocalpartOrThrow());
         register.addPassword(password);
         return Futures.transform(
                 connection.sendIqPacket(iq), r -> null, MoreExecutors.directExecutor());
@@ -44,7 +44,7 @@ public class RegistrationManager extends AbstractManager {
 
     public ListenableFuture<Void> unregister() {
         final var iq = new Iq(Iq.Type.SET);
-        iq.setTo(getAccount().address.getDomain());
+        iq.setTo(getAccount().address.asDomainBareJid());
         final var register = iq.addExtension(new Register());
         register.addExtension(new Remove());
         return Futures.transform(
@@ -53,7 +53,7 @@ public class RegistrationManager extends AbstractManager {
 
     public ListenableFuture<Registration> getRegistration() {
         final var iq = new Iq(Iq.Type.GET);
-        iq.setTo(getAccount().address.getDomain());
+        iq.setTo(getAccount().address.asDomainBareJid());
         iq.addExtension(new Register());
         return Futures.transform(
                 connection.sendIqPacketUnbound(iq),
@@ -98,7 +98,7 @@ public class RegistrationManager extends AbstractManager {
 
     public ListenableFuture<Void> sendPreAuthentication(final String token) {
         final var iq = new Iq(Iq.Type.GET);
-        iq.setTo(getAccount().address.getDomain());
+        iq.setTo(getAccount().address.asDomainBareJid());
         final var preAuthentication = iq.addExtension(new PreAuth());
         preAuthentication.setToken(token);
         return Futures.transform(

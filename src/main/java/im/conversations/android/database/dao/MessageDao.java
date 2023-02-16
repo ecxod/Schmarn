@@ -9,7 +9,6 @@ import androidx.room.Update;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
 import im.conversations.android.database.entity.MessageReactionEntity;
@@ -27,6 +26,9 @@ import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Collection;
 import java.util.List;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.parts.Resourcepart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,14 +40,17 @@ public abstract class MessageDao {
     @Query(
             "UPDATE message SET acknowledged=1 WHERE messageId=:messageId AND toBare=:toBare AND"
                 + " toResource=NULL AND chatId IN (SELECT id FROM chat WHERE accountId=:account)")
-    abstract int acknowledge(long account, String messageId, final String toBare);
+    abstract int acknowledge(long account, String messageId, final BareJid toBare);
 
     @Query(
             "UPDATE message SET acknowledged=1 WHERE messageId=:messageId AND toBare=:toBare AND"
                     + " toResource=:toResource AND chatId IN (SELECT id FROM chat WHERE"
                     + " accountId=:account)")
     abstract int acknowledge(
-            long account, final String messageId, final String toBare, final String toResource);
+            long account,
+            final String messageId,
+            final BareJid toBare,
+            final Resourcepart toResource);
 
     public boolean acknowledge(
             final Account account, @NonNull final String messageId, @NonNull final Jid to) {
@@ -54,12 +59,10 @@ public abstract class MessageDao {
 
     public boolean acknowledge(
             final long account, @NonNull final String messageId, @NonNull final Jid to) {
-        if (to.isBareJid()) {
-            return acknowledge(account, messageId, to.toEscapedString()) > 0;
+        if (to.hasResource()) {
+            return acknowledge(account, messageId, to.asBareJid(), to.getResourceOrThrow()) > 0;
         } else {
-            return acknowledge(
-                            account, messageId, to.asBareJid().toEscapedString(), to.getResource())
-                    > 0;
+            return acknowledge(account, messageId, to.asBareJid()) > 0;
         }
     }
 
@@ -192,7 +195,7 @@ public abstract class MessageDao {
                 + " stanzaId=:stanzaId AND (stanzaIdVerified=1 OR latestVersion IS NULL)) OR"
                 + " (stanzaId IS NULL AND messageId=:messageId AND latestVersion IS NULL))")
     abstract MessageIdentifier get(
-            long chatId, Jid fromBare, String occupantId, String stanzaId, String messageId);
+            long chatId, BareJid fromBare, String occupantId, String stanzaId, String messageId);
 
     public MessageIdentifier getOrCreateVersion(
             ChatIdentifier chat,
@@ -257,13 +260,13 @@ public abstract class MessageDao {
                     + " chatId=:chatId AND (fromBare=:fromBare OR fromBare IS NULL) AND"
                     + " (occupantId=:occupantId OR occupantId IS NULL) AND messageId=:messageId")
     abstract MessageIdentifier getByOccupantIdAndMessageId(
-            long chatId, Jid fromBare, String occupantId, String messageId);
+            long chatId, BareJid fromBare, String occupantId, String messageId);
 
     @Query(
             "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
                     + " chatId=:chatId AND (fromBare=:fromBare OR fromBare IS NULL) AND"
                     + " messageId=:messageId")
-    abstract MessageIdentifier getByMessageId(long chatId, Jid fromBare, String messageId);
+    abstract MessageIdentifier getByMessageId(long chatId, BareJid fromBare, String messageId);
 
     @Query(
             "SELECT id FROM message_version WHERE messageEntityId=:messageEntityId ORDER BY (CASE"
@@ -393,7 +396,7 @@ public abstract class MessageDao {
     @Query(
             "DELETE FROM message_reaction WHERE messageEntityId=:messageEntityId AND"
                     + " reactionBy=:fromBare")
-    protected abstract void deleteReactionsByFromBare(long messageEntityId, Jid fromBare);
+    protected abstract void deleteReactionsByFromBare(long messageEntityId, BareJid fromBare);
 
     @Transaction
     @Query(
@@ -436,7 +439,7 @@ public abstract class MessageDao {
     @Query(
             "SELECT id FROM message WHERE chatId=:chatId AND fromBare=:fromBare AND"
                     + " messageId=:messageId")
-    protected abstract Long getMessageByMessageId(long chatId, Jid fromBare, String messageId);
+    protected abstract Long getMessageByMessageId(long chatId, BareJid fromBare, String messageId);
 
     @Query("SELECT id FROM message WHERE chatId=:chatId AND stanzaId=:stanzaId")
     protected abstract Long getMessageByStanzaId(long chatId, String stanzaId);

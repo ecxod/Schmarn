@@ -1,18 +1,19 @@
 package im.conversations.android.database.model;
 
 import com.google.common.base.Preconditions;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.transformer.Transformation;
 import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.error.Text;
 import im.conversations.android.xmpp.model.stanza.Message;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 public class MessageState {
 
-    public final Jid fromBare;
+    public final BareJid fromBare;
 
-    public final String fromResource;
+    public final Resourcepart fromResource;
 
     public final StateType type;
 
@@ -21,8 +22,8 @@ public class MessageState {
     public final String errorText;
 
     public MessageState(
-            Jid fromBare,
-            String fromResource,
+            BareJid fromBare,
+            Resourcepart fromResource,
             StateType type,
             String errorCondition,
             String errorText) {

@@ -1,9 +1,9 @@
 package im.conversations.android.xmpp.model.stanza;
 
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.StreamElement;
 import im.conversations.android.xmpp.model.error.Error;
+import org.jxmpp.jid.Jid;
 
 public abstract class Stanza extends StreamElement {
 

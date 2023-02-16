@@ -1,10 +1,10 @@
 package im.conversations.android.database.model;
 
 import androidx.room.Relation;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.entity.MessageContentEntity;
 import java.time.Instant;
 import java.util.List;
+import org.jxmpp.jid.Jid;
 
 public class MessageEmbedded {
 

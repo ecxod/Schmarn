@@ -5,8 +5,8 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.model.roster.Item;
+import org.jxmpp.jid.Jid;
 
 @Entity(
         tableName = "roster",

@@ -1,7 +1,6 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
@@ -12,6 +11,7 @@ import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.manager.PresenceManager;
 import im.conversations.android.xmpp.manager.RosterManager;
 import java.util.function.Consumer;
+import org.jxmpp.jid.Jid;
 
 public class BindProcessor extends XmppConnection.Delegate implements Consumer<Jid> {
 
@@ -35,7 +35,8 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
         }
 
         if (discoManager.hasServerFeature(Namespace.COMMANDS)) {
-            discoManager.items(Entity.discoItem(account.address.getDomain()), Namespace.COMMANDS);
+            discoManager.items(
+                    Entity.discoItem(account.address.asDomainBareJid()), Namespace.COMMANDS);
         }
 
         getManager(BookmarkManager.class).fetch();

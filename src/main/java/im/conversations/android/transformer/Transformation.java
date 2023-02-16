@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.model.DeliveryReceipt;
 import im.conversations.android.xmpp.model.DeliveryReceiptRequest;
 import im.conversations.android.xmpp.model.Extension;
@@ -25,6 +24,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 public class Transformation {
 
@@ -83,20 +85,20 @@ public class Transformation {
         return this.extensions.size() > 0;
     }
 
-    public Jid fromBare() {
+    public BareJid fromBare() {
         return from == null ? null : from.asBareJid();
     }
 
-    public String fromResource() {
-        return from == null ? null : from.getResource();
+    public Resourcepart fromResource() {
+        return from == null ? null : from.getResourceOrNull();
     }
 
-    public Jid toBare() {
+    public BareJid toBare() {
         return to == null ? null : to.asBareJid();
     }
 
-    public String toResource() {
-        return to == null ? null : to.getResource();
+    public Resourcepart toResource() {
+        return to == null ? null : to.getResourceOrNull();
     }
 
     public Instant sentAt() {

@@ -6,11 +6,12 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import com.google.common.base.Preconditions;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.Transformation;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 @Entity(
         tableName = "message_version",
@@ -31,8 +32,8 @@ public class MessageVersionEntity {
     public String messageId;
     public String stanzaId;
     public Modification modification;
-    public Jid modifiedBy;
-    public String modifiedByResource;
+    public BareJid modifiedBy;
+    public Resourcepart modifiedByResource;
     public String occupantId;
     public Instant receivedAt;
 

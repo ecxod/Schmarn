@@ -6,8 +6,8 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import com.google.common.base.Strings;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.model.disco.items.Item;
+import org.jxmpp.jid.Jid;
 
 @Entity(
         tableName = "disco_item",
@@ -57,7 +57,7 @@ public class DiscoItemEntity {
         entity.accountId = accountId;
         entity.address = item.getJid();
         entity.node = Strings.nullToEmpty(item.getNode());
-        entity.parentAddress = parent.toEscapedString();
+        entity.parentAddress = parent.toString();
         entity.parentNode = Strings.nullToEmpty(parentNode);
         return entity;
     }

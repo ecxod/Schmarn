@@ -6,11 +6,12 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import com.google.common.base.Strings;
 import eu.siacs.conversations.entities.MucOptions;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.database.model.PresenceShow;
 import im.conversations.android.database.model.PresenceType;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 @Entity(
         tableName = "presence",
@@ -39,9 +40,9 @@ public class PresenceEntity {
 
     @NonNull public Long accountId;
 
-    @NonNull public Jid address;
+    @NonNull public BareJid address;
 
-    @NonNull public String resource;
+    @NonNull public Resourcepart resource;
 
     @Nullable public PresenceType type;
 
@@ -66,15 +67,15 @@ public class PresenceEntity {
 
     public static PresenceEntity of(
             long account,
-            Jid address,
-            @Nullable String resource,
+            @NonNull BareJid address,
+            @NonNull Resourcepart resource,
             PresenceType type,
             PresenceShow show,
             String status) {
         final var entity = new PresenceEntity();
         entity.accountId = account;
         entity.address = address;
-        entity.resource = Strings.nullToEmpty(resource);
+        entity.resource = resource;
         entity.type = type;
         entity.show = show;
         entity.status = status;

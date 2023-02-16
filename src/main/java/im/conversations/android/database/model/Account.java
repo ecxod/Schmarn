@@ -6,20 +6,19 @@ import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteSource;
 import com.google.common.primitives.Ints;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.IDs;
 import java.io.IOException;
 import java.util.UUID;
+import org.jxmpp.jid.BareJid;
 
 public class Account {
 
     public final long id;
-    @NonNull public final Jid address;
+    @NonNull public final BareJid address;
     @NonNull public final byte[] randomSeed;
 
-    public Account(final long id, @NonNull final Jid address, @NonNull byte[] randomSeed) {
+    public Account(final long id, @NonNull final BareJid address, @NonNull byte[] randomSeed) {
         Preconditions.checkNotNull(address, "Account can not be instantiated without an address");
-        Preconditions.checkArgument(address.isBareJid(), "Account address must be bare");
         Preconditions.checkArgument(
                 randomSeed.length == 32, "RandomSeed must have exactly 32 bytes");
         this.id = id;
@@ -43,7 +42,7 @@ public class Account {
     }
 
     public boolean isOnion() {
-        final String domain = address.getDomain().toEscapedString();
+        final String domain = address.getDomain().toString();
         return domain.endsWith(".onion");
     }
 

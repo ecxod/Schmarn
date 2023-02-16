@@ -1,7 +1,6 @@
 package im.conversations.android.xml;
 
 import androidx.annotation.NonNull;
-
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -9,15 +8,14 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import eu.siacs.conversations.xmpp.InvalidJid;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.ExtensionFactory;
 import im.conversations.android.xmpp.model.Extension;
-import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
 
 public class Element {
     private final String name;
@@ -154,7 +152,7 @@ public class Element {
     }
 
     public Element setAttribute(final String name, final Jid value) {
-        return this.setAttribute(name, value == null ? null : value.toEscapedString());
+        return this.setAttribute(name, value == null ? null : value.toString());
     }
 
     public void removeAttribute(final String name) {
@@ -187,16 +185,12 @@ public class Element {
         return Optional.fromNullable(Ints.tryParse(value));
     }
 
-    public Jid getAttributeAsJid(String name) {
+    public Jid getAttributeAsJid(final String name) {
         final String jid = this.getAttribute(name);
         if (Strings.isNullOrEmpty(jid)) {
             return null;
         }
-        try {
-            return Jid.ofEscaped(jid);
-        } catch (final IllegalArgumentException e) {
-            return InvalidJid.of(jid, this instanceof Message);
-        }
+        return JidCreate.fromOrThrowUnchecked(jid);
     }
 
     public Hashtable<String, String> getAttributes() {

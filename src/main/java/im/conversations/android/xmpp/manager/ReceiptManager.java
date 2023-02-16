@@ -2,7 +2,6 @@ package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
 import com.google.common.base.Strings;
-import eu.siacs.conversations.xmpp.Jid;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.DeliveryReceiptRequest;
 import im.conversations.android.xmpp.model.markers.Markable;
@@ -10,6 +9,7 @@ import im.conversations.android.xmpp.model.receipts.Received;
 import im.conversations.android.xmpp.model.receipts.Request;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Collection;
+import org.jxmpp.jid.Jid;
 
 public class ReceiptManager extends AbstractManager {
 

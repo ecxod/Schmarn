@@ -51,7 +51,7 @@ public class DigestMd5 extends SaslMechanism {
                     final String digestUri = "xmpp/" + account.address.getDomain();
                     final String nonceCount = "00000001";
                     final String x =
-                            account.address.getEscapedLocal()
+                            account.address.getLocalpartOrNull().toString()
                                     + ":"
                                     + account.address.getDomain()
                                     + ":"
@@ -60,7 +60,7 @@ public class DigestMd5 extends SaslMechanism {
                     final byte[] y = md.digest(x.getBytes(Charset.defaultCharset()));
                     final String cNonce = CryptoHelper.random(100);
                     final byte[] a1 =
-                            CryptoHelper.concatenateByteArrays(
+                            concatenate(
                                     y,
                                     (":" + nonce + ":" + cNonce)
                                             .getBytes(Charset.defaultCharset()));
@@ -76,7 +76,7 @@ public class DigestMd5 extends SaslMechanism {
                                     md.digest(kd.getBytes(Charset.defaultCharset())));
                     final String saslString =
                             "username=\""
-                                    + account.address.getEscapedLocal()
+                                    + account.address.getLocalpartOrThrow().toString()
                                     + "\",realm=\""
                                     + account.address.getDomain()
                                     + "\",nonce=\""
