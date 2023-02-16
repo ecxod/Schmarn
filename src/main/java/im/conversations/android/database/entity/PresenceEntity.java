@@ -6,9 +6,10 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import eu.siacs.conversations.entities.MucOptions;
 import im.conversations.android.database.model.PresenceShow;
 import im.conversations.android.database.model.PresenceType;
+import im.conversations.android.xmpp.model.muc.Affiliation;
+import im.conversations.android.xmpp.model.muc.Role;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.parts.Resourcepart;
@@ -54,9 +55,9 @@ public class PresenceEntity {
 
     @Nullable public String occupantId;
 
-    @Nullable public MucOptions.Affiliation mucUserAffiliation;
+    @Nullable public Affiliation mucUserAffiliation;
 
-    @Nullable public MucOptions.Role mucUserRole;
+    @Nullable public Role mucUserRole;
 
     @Nullable public Jid mucUserJid;
 

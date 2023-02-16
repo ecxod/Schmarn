@@ -1,18 +1,20 @@
 package im.conversations.android.xml;
 
-import android.util.Log;
 import android.util.Xml;
-import eu.siacs.conversations.Config;
 import im.conversations.android.xmpp.ExtensionFactory;
 import im.conversations.android.xmpp.model.Extension;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 public class XmlReader implements Closeable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(XmlReader.class);
     private final XmlPullParser parser;
     private InputStream is;
 
@@ -20,19 +22,19 @@ public class XmlReader implements Closeable {
         this.parser = Xml.newPullParser();
         try {
             this.parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-        } catch (XmlPullParserException e) {
-            Log.d(Config.LOGTAG, "error setting namespace feature on parser");
+        } catch (final XmlPullParserException e) {
+            LOGGER.error("error setting namespace feature on parser", e);
         }
     }
 
-    public void setInputStream(InputStream inputStream) throws IOException {
+    public void setInputStream(final InputStream inputStream) throws IOException {
         if (inputStream == null) {
             throw new IOException();
         }
         this.is = inputStream;
         try {
-            parser.setInput(new InputStreamReader(this.is));
-        } catch (XmlPullParserException e) {
+            this.parser.setInput(new InputStreamReader(this.is));
+        } catch (final XmlPullParserException e) {
             throw new IOException("error resetting parser");
         }
     }

@@ -1,14 +1,12 @@
 package im.conversations.android.xmpp.sasl;
 
 import android.util.Base64;
-import android.util.Log;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.hash.HashFunction;
 import com.google.common.primitives.Bytes;
-import eu.siacs.conversations.Config;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Credential;
 import im.conversations.android.tls.SSLSockets;
@@ -18,8 +16,12 @@ import java.util.Collection;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class HashedToken extends SaslMechanism implements ChannelBindingMechanism {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HashedToken.class);
 
     private static final String PREFIX = "HT";
 
@@ -65,12 +67,7 @@ public abstract class HashedToken extends SaslMechanism implements ChannelBindin
         try {
             return ChannelBindingMechanism.getChannelBindingData(sslSocket, this.channelBinding);
         } catch (final AuthenticationException e) {
-            Log.e(
-                    Config.LOGTAG,
-                    account.address
-                            + ": unable to retrieve channel binding data for "
-                            + getMechanism(),
-                    e);
+            LOGGER.error("Could not retrieve channel binding data for {}", getMechanism(), e);
             return new byte[0];
         }
     }

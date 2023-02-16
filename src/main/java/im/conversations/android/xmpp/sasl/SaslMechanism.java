@@ -1,10 +1,8 @@
 package im.conversations.android.xmpp.sasl;
 
-import android.util.Log;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
-import eu.siacs.conversations.Config;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Credential;
 import im.conversations.android.tls.SSLSockets;
@@ -13,8 +11,12 @@ import im.conversations.android.xml.Namespace;
 import java.util.Collection;
 import java.util.Collections;
 import javax.net.ssl.SSLSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class SaslMechanism {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SaslMechanism.class);
 
     protected final Account account;
     protected final Credential credential;
@@ -216,9 +218,7 @@ public abstract class SaslMechanism {
             if (ChannelBinding.isAvailable(cb, sslVersion)) {
                 return mechanism;
             } else {
-                Log.d(
-                        Config.LOGTAG,
-                        "pinned channel binding method " + cb + " no longer available");
+                LOGGER.warn("Pinned channel binding method {} no longer available", cb);
                 return null;
             }
         } else {

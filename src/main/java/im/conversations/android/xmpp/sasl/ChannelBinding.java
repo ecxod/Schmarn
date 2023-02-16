@@ -1,6 +1,5 @@
 package im.conversations.android.xmpp.sasl;
 
-import android.util.Log;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
@@ -8,7 +7,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableBiMap;
-import eu.siacs.conversations.Config;
 import im.conversations.android.tls.SSLSockets;
 import im.conversations.android.xml.Element;
 import im.conversations.android.xml.Namespace;
@@ -57,7 +55,6 @@ public enum ChannelBinding {
             return valueOf(
                     CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.UPPER_UNDERSCORE).convert(type));
         } catch (final IllegalArgumentException e) {
-            Log.d(Config.LOGTAG, type + " is not a known channel binding");
             return null;
         }
     }

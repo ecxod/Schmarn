@@ -11,8 +11,6 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import eu.siacs.conversations.Config;
-import eu.siacs.conversations.utils.PhoneHelper;
 import im.conversations.android.Conversations;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
@@ -32,6 +30,12 @@ import org.slf4j.LoggerFactory;
 public class ConnectionPool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionPool.class);
+
+    public static final int CONNECT_TIMEOUT = 90;
+    public static final int PING_MAX_INTERVAL = 300;
+    public static final int PING_MIN_INTERVAL = 30;
+    public static final int LOW_PING_TIMEOUT = 1; // used after push received
+    public static final int PING_TIMEOUT = 15;
 
     private static volatile ConnectionPool INSTANCE;
 
@@ -148,7 +152,7 @@ public class ConnectionPool {
             if (connection.supportsClientStateIndication()) {
                 // TODO send correct CSI state (connection.sendActive or connection.sendInactive)
             }
-            scheduleWakeUpCall(Config.PING_MAX_INTERVAL);
+            scheduleWakeUpCall(PING_MAX_INTERVAL);
         } else if (connection.getStatus() == ConnectionState.OFFLINE) {
 
             // TODO previously we would call resetSendingToWaiting. The new architecture likely
@@ -227,9 +231,7 @@ public class ConnectionPool {
         // WakeLockHelper.acquire(wakeLock);
         int pingNow = 0;
         final HashSet<XmppConnection> pingCandidates = new HashSet<>();
-        final String androidId = PhoneHelper.getAndroidId(context);
         for (final XmppConnection xmppConnection : this.connections) {
-            final Account account = xmppConnection.getAccount();
             // TODO fix me if we bring back FCM push support
             final boolean pushWasMeantForThisAccount = false;
             if (processAccountState(xmppConnection, pushWasMeantForThisAccount, pingCandidates)) {
@@ -242,7 +244,7 @@ public class ConnectionPool {
                 final boolean lowTimeout = isInLowPingTimeoutMode(account);
                 xmppConnection.sendPing();
                 LOGGER.debug("{}: send ping (lowTimeout={})", account.address, lowTimeout);
-                scheduleWakeUpCall(lowTimeout ? Config.LOW_PING_TIMEOUT : Config.PING_TIMEOUT);
+                scheduleWakeUpCall(lowTimeout ? LOW_PING_TIMEOUT : PING_TIMEOUT);
             }
         }
         // WakeLockHelper.release(wakeLock);
@@ -260,12 +262,12 @@ public class ConnectionPool {
                     final long lastReceived = connection.getLastPacketReceived();
                     final long lastSent = connection.getLastPingSent();
                     final long msToNextPing =
-                            (Math.max(lastReceived, lastSent) + Config.PING_MAX_INTERVAL * 1000)
+                            (Math.max(lastReceived, lastSent) + PING_MAX_INTERVAL * 1000)
                                     - SystemClock.elapsedRealtime();
                     final int pingTimeout =
                             lowPingTimeoutMode.contains(account.address)
-                                    ? Config.LOW_PING_TIMEOUT * 1000
-                                    : Config.PING_TIMEOUT * 1000;
+                                    ? LOW_PING_TIMEOUT * 1000
+                                    : PING_TIMEOUT * 1000;
                     final long pingTimeoutIn =
                             (lastSent + pingTimeout) - SystemClock.elapsedRealtime();
                     if (lastSent > lastReceived) {
@@ -297,7 +299,7 @@ public class ConnectionPool {
             } else if (connection.getStatus() == ConnectionState.CONNECTING) {
                 long secondsSinceLastConnect =
                         (SystemClock.elapsedRealtime() - connection.getLastConnect()) / 1000;
-                long timeout = Config.CONNECT_TIMEOUT - secondsSinceLastConnect;
+                long timeout = CONNECT_TIMEOUT - secondsSinceLastConnect;
                 if (timeout < 0) {
                     LOGGER.debug(
                             "{}: time out during connect reconnecting (secondsSinceLast={})",
@@ -322,7 +324,7 @@ public class ConnectionPool {
             connection.prepareNewConnection();
             connection.interrupt();
             thread.start();
-            scheduleWakeUpCall(Config.CONNECT_DISCO_TIMEOUT);
+            scheduleWakeUpCall(PING_MAX_INTERVAL);
         } else {
             disconnect(connection, true);
             connection.resetEverything();
