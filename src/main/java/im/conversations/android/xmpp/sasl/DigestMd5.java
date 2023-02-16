@@ -1,13 +1,18 @@
 package im.conversations.android.xmpp.sasl;
 
 import android.util.Base64;
+
 import com.google.common.base.Strings;
-import eu.siacs.conversations.utils.CryptoHelper;
+import com.google.common.io.BaseEncoding;
+
+import im.conversations.android.IDs;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Credential;
+
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
 import javax.net.ssl.SSLSocket;
 
 public class DigestMd5 extends SaslMechanism {
@@ -58,21 +63,21 @@ public class DigestMd5 extends SaslMechanism {
                                     + Strings.nullToEmpty(credential.password);
                     final MessageDigest md = MessageDigest.getInstance("MD5");
                     final byte[] y = md.digest(x.getBytes(Charset.defaultCharset()));
-                    final String cNonce = CryptoHelper.random(100);
+                    final String cNonce = IDs.huge();
                     final byte[] a1 =
                             concatenate(
                                     y,
                                     (":" + nonce + ":" + cNonce)
                                             .getBytes(Charset.defaultCharset()));
                     final String a2 = "AUTHENTICATE:" + digestUri;
-                    final String ha1 = CryptoHelper.bytesToHex(md.digest(a1));
+                    final String ha1 = bytesToHex(md.digest(a1));
                     final String ha2 =
-                            CryptoHelper.bytesToHex(
+                            bytesToHex(
                                     md.digest(a2.getBytes(Charset.defaultCharset())));
                     final String kd =
                             ha1 + ":" + nonce + ":" + nonceCount + ":" + cNonce + ":auth:" + ha2;
                     final String response =
-                            CryptoHelper.bytesToHex(
+                            bytesToHex(
                                     md.digest(kd.getBytes(Charset.defaultCharset())));
                     final String saslString =
                             "username=\""
@@ -109,5 +114,9 @@ public class DigestMd5 extends SaslMechanism {
                 throw new InvalidStateException(state);
         }
         return null;
+    }
+
+    private static String bytesToHex(final byte[] bytes) {
+        return BaseEncoding.base16().lowerCase().encode(bytes);
     }
 }

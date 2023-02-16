@@ -9,7 +9,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableBiMap;
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.utils.SSLSockets;
+import im.conversations.android.tls.SSLSockets;
 import im.conversations.android.xml.Element;
 import im.conversations.android.xml.Namespace;
 import java.util.Arrays;
