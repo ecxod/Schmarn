@@ -1,11 +1,11 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
+import android.util.Patterns;
 import androidx.annotation.NonNull;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import eu.siacs.conversations.utils.Patterns;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.data.Data;
