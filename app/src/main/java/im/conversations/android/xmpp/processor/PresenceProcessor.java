@@ -1,10 +1,6 @@
 package im.conversations.android.xmpp.processor;
 
 import android.content.Context;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import im.conversations.android.database.model.PresenceShow;
 import im.conversations.android.database.model.PresenceType;
 import im.conversations.android.xmpp.Entity;
@@ -12,6 +8,8 @@ import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.model.stanza.Presence;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PresenceProcessor extends XmppConnection.Delegate implements Consumer<Presence> {
 

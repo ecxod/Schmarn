@@ -2,7 +2,6 @@ package im.conversations.android.repository;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -13,6 +12,8 @@ import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.RegistrationManager;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import org.jxmpp.jid.BareJid;
 
 public class AccountRepository extends AbstractRepository {
@@ -22,8 +23,11 @@ public class AccountRepository extends AbstractRepository {
     }
 
     private Account createAccount(
-            @NonNull final BareJid address, final String password, final boolean loginAndBind) {
-        Preconditions.checkArgument(password != null, "Missing password");
+            @NonNull final BareJid address, final String password, final boolean loginAndBind)
+            throws GeneralSecurityException, IOException {
+        if (database.accountDao().hasAccount(address)) {
+            throw new AccountAlreadyExistsException(address);
+        }
         final byte[] randomSeed = IDs.seed();
         final var entity = new AccountEntity();
         entity.address = address;
@@ -32,12 +36,10 @@ public class AccountRepository extends AbstractRepository {
         entity.randomSeed = randomSeed;
         final long id = database.accountDao().insert(entity);
         final var account = new Account(id, address, entity.randomSeed);
-        try {
+        if (password != null) {
             CredentialStore.getInstance(context).setPassword(account, password);
-        } catch (final Exception e) {
-            throw new IllegalStateException("Could not store password", e);
         }
-        ConnectionPool.getInstance(context).reconfigure(account);
+        ConnectionPool.getInstance(context).reconfigure();
         return account;
     }
 
@@ -52,12 +54,41 @@ public class AccountRepository extends AbstractRepository {
     }
 
     public ListenableFuture<RegistrationManager.Registration> getRegistration(
-            final Account account) {
-        final ListenableFuture<XmppConnection> connectedFuture =
-                ConnectionPool.getInstance(context).reconfigure(account).asConnectedFuture();
+            @NonNull final Account account) {
+        final ListenableFuture<XmppConnection> connectedFuture = getConnectedFuture(account);
         return Futures.transformAsync(
                 connectedFuture,
                 xc -> xc.getManager(RegistrationManager.class).getRegistration(),
                 MoreExecutors.directExecutor());
+    }
+
+    public ListenableFuture<Boolean> deleteAccountAsync(@NonNull Account account) {
+        return Futures.submit(() -> deleteAccount(account), IO_EXECUTOR);
+    }
+
+    private Boolean deleteAccount(@NonNull Account account) {
+        return database.accountDao().delete(account.id) > 0;
+    }
+
+    public ListenableFuture<XmppConnection> getConnectedFuture(@NonNull final Account account) {
+        return ConnectionPool.getInstance(context).get(account).asConnectedFuture();
+    }
+
+    public ListenableFuture<Account> setPasswordAsync(
+            @NonNull Account account, @NonNull String password) {
+        return Futures.submit(() -> setPassword(account, password), IO_EXECUTOR);
+    }
+
+    private Account setPassword(@NonNull Account account, @NonNull String password)
+            throws GeneralSecurityException, IOException {
+        CredentialStore.getInstance(context).setPassword(account, password);
+        ConnectionPool.getInstance(context).reconnect(account);
+        return account;
+    }
+
+    public static class AccountAlreadyExistsException extends IllegalStateException {
+        public AccountAlreadyExistsException(BareJid address) {
+            super(String.format("The account %s has already been setup", address));
+        }
     }
 }

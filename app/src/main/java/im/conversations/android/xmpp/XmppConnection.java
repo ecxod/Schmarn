@@ -1884,6 +1884,7 @@ public class XmppConnection implements Runnable {
 
     public ListenableFuture<XmppConnection> asConnectedFuture() {
         synchronized (this) {
+            // TODO some more permanent errors like 'unauthorized' should also return immediate
             if (this.connectionState == ConnectionState.ONLINE) {
                 return Futures.immediateFuture(this);
             }

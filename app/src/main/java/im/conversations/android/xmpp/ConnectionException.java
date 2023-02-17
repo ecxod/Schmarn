@@ -7,4 +7,8 @@ public class ConnectionException extends Exception {
     public ConnectionException(ConnectionState state) {
         this.connectionState = state;
     }
+
+    public ConnectionState getConnectionState() {
+        return this.connectionState;
+    }
 }

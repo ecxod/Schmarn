@@ -2,7 +2,6 @@ package im.conversations.android.ui.activity;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -13,8 +12,12 @@ import im.conversations.android.ui.Activities;
 import im.conversations.android.ui.Event;
 import im.conversations.android.ui.NavControllers;
 import im.conversations.android.ui.model.SetupViewModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SetupActivity extends AppCompatActivity {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SetupActivity.class);
 
     private SetupViewModel setupViewModel;
 
@@ -38,6 +41,10 @@ public class SetupActivity extends AppCompatActivity {
                 case ENTER_PASSWORD:
                     navController.navigate(SetupNavigationDirections.enterPassword());
                     break;
+                case DONE:
+                    // TODO open MainActivity
+                    finish();
+                    break;
                 default:
                     throw new IllegalStateException(
                             String.format("Unable to navigate to target %s", target));
@@ -47,5 +54,19 @@ public class SetupActivity extends AppCompatActivity {
 
     private NavController getNavController() {
         return NavControllers.findNavController(this, R.id.nav_host_fragment);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (this.setupViewModel.cancelCurrentOperation()) {
+            return;
+        }
+        final var navController = getNavController();
+        final var destination = navController.getCurrentDestination();
+        if (destination != null && destination.getId() == R.id.signIn) {
+            LOGGER.info("User pressed back in signIn. Cancel setup");
+            this.setupViewModel.cancelSetup();
+        }
+        super.onBackPressed();
     }
 }

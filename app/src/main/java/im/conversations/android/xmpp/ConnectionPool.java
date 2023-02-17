@@ -62,13 +62,23 @@ public class ConnectionPool {
                 reconfigurationExecutor);
     }
 
-    public synchronized XmppConnection reconfigure(final Account account) {
+    public synchronized XmppConnection get(final Account account) {
         final Optional<XmppConnection> xmppConnectionOptional =
                 Iterables.tryFind(this.connections, c -> c.getAccount().equals(account));
         if (xmppConnectionOptional.isPresent()) {
             return xmppConnectionOptional.get();
         }
         return setupXmppConnection(context, account);
+    }
+
+    public synchronized void reconnect(final Account account) {
+        final Optional<XmppConnection> xmppConnectionOptional =
+                Iterables.tryFind(this.connections, c -> c.getAccount().equals(account));
+        if (xmppConnectionOptional.isPresent()) {
+            reconnectAccount(xmppConnectionOptional.get());
+        } else {
+            setupXmppConnection(context, account);
+        }
     }
 
     public synchronized ListenableFuture<XmppConnection> get(final BareJid address) {
@@ -85,7 +95,7 @@ public class ConnectionPool {
                                 String.format(
                                         "No enabled account with address %s", address.toString()));
                     }
-                    return reconfigure(account);
+                    return get(account);
                 },
                 reconfigurationExecutor);
     }
@@ -102,7 +112,7 @@ public class ConnectionPool {
                         throw new IllegalStateException(
                                 String.format("No enabled account with id %d", id));
                     }
-                    return reconfigure(account);
+                    return get(account);
                 },
                 reconfigurationExecutor);
     }
@@ -111,9 +121,6 @@ public class ConnectionPool {
         return Iterables.any(this.connections, c -> id == c.getAccount().id);
     }
 
-    public synchronized List<XmppConnection> getConnections() {
-        return ImmutableList.copyOf(this.connections);
-    }
 
     private synchronized Void reconfigure(final Set<Account> accounts) {
         final Set<Account> current = getAccounts();
@@ -349,6 +356,7 @@ public class ConnectionPool {
     }
 
     private XmppConnection setupXmppConnection(final Context context, final Account account) {
+        LOGGER.info("Setting up XMPP connection for {}",account.address);
         final XmppConnection xmppConnection = new XmppConnection(context, account);
         this.connections.add(xmppConnection);
         xmppConnection.setOnStatusChangedListener(this::onStatusChanged);

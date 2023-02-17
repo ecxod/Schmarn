@@ -8,6 +8,7 @@ import com.google.common.io.ByteSource;
 import com.google.common.primitives.Ints;
 import im.conversations.android.IDs;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.UUID;
 import org.jxmpp.jid.BareJid;
 
@@ -16,6 +17,15 @@ public class Account {
     public final long id;
     @NonNull public final BareJid address;
     @NonNull public final byte[] randomSeed;
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "id=" + id +
+                ", address=" + address +
+                ", randomSeed=" + Arrays.toString(randomSeed) +
+                '}';
+    }
 
     public Account(final long id, @NonNull final BareJid address, @NonNull byte[] randomSeed) {
         Preconditions.checkNotNull(address, "Account can not be instantiated without an address");
@@ -33,7 +43,7 @@ public class Account {
         Account account = (Account) o;
         return id == account.id
                 && Objects.equal(address, account.address)
-                && Objects.equal(randomSeed, account.randomSeed);
+                && Arrays.equals(randomSeed, account.randomSeed);
     }
 
     @Override

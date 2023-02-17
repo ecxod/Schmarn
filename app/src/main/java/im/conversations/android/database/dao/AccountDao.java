@@ -2,7 +2,6 @@ package im.conversations.android.database.dao;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
-import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import com.google.common.util.concurrent.ListenableFuture;
 import im.conversations.android.database.entity.AccountEntity;
@@ -14,7 +13,10 @@ import org.jxmpp.jid.BareJid;
 @Dao
 public interface AccountDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Query("SELECT EXISTS (SELECT id FROM account WHERE address=:address)")
+    boolean hasAccount(BareJid address);
+
+    @Insert
     long insert(final AccountEntity account);
 
     @Query("SELECT id,address,randomSeed FROM account WHERE enabled = 1")
@@ -58,6 +60,9 @@ public interface AccountDao {
 
     @Query("UPDATE account set resource=:resource WHERE id=:id")
     void setResource(long id, String resource);
+
+    @Query("DELETE FROM account WHERE id=:id")
+    int delete(long id);
 
     // TODO on disable set resource to null
 }
