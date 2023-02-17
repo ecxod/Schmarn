@@ -94,6 +94,8 @@ dependencies {
     // Google material design libraries
     implementation "com.google.android.material:material:$rootProject.ext.material"
 
+    // LeakCanary to detect memory leaks in debug builds
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
 
     // crypto libraries
     implementation 'org.whispersystems:signal-protocol-java:2.6.2'
