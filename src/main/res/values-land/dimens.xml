@@ -1,8 +1,0 @@
-<resources>
-    <dimen name="local_video_preview_height">96dp</dimen>
-    <dimen name="local_video_preview_width">128dp</dimen>
-    <dimen name="rtp_session_duration_top_margin">16dp</dimen>
-    <dimen name="setup_screen_top_margin">8dp</dimen>
-    <dimen name="setup_screen_padding">16dp</dimen>
-    <dimen name="setup_main_min_height">288dp</dimen>
-</resources>

@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="setup_screen_top_margin">48dp</dimen>
+    <dimen name="setup_main_min_height">336dp</dimen>
+    <dimen name="setup_screen_padding">24dp</dimen>
+</resources>
