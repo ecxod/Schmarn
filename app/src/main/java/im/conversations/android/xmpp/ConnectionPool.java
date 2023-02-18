@@ -3,6 +3,7 @@ package im.conversations.android.xmpp;
 import android.content.Context;
 import android.os.SystemClock;
 import com.google.common.base.Optional;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -21,6 +22,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
@@ -47,6 +49,8 @@ public class ConnectionPool {
 
     private final List<XmppConnection> connections = new ArrayList<>();
     private final HashSet<Jid> lowPingTimeoutMode = new HashSet<>();
+
+    private Consumer<Summary> summaryProcessor;
 
     private ConnectionPool(final Context context) {
         this.context = context.getApplicationContext();
@@ -207,8 +211,28 @@ public class ConnectionPool {
                 }
             }
         }
+        this.updateSummaryProcessor();
         // TODO toggle error notification
         // getNotificationService().updateErrorNotification();
+    }
+
+    private void updateSummaryProcessor() {
+        final var processor = this.summaryProcessor;
+        if (processor == null) {
+            return;
+        }
+        processor.accept(buildSummary());
+    }
+
+    public synchronized Summary buildSummary() {
+        final int connected =
+                Collections2.filter(this.connections, c -> c.getStatus() == ConnectionState.ONLINE)
+                        .size();
+        return new Summary(this.connections.size(), connected);
+    }
+
+    public void setSummaryProcessor(final Consumer<Summary> processor) {
+        this.summaryProcessor = processor;
     }
 
     public void scheduleWakeUpCall(final int seconds) {
@@ -370,6 +394,20 @@ public class ConnectionPool {
 
     private Set<Account> getAccounts() {
         return ImmutableSet.copyOf(Lists.transform(this.connections, XmppConnection::getAccount));
+    }
+
+    public static final class Summary {
+        public final int total;
+        public final int connected;
+
+        public Summary(int total, int connected) {
+            this.total = total;
+            this.connected = connected;
+        }
+
+        public boolean isConnected() {
+            return total > 0 && total == connected;
+        }
     }
 
     public static ConnectionPool getInstance(final Context context) {

@@ -4,6 +4,7 @@ import android.app.Application;
 import androidx.appcompat.app.AppCompatDelegate;
 import com.google.android.material.color.DynamicColors;
 import im.conversations.android.dns.Resolver;
+import im.conversations.android.notification.Channels;
 import im.conversations.android.xmpp.ConnectionPool;
 import java.security.SecureRandom;
 import java.security.Security;
@@ -25,6 +26,8 @@ public class Conversations extends Application {
         } catch (final Throwable throwable) {
             LOGGER.warn("Could not initialize security provider", throwable);
         }
+        final var channels = new Channels(this);
+        channels.initialize();
         Resolver.init(this);
         ConnectionPool.getInstance(this).reconfigure();
         AppCompatDelegate.setDefaultNightMode(
