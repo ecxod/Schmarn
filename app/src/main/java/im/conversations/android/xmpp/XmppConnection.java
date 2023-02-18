@@ -1238,9 +1238,12 @@ public class XmppConnection implements Runnable {
         final Element cbElement =
                 this.streamFeatures.findChild("sasl-channel-binding", Namespace.CHANNEL_BINDING);
         final Collection<ChannelBinding> channelBindings = ChannelBinding.of(cbElement);
-        final SaslMechanism.Factory saslFactory =
-                new SaslMechanism.Factory(
-                        account, CredentialStore.getInstance(context).get(account));
+        final var credential = CredentialStore.getInstance(context).get(account);
+        if (credential.isEmpty()) {
+            LOGGER.warn("No credentials configured. Going to bail out before actual attempt.");
+            throw new StateChangingException(ConnectionState.UNAUTHORIZED);
+        }
+        final SaslMechanism.Factory saslFactory = new SaslMechanism.Factory(account, credential);
         final SaslMechanism saslMechanism =
                 saslFactory.of(
                         mechanisms, channelBindings, version, SSLSockets.version(this.socket));

@@ -1,5 +1,7 @@
 package im.conversations.android.database.model;
 
+import java.util.Objects;
+
 public class Credential {
 
     public final String password;
@@ -42,6 +44,12 @@ public class Credential {
         this.fastToken = fastToken;
         this.preAuthRegistrationToken = preAuthRegistrationToken;
         this.privateKeyAlias = privateKeyAlias;
+    }
+
+    public boolean isEmpty() {
+        return Objects.isNull(this.password)
+                && Objects.isNull(this.fastToken)
+                && Objects.isNull(this.privateKeyAlias);
     }
 
     public static Credential empty() {

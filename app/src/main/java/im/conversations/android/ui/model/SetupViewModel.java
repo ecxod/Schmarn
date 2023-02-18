@@ -74,6 +74,7 @@ public class SetupViewModel extends AndroidViewModel {
     }
 
     public boolean submitXmppAddress() {
+        final var account = this.account;
         final var userInput = Strings.nullToEmpty(this.xmppAddress.getValue()).trim();
         if (userInput.isEmpty()) {
             this.xmppAddressError.postValue(
@@ -88,14 +89,28 @@ public class SetupViewModel extends AndroidViewModel {
             return true;
         }
 
-        // TODO do we already have an account in this viewModel? is it the same? if so go to that
-        // one with the next step
+        if (account != null) {
+            if (account.address.equals(address)) {
+                this.accountRepository.reconnect(account);
+                decideNextStep(Target.ENTER_ADDRESS, account);
+                return true;
+            } else {
+                this.account = null;
+                this.accountRepository.deleteAccountAsync(account);
+            }
+        }
+        createAccount(address);
+        return true;
+    }
 
-        final String password = this.password.getValue();
+    private void createAccount(final BareJid address) {
+
+        // if the user hasn't entered anything we want this to be null so we don't store credentials
+        final String password = Strings.emptyToNull(this.password.getValue());
         // post parsed/normalized jid back into UI
         this.xmppAddress.postValue(address.toString());
-        this.loading.postValue(true);
         final var creationFuture = this.accountRepository.createAccountAsync(address, password);
+        this.setCurrentOperation(creationFuture);
         Futures.addCallback(
                 creationFuture,
                 new FutureCallback<>() {
@@ -116,7 +131,11 @@ public class SetupViewModel extends AndroidViewModel {
                     }
                 },
                 MoreExecutors.directExecutor());
-        return true;
+    }
+
+    private void setCurrentOperation(ListenableFuture<?> currentOperation) {
+        this.loading.postValue(true);
+        this.currentOperation = currentOperation;
     }
 
     private void setAccount(@NonNull final Account account) {
@@ -125,9 +144,9 @@ public class SetupViewModel extends AndroidViewModel {
     }
 
     private void decideNextStep(final Target current, @NonNull final Account account) {
-        LOGGER.info("Get connected future for {}", account.address);
         final ListenableFuture<XmppConnection> connectedFuture =
                 this.accountRepository.getConnectedFuture(account);
+        this.setCurrentOperation(connectedFuture);
         Futures.addCallback(
                 connectedFuture,
                 new FutureCallback<>() {
@@ -135,6 +154,8 @@ public class SetupViewModel extends AndroidViewModel {
                     public void onSuccess(final XmppConnection result) {
                         // TODO only when configured for loginAndBind
                         LOGGER.info("Account setup successful");
+                        SetupViewModel.this.account = null;
+                        redirect(Target.DONE);
                     }
 
                     @Override
@@ -197,19 +218,22 @@ public class SetupViewModel extends AndroidViewModel {
         }
         final String password = Strings.nullToEmpty(this.password.getValue());
         final var setPasswordFuture = this.accountRepository.setPasswordAsync(account, password);
-        this.loading.postValue(true);
-        Futures.addCallback(setPasswordFuture, new FutureCallback<>() {
-            @Override
-            public void onSuccess(final Account account) {
-                decideNextStep(Target.ENTER_PASSWORD, account);
-            }
+        this.setCurrentOperation(setPasswordFuture);
+        Futures.addCallback(
+                setPasswordFuture,
+                new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(final Account account) {
+                        decideNextStep(Target.ENTER_PASSWORD, account);
+                    }
 
-            @Override
-            public void onFailure(@NonNull Throwable throwable) {
-                // TODO show some sort of error message
-                loading.postValue(false);
-            }
-        },MoreExecutors.directExecutor());
+                    @Override
+                    public void onFailure(@NonNull Throwable throwable) {
+                        // TODO show some sort of error message
+                        loading.postValue(false);
+                    }
+                },
+                MoreExecutors.directExecutor());
         return true;
     }
 
@@ -224,6 +248,7 @@ public class SetupViewModel extends AndroidViewModel {
     public void cancelSetup() {
         final var account = this.account;
         if (account != null) {
+            this.account = null;
             this.accountRepository.deleteAccountAsync(account);
         }
     }

@@ -39,13 +39,21 @@ public class AccountRepository extends AbstractRepository {
         if (password != null) {
             CredentialStore.getInstance(context).setPassword(account, password);
         }
-        ConnectionPool.getInstance(context).reconfigure();
         return account;
     }
 
     public ListenableFuture<Account> createAccountAsync(
             final @NonNull BareJid address, final String password, final boolean loginAndBind) {
-        return Futures.submit(() -> createAccount(address, password, loginAndBind), IO_EXECUTOR);
+        final var creationFuture =
+                Futures.submit(() -> createAccount(address, password, loginAndBind), IO_EXECUTOR);
+        return Futures.transformAsync(
+                creationFuture,
+                account ->
+                        Futures.transform(
+                                ConnectionPool.getInstance(context).reconfigure(),
+                                v -> account,
+                                MoreExecutors.directExecutor()),
+                MoreExecutors.directExecutor());
     }
 
     public ListenableFuture<Account> createAccountAsync(
@@ -62,16 +70,25 @@ public class AccountRepository extends AbstractRepository {
                 MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<Boolean> deleteAccountAsync(@NonNull Account account) {
+    public ListenableFuture<Void> deleteAccountAsync(@NonNull Account account) {
         return Futures.submit(() -> deleteAccount(account), IO_EXECUTOR);
     }
 
-    private Boolean deleteAccount(@NonNull Account account) {
-        return database.accountDao().delete(account.id) > 0;
+    private Void deleteAccount(@NonNull Account account) {
+        database.accountDao().delete(account.id);
+        ConnectionPool.getInstance(context).reconfigure();
+        return null;
     }
 
     public ListenableFuture<XmppConnection> getConnectedFuture(@NonNull final Account account) {
-        return ConnectionPool.getInstance(context).get(account).asConnectedFuture();
+        final var optional = ConnectionPool.getInstance(context).get(account);
+        if (optional.isPresent()) {
+            return optional.get().asConnectedFuture();
+        } else {
+            return Futures.immediateFailedFuture(
+                    new IllegalStateException(
+                            String.format("Account %s is not configured", account.address)));
+        }
     }
 
     public ListenableFuture<Account> setPasswordAsync(
@@ -84,6 +101,10 @@ public class AccountRepository extends AbstractRepository {
         CredentialStore.getInstance(context).setPassword(account, password);
         ConnectionPool.getInstance(context).reconnect(account);
         return account;
+    }
+
+    public void reconnect(final Account account) {
+        ConnectionPool.getInstance(context).reconnect(account);
     }
 
     public static class AccountAlreadyExistsException extends IllegalStateException {

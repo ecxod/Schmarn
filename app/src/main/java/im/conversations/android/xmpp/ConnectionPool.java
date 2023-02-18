@@ -3,7 +3,6 @@ package im.conversations.android.xmpp;
 import android.content.Context;
 import android.os.SystemClock;
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -62,7 +61,7 @@ public class ConnectionPool {
                 reconfigurationExecutor);
     }
 
-    public synchronized XmppConnection get(final Account account) {
+    private synchronized XmppConnection reconfigure(final Account account) {
         final Optional<XmppConnection> xmppConnectionOptional =
                 Iterables.tryFind(this.connections, c -> c.getAccount().equals(account));
         if (xmppConnectionOptional.isPresent()) {
@@ -71,13 +70,19 @@ public class ConnectionPool {
         return setupXmppConnection(context, account);
     }
 
+    public synchronized Optional<XmppConnection> get(final Account account) {
+        return Iterables.tryFind(this.connections, c -> c.getAccount().equals(account));
+    }
+
     public synchronized void reconnect(final Account account) {
-        final Optional<XmppConnection> xmppConnectionOptional =
-                Iterables.tryFind(this.connections, c -> c.getAccount().equals(account));
+        final Optional<XmppConnection> xmppConnectionOptional = get(account);
         if (xmppConnectionOptional.isPresent()) {
             reconnectAccount(xmppConnectionOptional.get());
         } else {
-            setupXmppConnection(context, account);
+            throw new IllegalStateException(
+                    String.format(
+                            "Attempted to reconnect %s but the account was not configured",
+                            account.address));
         }
     }
 
@@ -95,7 +100,7 @@ public class ConnectionPool {
                                 String.format(
                                         "No enabled account with address %s", address.toString()));
                     }
-                    return get(account);
+                    return reconfigure(account);
                 },
                 reconfigurationExecutor);
     }
@@ -112,7 +117,7 @@ public class ConnectionPool {
                         throw new IllegalStateException(
                                 String.format("No enabled account with id %d", id));
                     }
-                    return get(account);
+                    return reconfigure(account);
                 },
                 reconfigurationExecutor);
     }
@@ -120,7 +125,6 @@ public class ConnectionPool {
     private synchronized boolean isEnabled(final long id) {
         return Iterables.any(this.connections, c -> id == c.getAccount().id);
     }
-
 
     private synchronized Void reconfigure(final Set<Account> accounts) {
         final Set<Account> current = getAccounts();
@@ -356,7 +360,7 @@ public class ConnectionPool {
     }
 
     private XmppConnection setupXmppConnection(final Context context, final Account account) {
-        LOGGER.info("Setting up XMPP connection for {}",account.address);
+        LOGGER.info("Setting up XMPP connection for {}", account.address);
         final XmppConnection xmppConnection = new XmppConnection(context, account);
         this.connections.add(xmppConnection);
         xmppConnection.setOnStatusChangedListener(this::onStatusChanged);

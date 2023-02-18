@@ -20,11 +20,14 @@ public class Account {
 
     @Override
     public String toString() {
-        return "Account{" +
-                "id=" + id +
-                ", address=" + address +
-                ", randomSeed=" + Arrays.toString(randomSeed) +
-                '}';
+        return "Account{"
+                + "id="
+                + id
+                + ", address="
+                + address
+                + ", randomSeed="
+                + Arrays.toString(randomSeed)
+                + '}';
     }
 
     public Account(final long id, @NonNull final BareJid address, @NonNull byte[] randomSeed) {
