@@ -2,7 +2,6 @@ package im.conversations.android.service;
 
 import android.content.Context;
 import android.content.Intent;
-
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleService;
 import im.conversations.android.notification.ForegroundServiceNotification;
@@ -41,7 +40,8 @@ public class ForegroundService extends LifecycleService {
 
     public static void start(final Context context) {
         try {
-            ContextCompat.startForegroundService(context, new Intent(context, ForegroundService.class));
+            ContextCompat.startForegroundService(
+                    context, new Intent(context, ForegroundService.class));
         } catch (final RuntimeException e) {
             LOGGER.error("Could not start foreground service", e);
         }

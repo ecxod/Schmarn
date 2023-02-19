@@ -6,13 +6,13 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 
 @Entity(
-        tableName = "roster_group",
-        primaryKeys = {"rosterItemId", "groupId"},
+        tableName = "bookmark_group",
+        primaryKeys = {"bookmarkId", "groupId"},
         foreignKeys = {
             @ForeignKey(
-                    entity = RosterItemEntity.class,
+                    entity = BookmarkEntity.class,
                     parentColumns = {"id"},
-                    childColumns = {"rosterItemId"},
+                    childColumns = {"bookmarkId"},
                     onDelete = ForeignKey.CASCADE),
             @ForeignKey(
                     entity = GroupEntity.class,
@@ -21,15 +21,15 @@ import androidx.room.Index;
                     onDelete = ForeignKey.RESTRICT),
         },
         indices = {@Index(value = "groupId")})
-public class RosterItemGroupEntity {
+public class BookmarkGroupEntity {
 
-    @NonNull public Long rosterItemId;
+    @NonNull public Long bookmarkId;
 
     @NonNull public Long groupId;
 
-    public static RosterItemGroupEntity of(long rosterItemId, final long groupId) {
-        final var entity = new RosterItemGroupEntity();
-        entity.rosterItemId = rosterItemId;
+    public static BookmarkGroupEntity of(long bookmarkId, final long groupId) {
+        final var entity = new BookmarkGroupEntity();
+        entity.bookmarkId = bookmarkId;
         entity.groupId = groupId;
         return entity;
     }

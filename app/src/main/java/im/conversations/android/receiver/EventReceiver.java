@@ -3,7 +3,6 @@ package im.conversations.android.receiver;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import androidx.core.content.ContextCompat;
 import im.conversations.android.service.ForegroundService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

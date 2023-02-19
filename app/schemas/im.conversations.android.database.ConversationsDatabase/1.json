@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "1952101c2c0d439fcd6c9d417f126a54",
+    "identityHash": "070e419bfe6857a47cda745017f04a57",
     "entities": [
       {
         "tableName": "account",
@@ -881,6 +881,66 @@
         ]
       },
       {
+        "tableName": "bookmark_group",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`bookmarkId` INTEGER NOT NULL, `groupId` INTEGER NOT NULL, PRIMARY KEY(`bookmarkId`, `groupId`), FOREIGN KEY(`bookmarkId`) REFERENCES `bookmark`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`groupId`) REFERENCES `group`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "bookmarkId",
+            "columnName": "bookmarkId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "groupId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "bookmarkId",
+            "groupId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_bookmark_group_groupId",
+            "unique": false,
+            "columnNames": [
+              "groupId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookmark_group_groupId` ON `${TABLE_NAME}` (`groupId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "bookmark",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "bookmarkId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "group",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "groupId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
         "tableName": "chat",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `address` TEXT NOT NULL, `type` TEXT, `archived` INTEGER NOT NULL, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
@@ -1411,6 +1471,32 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "group",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
       },
       {
         "tableName": "message",
@@ -2204,14 +2290,8 @@
       },
       {
         "tableName": "roster_group",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `rosterItemId` INTEGER NOT NULL, `name` TEXT, FOREIGN KEY(`rosterItemId`) REFERENCES `roster`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rosterItemId` INTEGER NOT NULL, `groupId` INTEGER NOT NULL, PRIMARY KEY(`rosterItemId`, `groupId`), FOREIGN KEY(`rosterItemId`) REFERENCES `roster`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`groupId`) REFERENCES `group`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": false
-          },
           {
             "fieldPath": "rosterItemId",
             "columnName": "rosterItemId",
@@ -2219,27 +2299,28 @@
             "notNull": true
           },
           {
-            "fieldPath": "name",
-            "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": false
+            "fieldPath": "groupId",
+            "columnName": "groupId",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
-          "autoGenerate": true,
+          "autoGenerate": false,
           "columnNames": [
-            "id"
+            "rosterItemId",
+            "groupId"
           ]
         },
         "indices": [
           {
-            "name": "index_roster_group_rosterItemId",
+            "name": "index_roster_group_groupId",
             "unique": false,
             "columnNames": [
-              "rosterItemId"
+              "groupId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_roster_group_rosterItemId` ON `${TABLE_NAME}` (`rosterItemId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_roster_group_groupId` ON `${TABLE_NAME}` (`groupId`)"
           }
         ],
         "foreignKeys": [
@@ -2253,6 +2334,17 @@
             "referencedColumns": [
               "id"
             ]
+          },
+          {
+            "table": "group",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "groupId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
           }
         ]
       }
@@ -2260,7 +2352,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1952101c2c0d439fcd6c9d417f126a54')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '070e419bfe6857a47cda745017f04a57')"
     ]
   }
 }

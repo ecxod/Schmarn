@@ -6,7 +6,7 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
-import com.google.common.collect.Collections2;
+import com.google.common.base.Strings;
 import im.conversations.android.database.entity.RosterItemEntity;
 import im.conversations.android.database.entity.RosterItemGroupEntity;
 import im.conversations.android.database.model.Account;
@@ -15,7 +15,7 @@ import java.util.Collection;
 import org.jxmpp.jid.Jid;
 
 @Dao
-public abstract class RosterDao {
+public abstract class RosterDao extends GroupDao {
 
     @Insert(onConflict = REPLACE)
     protected abstract long insert(RosterItemEntity rosterItem);
@@ -35,11 +35,10 @@ public abstract class RosterDao {
         clear(account.id);
         for (final Item item : rosterItems) {
             final long id = insert(RosterItemEntity.of(account.id, item));
-            insertRosterGroups(
-                    Collections2.transform(
-                            item.getGroups(), name -> RosterItemGroupEntity.of(id, name)));
+            insertRosterGroups(id, item.getGroups());
         }
         setRosterVersion(account.id, version);
+        deleteEmptyGroups();
     }
 
     public void update(
@@ -54,13 +53,21 @@ public abstract class RosterDao {
             }
             final RosterItemEntity entity = RosterItemEntity.of(account.id, item);
             final long id = insert(entity);
-            insertRosterGroups(
-                    Collections2.transform(
-                            item.getGroups(), name -> RosterItemGroupEntity.of(id, name)));
+            insertRosterGroups(id, item.getGroups());
         }
         setRosterVersion(account.id, version);
+        deleteEmptyGroups();
+    }
+
+    protected void insertRosterGroups(final long rosterItemId, Collection<String> groups) {
+        for (final String group : groups) {
+            if (Strings.isNullOrEmpty(group)) {
+                continue;
+            }
+            insertRosterGroup(RosterItemGroupEntity.of(rosterItemId, getOrCreateId(group)));
+        }
     }
 
     @Insert
-    protected abstract void insertRosterGroups(Collection<RosterItemGroupEntity> entities);
+    protected abstract void insertRosterGroup(RosterItemGroupEntity entity);
 }

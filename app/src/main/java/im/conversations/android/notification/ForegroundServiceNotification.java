@@ -6,9 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
-
 import androidx.core.content.ContextCompat;
-
 import im.conversations.android.R;
 import im.conversations.android.ui.activity.MainActivity;
 import im.conversations.android.xmpp.ConnectionPool;
@@ -53,7 +51,8 @@ public class ForegroundServiceNotification {
     }
 
     public void update(final ConnectionPool.Summary summary) {
-        final var notificationManager = ContextCompat.getSystemService(service, NotificationManager.class);
+        final var notificationManager =
+                ContextCompat.getSystemService(service, NotificationManager.class);
         if (notificationManager == null) {
             return;
         }

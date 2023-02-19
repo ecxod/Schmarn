@@ -28,6 +28,7 @@ import im.conversations.android.database.entity.AxolotlSessionEntity;
 import im.conversations.android.database.entity.AxolotlSignedPreKeyEntity;
 import im.conversations.android.database.entity.BlockedItemEntity;
 import im.conversations.android.database.entity.BookmarkEntity;
+import im.conversations.android.database.entity.BookmarkGroupEntity;
 import im.conversations.android.database.entity.ChatEntity;
 import im.conversations.android.database.entity.DiscoEntity;
 import im.conversations.android.database.entity.DiscoExtensionEntity;
@@ -36,6 +37,7 @@ import im.conversations.android.database.entity.DiscoExtensionFieldValueEntity;
 import im.conversations.android.database.entity.DiscoFeatureEntity;
 import im.conversations.android.database.entity.DiscoIdentityEntity;
 import im.conversations.android.database.entity.DiscoItemEntity;
+import im.conversations.android.database.entity.GroupEntity;
 import im.conversations.android.database.entity.MessageContentEntity;
 import im.conversations.android.database.entity.MessageEntity;
 import im.conversations.android.database.entity.MessageReactionEntity;
@@ -60,6 +62,7 @@ import im.conversations.android.database.entity.RosterItemGroupEntity;
             AxolotlSignedPreKeyEntity.class,
             BlockedItemEntity.class,
             BookmarkEntity.class,
+            BookmarkGroupEntity.class,
             ChatEntity.class,
             DiscoEntity.class,
             DiscoExtensionEntity.class,
@@ -68,6 +71,7 @@ import im.conversations.android.database.entity.RosterItemGroupEntity;
             DiscoFeatureEntity.class,
             DiscoIdentityEntity.class,
             DiscoItemEntity.class,
+            GroupEntity.class,
             MessageEntity.class,
             MessageStateEntity.class,
             MessageContentEntity.class,
