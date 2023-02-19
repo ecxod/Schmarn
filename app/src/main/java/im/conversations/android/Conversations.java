@@ -2,7 +2,6 @@ package im.conversations.android;
 
 import android.app.Application;
 import androidx.appcompat.app.AppCompatDelegate;
-import com.google.android.material.color.DynamicColors;
 import im.conversations.android.dns.Resolver;
 import im.conversations.android.notification.Channels;
 import im.conversations.android.xmpp.ConnectionPool;
@@ -32,6 +31,6 @@ public class Conversations extends Application {
         ConnectionPool.getInstance(this).reconfigure();
         AppCompatDelegate.setDefaultNightMode(
                 AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM); // For night mode theme
-        DynamicColors.applyToActivitiesIfAvailable(this);
+        // DynamicColors.applyToActivitiesIfAvailable(this);
     }
 }

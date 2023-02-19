@@ -1,11 +1,13 @@
 package im.conversations.android.database.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
 import com.google.common.util.concurrent.ListenableFuture;
 import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.database.model.AccountIdentifier;
 import im.conversations.android.database.model.Connection;
 import java.util.List;
 import org.jxmpp.jid.BareJid;
@@ -27,6 +29,9 @@ public interface AccountDao {
 
     @Query("SELECT id,address,randomSeed FROM account WHERE id=:id AND enabled=1")
     ListenableFuture<Account> getEnabledAccount(long id);
+
+    @Query("SELECT id,address FROM account")
+    LiveData<List<AccountIdentifier>> getAccounts();
 
     @Query("SELECT hostname,port,directTls FROM account WHERE id=:id AND hostname != null")
     Connection getConnectionSettings(long id);

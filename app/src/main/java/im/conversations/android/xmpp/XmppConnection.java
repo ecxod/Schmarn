@@ -2014,8 +2014,7 @@ public class XmppConnection implements Runnable {
 
     public boolean fromAccount(final Stanza stanza) {
         final Jid from = stanza.getFrom();
-        // TODO null is valid too?!
-        return from != null && from.asBareJid().equals(connectionAddress.asBareJid());
+        return from == null || from.asBareJid().equals(connectionAddress.asBareJid());
     }
 
     public boolean toAccount(final Stanza stanza) {

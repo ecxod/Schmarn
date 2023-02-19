@@ -13,9 +13,13 @@ import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.model.roster.Item;
 import java.util.Collection;
 import org.jxmpp.jid.Jid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Dao
 public abstract class RosterDao extends GroupDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RosterDao.class);
 
     @Insert(onConflict = REPLACE)
     protected abstract long insert(RosterItemEntity rosterItem);
@@ -32,6 +36,7 @@ public abstract class RosterDao extends GroupDao {
     @Transaction
     public void set(
             final Account account, final String version, final Collection<Item> rosterItems) {
+        LOGGER.info("items: " + rosterItems);
         clear(account.id);
         for (final Item item : rosterItems) {
             final long id = insert(RosterItemEntity.of(account.id, item));

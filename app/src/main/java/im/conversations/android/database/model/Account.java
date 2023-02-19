@@ -12,30 +12,14 @@ import java.util.Arrays;
 import java.util.UUID;
 import org.jxmpp.jid.BareJid;
 
-public class Account {
+public class Account extends AccountIdentifier {
 
-    public final long id;
-    @NonNull public final BareJid address;
     @NonNull public final byte[] randomSeed;
 
-    @Override
-    public String toString() {
-        return "Account{"
-                + "id="
-                + id
-                + ", address="
-                + address
-                + ", randomSeed="
-                + Arrays.toString(randomSeed)
-                + '}';
-    }
-
     public Account(final long id, @NonNull final BareJid address, @NonNull byte[] randomSeed) {
-        Preconditions.checkNotNull(address, "Account can not be instantiated without an address");
+        super(id, address);
         Preconditions.checkArgument(
                 randomSeed.length == 32, "RandomSeed must have exactly 32 bytes");
-        this.id = id;
-        this.address = address;
         this.randomSeed = randomSeed;
     }
 
@@ -43,15 +27,14 @@ public class Account {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         Account account = (Account) o;
-        return id == account.id
-                && Objects.equal(address, account.address)
-                && Arrays.equals(randomSeed, account.randomSeed);
+        return Arrays.equals(randomSeed, account.randomSeed);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id, address, randomSeed);
+        return Objects.hashCode(super.hashCode(), randomSeed);
     }
 
     public boolean isOnion() {

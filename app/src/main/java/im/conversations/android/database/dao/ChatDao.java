@@ -1,5 +1,6 @@
 package im.conversations.android.database.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
@@ -10,6 +11,7 @@ import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.ChatType;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Arrays;
+import java.util.List;
 import org.jxmpp.jid.Jid;
 
 @Dao
@@ -52,4 +54,7 @@ public abstract class ChatDao {
 
     @Insert
     protected abstract long insert(ChatEntity chatEntity);
+
+    @Query("SELECT name FROM `group` ORDER BY name")
+    public abstract LiveData<List<String>> getGroups();
 }

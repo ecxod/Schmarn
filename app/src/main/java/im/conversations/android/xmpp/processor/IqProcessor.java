@@ -69,6 +69,7 @@ public class IqProcessor extends XmppConnection.Delegate implements Consumer<Iq>
         }
 
         final var extensionIds = packet.getExtensionIds();
+        LOGGER.info("Received from {} type {}", packet.getFrom(), type);
         LOGGER.info("Could not handle {}. Sending feature-not-implemented", extensionIds);
         connection.sendErrorFor(packet, new Condition.FeatureNotImplemented());
     }

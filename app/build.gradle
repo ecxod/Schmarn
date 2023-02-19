@@ -106,6 +106,10 @@ dependencies {
     // XMPP Address library
     implementation 'org.jxmpp:jxmpp-jid:1.0.3'
 
+    // Consistent Color Generation
+    implementation 'org.hsluv:hsluv:0.2'
+
+
     // DNS library (XMPP needs to resolve SRV records)
     implementation 'de.measite.minidns:minidns-hla:0.2.4'
 

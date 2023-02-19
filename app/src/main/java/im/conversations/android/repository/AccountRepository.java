@@ -2,6 +2,7 @@ package im.conversations.android.repository;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -9,11 +10,13 @@ import im.conversations.android.IDs;
 import im.conversations.android.database.CredentialStore;
 import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.database.model.AccountIdentifier;
 import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.RegistrationManager;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.List;
 import org.jxmpp.jid.BareJid;
 
 public class AccountRepository extends AbstractRepository {
@@ -105,6 +108,10 @@ public class AccountRepository extends AbstractRepository {
 
     public void reconnect(final Account account) {
         ConnectionPool.getInstance(context).reconnect(account);
+    }
+
+    public LiveData<List<AccountIdentifier>> getAccounts() {
+        return database.accountDao().getAccounts();
     }
 
     public static class AccountAlreadyExistsException extends IllegalStateException {

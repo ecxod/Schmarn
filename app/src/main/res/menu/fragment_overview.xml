@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/chats"
+        android:checkable="true"
+        android:icon="@drawable/ic_chat_24dp"
+        android:title="@string/all_chats" />
+    <item
+        android:id="@+id/accounts"
+        android:title="@string/accounts">
+        <menu />
+    </item>
+    <item
+        android:id="@+id/spaces"
+        android:title="@string/spaces">
+        <menu/>
+    </item>
+    <group android:id="@+id/navigation">
+        <item
+            android:id="@+id/add_account"
+            android:checkable="true"
+            android:icon="@drawable/ic_person_add_24dp"
+            android:title="@string/action_add_account" />
+        <item
+            android:id="@+id/manage_accounts"
+            android:checkable="true"
+            android:icon="@drawable/ic_manage_accounts_24dp"
+            android:title="@string/title_activity_manage_accounts" />
+        <item
+            android:id="@+id/settings"
+            android:checkable="true"
+            android:icon="@drawable/ic_settings_24dp"
+            android:title="@string/action_settings" />
+    </group>
+</menu>

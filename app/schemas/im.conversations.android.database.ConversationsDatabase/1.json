@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "070e419bfe6857a47cda745017f04a57",
+    "identityHash": "6186e2691813f4fbd804b90fd770e18b",
     "entities": [
       {
         "tableName": "account",
@@ -2290,7 +2290,7 @@
       },
       {
         "tableName": "roster_group",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rosterItemId` INTEGER NOT NULL, `groupId` INTEGER NOT NULL, PRIMARY KEY(`rosterItemId`, `groupId`), FOREIGN KEY(`rosterItemId`) REFERENCES `roster`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`groupId`) REFERENCES `group`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rosterItemId` INTEGER NOT NULL, `groupId` INTEGER NOT NULL, PRIMARY KEY(`rosterItemId`, `groupId`), FOREIGN KEY(`rosterItemId`) REFERENCES `roster`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`groupId`) REFERENCES `group`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
         "fields": [
           {
             "fieldPath": "rosterItemId",
@@ -2337,7 +2337,7 @@
           },
           {
             "table": "group",
-            "onDelete": "CASCADE",
+            "onDelete": "RESTRICT",
             "onUpdate": "NO ACTION",
             "columns": [
               "groupId"
@@ -2352,7 +2352,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '070e419bfe6857a47cda745017f04a57')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6186e2691813f4fbd804b90fd770e18b')"
     ]
   }
 }
