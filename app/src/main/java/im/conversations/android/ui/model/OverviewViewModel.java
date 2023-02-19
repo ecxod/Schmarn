@@ -7,6 +7,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.Transformations;
 import im.conversations.android.database.model.AccountIdentifier;
+import im.conversations.android.database.model.ChatFilter;
+import im.conversations.android.database.model.GroupIdentifier;
 import im.conversations.android.repository.AccountRepository;
 import im.conversations.android.repository.ChatRepository;
 import java.util.List;
@@ -18,10 +20,12 @@ public class OverviewViewModel extends AndroidViewModel {
     private final AccountRepository accountRepository;
     private final ChatRepository chatRepository;
     private final LiveData<List<AccountIdentifier>> accounts;
-    private final LiveData<List<String>> groups;
+    private final LiveData<List<GroupIdentifier>> groups;
     private final MediatorLiveData<Boolean> chatFilterAvailable = new MediatorLiveData<>();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OverviewViewModel.class);
+
+    private ChatFilter chatFilter;
 
     public OverviewViewModel(@NonNull Application application) {
         super(application);
@@ -36,7 +40,7 @@ public class OverviewViewModel extends AndroidViewModel {
     }
 
     private void setChatFilterAvailable(
-            final List<AccountIdentifier> accounts, final List<String> groups) {
+            final List<AccountIdentifier> accounts, final List<GroupIdentifier> groups) {
         this.chatFilterAvailable.setValue(
                 (accounts != null && accounts.size() > 1) || (groups != null && groups.size() > 0));
     }
@@ -45,11 +49,21 @@ public class OverviewViewModel extends AndroidViewModel {
         return Transformations.distinctUntilChanged(this.accountRepository.getAccounts());
     }
 
-    public LiveData<List<String>> getGroups() {
+    // TODO change into GroupIdentifier
+    public LiveData<List<GroupIdentifier>> getGroups() {
         return Transformations.distinctUntilChanged(this.chatRepository.getGroups());
     }
 
     public LiveData<Boolean> getChatFilterAvailable() {
         return Transformations.distinctUntilChanged(this.chatFilterAvailable);
+    }
+
+    public ChatFilter getChatFilter() {
+        return this.chatFilter;
+    }
+
+    public void setChatFilter(final ChatFilter chatFilter) {
+        this.chatFilter = chatFilter;
+        LOGGER.info("Setting chat filter to {}", chatFilter);
     }
 }

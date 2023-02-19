@@ -9,6 +9,7 @@ import im.conversations.android.database.entity.ChatEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.ChatType;
+import im.conversations.android.database.model.GroupIdentifier;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Arrays;
 import java.util.List;
@@ -55,6 +56,6 @@ public abstract class ChatDao {
     @Insert
     protected abstract long insert(ChatEntity chatEntity);
 
-    @Query("SELECT name FROM `group` ORDER BY name")
-    public abstract LiveData<List<String>> getGroups();
+    @Query("SELECT id,name FROM `group` ORDER BY name")
+    public abstract LiveData<List<GroupIdentifier>> getGroups();
 }

@@ -1,5 +1,6 @@
 package im.conversations.android.ui.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
@@ -42,7 +43,7 @@ public class SetupActivity extends AppCompatActivity {
                     navController.navigate(SetupNavigationDirections.enterPassword());
                     break;
                 case DONE:
-                    // TODO open MainActivity
+                    startActivity(new Intent(this, MainActivity.class));
                     finish();
                     break;
                 default:

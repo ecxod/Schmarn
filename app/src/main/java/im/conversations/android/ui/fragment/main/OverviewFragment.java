@@ -13,12 +13,19 @@ import com.google.android.material.elevation.SurfaceColors;
 import com.google.android.material.search.SearchView;
 import im.conversations.android.R;
 import im.conversations.android.database.model.AccountIdentifier;
+import im.conversations.android.database.model.ChatFilter;
+import im.conversations.android.database.model.GroupIdentifier;
 import im.conversations.android.databinding.FragmentOverviewBinding;
+import im.conversations.android.ui.Intents;
 import im.conversations.android.ui.activity.SetupActivity;
 import im.conversations.android.ui.model.OverviewViewModel;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OverviewFragment extends Fragment {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OverviewViewModel.class);
 
     private FragmentOverviewBinding binding;
 
@@ -50,10 +57,20 @@ public class OverviewFragment extends Fragment {
                 });
         binding.navigationView.setNavigationItemSelectedListener(
                 item -> {
+                    if (item.getItemId() == R.id.chats) {
+                        setChatFilter(null);
+                        return true;
+                    }
                     if (item.getItemId() == R.id.add_account) {
                         startActivity(new Intent(requireContext(), SetupActivity.class));
+                        binding.drawerLayout.close();
                         return false;
                     }
+                    final var intent = item.getIntent();
+                    if (intent == null) {
+                        return false;
+                    }
+                    setChatFilter(Intents.toChatFilter(intent));
                     return true;
                 });
         binding.navigationView.setCheckedItem(R.id.chats);
@@ -67,6 +84,11 @@ public class OverviewFragment extends Fragment {
         return binding.getRoot();
     }
 
+    private void setChatFilter(final ChatFilter chatFilter) {
+        overviewViewModel.setChatFilter(chatFilter);
+        binding.drawerLayout.close();
+    }
+
     private void onChatFilterAvailable(final Boolean available) {
         final var menu = this.binding.navigationView.getMenu();
         final var chatsMenuItem = menu.findItem(R.id.chats);
@@ -77,7 +99,7 @@ public class OverviewFragment extends Fragment {
         }
     }
 
-    private void onGroupsUpdated(final List<String> groups) {
+    private void onGroupsUpdated(final List<GroupIdentifier> groups) {
         final var menu = this.binding.navigationView.getMenu();
         final var menuItemSpaces = menu.findItem(R.id.spaces);
         if (groups.isEmpty()) {
@@ -87,10 +109,11 @@ public class OverviewFragment extends Fragment {
         menuItemSpaces.setVisible(true);
         final var subMenu = menuItemSpaces.getSubMenu();
         subMenu.clear();
-        for (final String group : groups) {
-            final var menuItemSpace = subMenu.add(group);
+        for (final GroupIdentifier group : groups) {
+            final var menuItemSpace = subMenu.add(group.name);
             menuItemSpace.setCheckable(true);
             menuItemSpace.setIcon(R.drawable.ic_workspaces_24dp);
+            menuItemSpace.setIntent(Intents.of(group));
         }
     }
 
@@ -108,6 +131,7 @@ public class OverviewFragment extends Fragment {
             final var menuItemAccount = subMenu.add(account.address);
             menuItemAccount.setCheckable(true);
             menuItemAccount.setIcon(R.drawable.ic_person_24dp);
+            menuItemAccount.setIntent(Intents.of(account));
         }
     }
 }
