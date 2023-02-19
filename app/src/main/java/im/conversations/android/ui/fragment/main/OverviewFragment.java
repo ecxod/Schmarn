@@ -34,10 +34,7 @@ public class OverviewFragment extends Fragment {
                 new ViewModelProvider(this, getDefaultViewModelProviderFactory());
         this.overviewViewModel = viewModelProvider.get(OverviewViewModel.class);
         binding.setLifecycleOwner(getViewLifecycleOwner());
-        binding.searchBar.setNavigationOnClickListener(
-                view -> {
-                    binding.drawerLayout.open();
-                });
+        binding.searchBar.setNavigationOnClickListener(view -> binding.drawerLayout.open());
         binding.searchView.addTransitionListener(
                 (searchView, previousState, newState) -> {
                     final var activity = requireActivity();
@@ -55,6 +52,7 @@ public class OverviewFragment extends Fragment {
                 item -> {
                     if (item.getItemId() == R.id.add_account) {
                         startActivity(new Intent(requireContext(), SetupActivity.class));
+                        return false;
                     }
                     return true;
                 });
@@ -63,7 +61,20 @@ public class OverviewFragment extends Fragment {
                 .getAccounts()
                 .observe(getViewLifecycleOwner(), this::onAccountsUpdated);
         this.overviewViewModel.getGroups().observe(getViewLifecycleOwner(), this::onGroupsUpdated);
+        this.overviewViewModel
+                .getChatFilterAvailable()
+                .observe(getViewLifecycleOwner(), this::onChatFilterAvailable);
         return binding.getRoot();
+    }
+
+    private void onChatFilterAvailable(final Boolean available) {
+        final var menu = this.binding.navigationView.getMenu();
+        final var chatsMenuItem = menu.findItem(R.id.chats);
+        if (Boolean.TRUE.equals(available)) {
+            chatsMenuItem.setTitle(R.string.all_chats);
+        } else {
+            chatsMenuItem.setTitle(R.string.chats);
+        }
     }
 
     private void onGroupsUpdated(final List<String> groups) {

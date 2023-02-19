@@ -1016,5 +1016,6 @@
     <string name="all_chats">All chats</string>
     <string name="accounts">Accounts</string>
     <string name="spaces">Spaces</string>
+    <string name="chats">Chats</string>
 
 </resources>
