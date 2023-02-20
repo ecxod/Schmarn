@@ -25,13 +25,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:liftOnScroll="false"
-            app:elevation="0dp">
+            app:elevation="4dp">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/material_toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                app:title="@string/title_activity_settings"/>
+                app:title="@string/title_activity_settings"
+                app:navigationIcon="@drawable/ic_arrow_back_24dp"/>
         </com.google.android.material.appbar.AppBarLayout>
         <androidx.fragment.app.FragmentContainerView
             android:fillViewport="true"

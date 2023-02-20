@@ -2,7 +2,6 @@ package im.conversations.android.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -16,7 +15,7 @@ import im.conversations.android.ui.model.SetupViewModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SetupActivity extends AppCompatActivity {
+public class SetupActivity extends BaseActivity {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SetupActivity.class);
 

@@ -2,10 +2,10 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
-        app:title="@string/pref_title_appearance"
+        app:title="@string/pref_title_interface"
         app:summary="@string/pref_summary_appearance"
-        android:icon="@drawable/ic_palette_24dp"
-        app:fragment="im.conversations.android.ui.fragment.MainSettingsFragment"/>
+        android:icon="@drawable/ic_touch_app_24dp"
+        app:fragment="im.conversations.android.ui.fragment.settings.InterfaceSettingsFragment"/>
     <Preference
         app:title="@string/pref_title_security"
         app:summary="@string/pref_summary_security"

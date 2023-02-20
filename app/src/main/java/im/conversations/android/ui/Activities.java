@@ -13,11 +13,20 @@ public final class Activities {
 
     public static void setStatusAndNavigationBarColors(
             final AppCompatActivity activity, final View view) {
+        setStatusAndNavigationBarColors(activity, view, false);
+    }
+
+    public static void setStatusAndNavigationBarColors(
+            final AppCompatActivity activity, final View view, final boolean raisedStatusBar) {
         final var isLightMode = isLightMode(activity);
         final var window = activity.getWindow();
         final var flags = view.getSystemUiVisibility();
         // an elevation of 4 matches the MaterialToolbar elevation
-        window.setStatusBarColor(SurfaceColors.SURFACE_0.getColor(activity));
+        if (raisedStatusBar) {
+            window.setStatusBarColor(SurfaceColors.SURFACE_5.getColor(activity));
+        } else {
+            window.setStatusBarColor(SurfaceColors.SURFACE_0.getColor(activity));
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             window.setNavigationBarColor(SurfaceColors.SURFACE_1.getColor(activity));
             if (isLightMode) {
