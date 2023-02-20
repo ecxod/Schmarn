@@ -2,18 +2,41 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory android:title="@string/appearance">
-    <SwitchPreferenceCompat
-        android:icon="@drawable/ic_palette_24dp"
-        android:key="dynamic_colors"
-        android:title="@string/pref_dynamic_colors"
-        android:summary="@string/pref_dynamic_colors_summary"/>
-    <ListPreference
-        android:defaultValue="@string/theme"
-        android:entries="@array/themes"
-        android:entryValues="@array/themes_values"
-        android:icon="@drawable/ic_dark_mode_24dp"
-        android:key="theme"
-        android:title="@string/pref_light_dark_mode"
-        app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            android:icon="@drawable/ic_palette_24dp"
+            android:key="dynamic_colors"
+            android:summary="@string/pref_dynamic_colors_summary"
+            android:title="@string/pref_dynamic_colors" />
+        <ListPreference
+            android:defaultValue="@string/default_theme"
+            android:entries="@array/themes"
+            android:entryValues="@array/themes_values"
+            android:icon="@drawable/ic_dark_mode_24dp"
+            android:key="theme"
+            android:title="@string/pref_light_dark_mode"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_privacy">
+        <SwitchPreferenceCompat
+            android:icon="@drawable/ic_screenshot_24dp"
+            android:defaultValue="@bool/allow_screenshots"
+            android:key="allow_screenshots"
+            android:summary="@string/pref_allow_screenshots_summary"
+            android:title="@string/pref_allow_screenshots" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_input_options">
+        <SwitchPreferenceCompat
+            android:icon="@drawable/ic_keyboard_return_24dp"
+            android:defaultValue="@bool/enter_is_send"
+            android:key="enter_is_send"
+            android:summary="@string/pref_enter_is_send_summary"
+            android:title="@string/pref_enter_is_send" />
+        <SwitchPreferenceCompat
+            android:icon="@drawable/ic_vertical_align_bottom_24dp"
+            android:defaultValue="@bool/scroll_to_bottom"
+            android:key="scroll_to_bottom"
+            android:summary="@string/pref_scroll_to_bottom_summary"
+            android:title="@string/pref_scroll_to_bottom" />
+
     </PreferenceCategory>
 </PreferenceScreen>

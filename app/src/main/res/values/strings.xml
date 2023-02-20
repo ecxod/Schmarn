@@ -130,8 +130,7 @@
     <string name="pref_never_send_crash_summary">By sending in stack traces you are helping the development</string>
     <string name="pref_confirm_messages">Confirm Messages</string>
     <string name="pref_confirm_messages_summary">Let your contacts know when you have received and read their messages</string>
-    <string name="pref_prevent_screenshots">Prevent Screenshots</string>
-    <string name="pref_prevent_screenshots_summary">Hide app contents in the app switcher and block screenshots</string>
+    <string name="pref_allow_screenshots_summary">Show app content in app switcher and allow screenshots to be taken</string>
     <string name="pref_ui_options">UI</string>
     <string name="openpgp_error">OpenKeychain produced an error.</string>
     <string name="bad_key_for_encryption">Bad key for encryption.</string>
@@ -410,7 +409,7 @@
     <string name="mark_as_read">Mark as read</string>
     <string name="pref_input_options">Input</string>
     <string name="pref_enter_is_send">Enter is send</string>
-    <string name="pref_enter_is_send_summary">Use Enter key to send message. You can always use Ctrl+Enter to send message, even if this option is disabled.</string>
+    <string name="pref_enter_is_send_summary">Use Enter (instead of Ctrl+Enter) to send message</string>
     <string name="pref_display_enter_key">Show enter key</string>
     <string name="pref_display_enter_key_summary">Change the emoticons key to an enter key</string>
     <string name="audio">audio</string>
@@ -1018,7 +1017,7 @@
     <string name="spaces">Spaces</string>
     <string name="chats">Chats</string>
     <string name="pref_title_interface">Interface</string>
-    <string name="pref_summary_appearance"><![CDATA[Theme & Colors]]></string>
+    <string name="pref_summary_appearance">Theme, Colors, Screenshots, Input</string>
     <string name="pref_title_security">Security</string>
     <string name="pref_summary_security">Encryption, Blind Trust Before Verification, MIM Detection</string>
     <string name="unified_push_summary">Notification relay for UnifiedPush compatible third party apps</string>
@@ -1026,5 +1025,6 @@
     <string name="pref_dynamic_colors_summary">System colors (Material You)</string>
     <string name="pref_light_dark_mode">Light/dark mode</string>
     <string name="appearance">Appearance</string>
+    <string name="pref_allow_screenshots">Allow screenshots</string>
 
 </resources>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="theme">light</string>
+    <string name="default_theme" translatable="false">light</string>
     <string-array name="themes">
         <item>@string/pref_theme_light</item>
         <item>@string/pref_theme_dark</item>

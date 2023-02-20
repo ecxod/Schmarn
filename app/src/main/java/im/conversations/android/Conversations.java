@@ -70,7 +70,7 @@ public class Conversations extends Application {
     private static int getDesiredNightMode(
             final Context context, final SharedPreferences sharedPreferences) {
         final String theme =
-                sharedPreferences.getString("theme", context.getString(R.string.theme));
+                sharedPreferences.getString("theme", context.getString(R.string.default_theme));
         return getDesiredNightMode(theme);
     }
 

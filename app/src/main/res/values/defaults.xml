@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="scroll_to_bottom">true</bool>
+    <bool name="enter_is_send">false</bool>
+    <bool name="allow_screenshots">true</bool>
+</resources>
