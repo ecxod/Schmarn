@@ -16,7 +16,8 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:layout_behavior="@string/searchbar_scrolling_view_behavior"/>
+                android:fillViewport="true"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/app_bar_layout"
@@ -24,12 +25,19 @@
                 android:layout_height="wrap_content"
                 app:elevation="0dp"
                 app:liftOnScroll="false">
+                <!-- app:layout_scrollFlags="scroll|enterAlways" provides 'gmail like' effect for
+                when the nestedscrollview actually has something to scroll. However this seems buggy
+                when there is nothing to scroll as you can move the searchbar out of the view.
+                'snap' doesn’t seem to have the bug but the the Searchbar always stays visible.
+                A possible work around would be to toggle between scroll|EnterAlways and snap
+                depending on how many items are in the view. -->
                 <com.google.android.material.search.SearchBar
                     android:id="@+id/search_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/search_in_chats"
-                    app:navigationIcon="@drawable/ic_menu_24dp"/>
+                    app:layout_scrollFlags="snap"
+                    app:navigationIcon="@drawable/ic_menu_24dp" />
 
 
             </com.google.android.material.appbar.AppBarLayout>
@@ -38,10 +46,10 @@
                 android:id="@+id/extended_fab"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
                 android:layout_gravity="bottom|end"
+                android:layout_margin="16dp"
                 android:text="@string/start_chat"
-                app:icon="@drawable/ic_chat_24dp"/>
+                app:icon="@drawable/ic_chat_24dp" />
 
             <com.google.android.material.search.SearchView
                 android:id="@+id/search_view"
@@ -63,8 +71,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            app:menu="@menu/fragment_overview"
-            app:headerLayout="@layout/item_navigation_header"/>
+            app:headerLayout="@layout/item_navigation_header"
+            app:menu="@menu/fragment_overview" />
 
     </androidx.drawerlayout.widget.DrawerLayout>
 </layout>
