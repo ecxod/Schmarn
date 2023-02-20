@@ -1017,5 +1017,10 @@
     <string name="accounts">Accounts</string>
     <string name="spaces">Spaces</string>
     <string name="chats">Chats</string>
+    <string name="pref_title_appearance">Appearance</string>
+    <string name="pref_summary_appearance"><![CDATA[Theme & Colors]]></string>
+    <string name="pref_title_security">Security</string>
+    <string name="pref_summary_security">Encryption, Blind Trust Before Verification, MIM Detection</string>
+    <string name="unified_push_summary">Notification relay for UnifiedPush compatible third party apps</string>
 
 </resources>

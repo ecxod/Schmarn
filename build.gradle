@@ -5,6 +5,7 @@ buildscript {
         lifecycleVersion = "2.2.0"
         navVersion = '2.5.3'
         roomVersion = "2.5.0"
+        preferenceVersion = "1.2.0"
         espressoVersion = "3.5.1"
     }
 

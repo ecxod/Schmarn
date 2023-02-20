@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        app:title="@string/pref_title_appearance"
+        app:summary="@string/pref_summary_appearance"
+        android:icon="@drawable/ic_palette_24dp"
+        app:fragment="im.conversations.android.ui.fragment.MainSettingsFragment"/>
+    <Preference
+        app:title="@string/pref_title_security"
+        app:summary="@string/pref_summary_security"
+        android:icon="@drawable/ic_security_24dp"
+        app:fragment="im.conversations.android.ui.fragment.MainSettingsFragment"/>
+    <Preference
+        app:title="@string/unified_push_distributor"
+        app:summary="@string/unified_push_summary"
+        android:icon="@drawable/ic_cloud_sync_24dp"
+        app:fragment="im.conversations.android.ui.fragment.MainSettingsFragment"/>
+
+</PreferenceScreen>

@@ -3,9 +3,11 @@ package im.conversations.android.ui.fragment.main;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -17,6 +19,7 @@ import im.conversations.android.database.model.ChatFilter;
 import im.conversations.android.database.model.GroupIdentifier;
 import im.conversations.android.databinding.FragmentOverviewBinding;
 import im.conversations.android.ui.Intents;
+import im.conversations.android.ui.activity.SettingsActivity;
 import im.conversations.android.ui.activity.SetupActivity;
 import im.conversations.android.ui.model.OverviewViewModel;
 import java.util.List;
@@ -55,24 +58,7 @@ public class OverviewFragment extends Fragment {
                         window.setStatusBarColor(SurfaceColors.SURFACE_0.getColor(activity));
                     }
                 });
-        binding.navigationView.setNavigationItemSelectedListener(
-                item -> {
-                    if (item.getItemId() == R.id.chats) {
-                        setChatFilter(null);
-                        return true;
-                    }
-                    if (item.getItemId() == R.id.add_account) {
-                        startActivity(new Intent(requireContext(), SetupActivity.class));
-                        binding.drawerLayout.close();
-                        return false;
-                    }
-                    final var intent = item.getIntent();
-                    if (intent == null) {
-                        return false;
-                    }
-                    setChatFilter(Intents.toChatFilter(intent));
-                    return true;
-                });
+        binding.navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
         binding.navigationView.setCheckedItem(R.id.chats);
         this.overviewViewModel
                 .getAccounts()
@@ -82,6 +68,31 @@ public class OverviewFragment extends Fragment {
                 .getChatFilterAvailable()
                 .observe(getViewLifecycleOwner(), this::onChatFilterAvailable);
         return binding.getRoot();
+    }
+
+    private boolean onNavigationItemSelected(final MenuItem menuItem) {
+        if (menuItem.getItemId() == R.id.chats) {
+            setChatFilter(null);
+            return true;
+        }
+        if (menuItem.getItemId() == R.id.add_account) {
+            return startActivity(SetupActivity.class);
+        }
+        if (menuItem.getItemId() == R.id.settings) {
+            return startActivity(SettingsActivity.class);
+        }
+        final var intent = menuItem.getIntent();
+        if (intent == null) {
+            return false;
+        }
+        setChatFilter(Intents.toChatFilter(intent));
+        return true;
+    }
+
+    private boolean startActivity(final Class<? extends AppCompatActivity> activityClazz) {
+        startActivity(new Intent(requireContext(), activityClazz));
+        binding.drawerLayout.close();
+        return false;
     }
 
     private void setChatFilter(final ChatFilter chatFilter) {

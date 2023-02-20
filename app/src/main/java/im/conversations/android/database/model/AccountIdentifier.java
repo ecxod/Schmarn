@@ -1,7 +1,6 @@
 package im.conversations.android.database.model;
 
 import androidx.annotation.NonNull;
-
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -33,9 +32,6 @@ public class AccountIdentifier implements ChatFilter {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("id", id)
-                .add("address", address)
-                .toString();
+        return MoreObjects.toStringHelper(this).add("id", id).add("address", address).toString();
     }
 }

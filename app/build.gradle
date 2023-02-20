@@ -88,6 +88,9 @@ dependencies {
     implementation "androidx.room:room-guava:$rootProject.ext.roomVersion"
     annotationProcessor "androidx.room:room-compiler:$rootProject.ext.roomVersion"
 
+    implementation "androidx.preference:preference:$rootProject.ext.preferenceVersion"
+
+
     implementation "androidx.security:security-crypto:1.0.0"
 
 

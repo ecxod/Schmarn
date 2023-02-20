@@ -93,12 +93,15 @@
 
         <activity
             android:name="im.conversations.android.ui.activity.MainActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="im.conversations.android.ui.activity.SettingsActivity" />
         <activity
             android:name="im.conversations.android.ui.activity.SetupActivity"
             android:windowSoftInputMode="adjustResize" />

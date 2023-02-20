@@ -13,6 +13,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <androidx.recyclerview.widget.RecyclerView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/searchbar_scrolling_view_behavior"/>
+
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/app_bar_layout"
                 android:layout_width="match_parent"
@@ -29,6 +34,15 @@
 
             </com.google.android.material.appbar.AppBarLayout>
 
+            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                android:id="@+id/extended_fab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:layout_gravity="bottom|end"
+                android:text="@string/start_chat"
+                app:icon="@drawable/ic_chat_24dp"/>
+
             <com.google.android.material.search.SearchView
                 android:id="@+id/search_view"
                 android:layout_width="match_parent"
@@ -38,14 +52,6 @@
                 app:useDrawerArrowDrawable="true">
                 <!-- Search suggestions/results go here (ScrollView, RecyclerView, etc.). -->
             </com.google.android.material.search.SearchView>
-            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                android:id="@+id/extended_fab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                android:layout_gravity="bottom|end"
-                android:text="@string/start_chat"
-                app:icon="@drawable/ic_chat_24dp"/>
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 

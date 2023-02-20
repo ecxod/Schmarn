@@ -1,15 +1,11 @@
 package im.conversations.android.ui;
 
 import android.content.Intent;
-
 import com.google.common.base.Strings;
-
-import org.jxmpp.jid.BareJid;
-import org.jxmpp.jid.impl.JidCreate;
-
 import im.conversations.android.database.model.AccountIdentifier;
 import im.conversations.android.database.model.ChatFilter;
 import im.conversations.android.database.model.GroupIdentifier;
+import org.jxmpp.jid.impl.JidCreate;
 
 public final class Intents {
 
@@ -47,7 +43,7 @@ public final class Intents {
             throw new IllegalArgumentException("Intent doe not specify an action");
         }
         if (ACTION_FILTER_CHATS_BY_ACCOUNT.equals(action)) {
-            final var id = intent.getLongExtra(EXTRA_ACCOUNT_ID,-1);
+            final var id = intent.getLongExtra(EXTRA_ACCOUNT_ID, -1);
             final var address = intent.getStringExtra(EXTRA_ACCOUNT_ADDRESS);
             if (id < 0 || Strings.isNullOrEmpty(address)) {
                 throw new IllegalArgumentException("account filter intent lacks extras");
@@ -55,7 +51,7 @@ public final class Intents {
             return new AccountIdentifier(id, JidCreate.bareFromOrThrowUnchecked(address));
         }
         if (ACTION_FILTER_CHATS_BY_GROUP.equals(action)) {
-            final var id = intent.getLongExtra(EXTRA_GROUP_ID,-1);
+            final var id = intent.getLongExtra(EXTRA_GROUP_ID, -1);
             final var name = intent.getStringExtra(EXTRA_GROUP_NAME);
             if (id < 0 || Strings.isNullOrEmpty(name)) {
                 throw new IllegalArgumentException("group filter intent lack address");
