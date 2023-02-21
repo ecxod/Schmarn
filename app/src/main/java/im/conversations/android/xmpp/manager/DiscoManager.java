@@ -24,6 +24,7 @@ import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import im.conversations.android.xmpp.model.disco.items.ItemsQuery;
 import im.conversations.android.xmpp.model.error.Condition;
+import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import im.conversations.android.xmpp.model.version.Version;
 import java.util.Arrays;
@@ -303,7 +304,7 @@ public class DiscoManager extends AbstractManager {
                 serviceDescription = cachedServiceDescription;
             } else {
                 LOGGER.warn("No disco info was cached for node {}", nodeRequest);
-                connection.sendErrorFor(request, new Condition.ItemNotFound());
+                connection.sendErrorFor(request, Error.Type.CANCEL, new Condition.ItemNotFound());
                 return;
             }
         }
@@ -314,7 +315,7 @@ public class DiscoManager extends AbstractManager {
 
     public void handleVersion(final Iq request) {
         if (isPrivacyModeEnabled()) {
-            connection.sendErrorFor(request, new Condition.ServiceUnavailable());
+            connection.sendErrorFor(request, Error.Type.CANCEL, new Condition.ServiceUnavailable());
         } else {
             final var version = new Version();
             version.setSoftwareName(BuildConfig.APP_NAME);

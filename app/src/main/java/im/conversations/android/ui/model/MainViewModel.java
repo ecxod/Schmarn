@@ -1,12 +1,10 @@
 package im.conversations.android.ui.model;
 
 import android.app.Application;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Transformations;
-
 import im.conversations.android.repository.AccountRepository;
 
 public class MainViewModel extends AndroidViewModel {

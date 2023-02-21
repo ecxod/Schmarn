@@ -5,11 +5,14 @@ import com.google.common.base.Preconditions;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.BlockingManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.manager.JingleConnectionManager;
 import im.conversations.android.xmpp.manager.RosterManager;
 import im.conversations.android.xmpp.model.blocking.Block;
 import im.conversations.android.xmpp.model.blocking.Unblock;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.error.Condition;
+import im.conversations.android.xmpp.model.error.Error;
+import im.conversations.android.xmpp.model.jingle.Jingle;
 import im.conversations.android.xmpp.model.ping.Ping;
 import im.conversations.android.xmpp.model.roster.Query;
 import im.conversations.android.xmpp.model.stanza.Iq;
@@ -68,9 +71,13 @@ public class IqProcessor extends XmppConnection.Delegate implements Consumer<Iq>
             return;
         }
 
+        if (type == Iq.Type.SET && packet.hasExtension(Jingle.class)) {
+            getManager(JingleConnectionManager.class).handleJingle(packet);
+        }
+
         final var extensionIds = packet.getExtensionIds();
         LOGGER.info("Received from {} type {}", packet.getFrom(), type);
         LOGGER.info("Could not handle {}. Sending feature-not-implemented", extensionIds);
-        connection.sendErrorFor(packet, new Condition.FeatureNotImplemented());
+        connection.sendErrorFor(packet, Error.Type.CANCEL, new Condition.FeatureNotImplemented());
     }
 }

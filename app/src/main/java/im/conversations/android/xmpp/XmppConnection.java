@@ -1793,13 +1793,14 @@ public class XmppConnection implements Runnable {
         this.sendPacket(response);
     }
 
-    public void sendErrorFor(final Iq request, final Condition condition) {
+    public void sendErrorFor(final Iq request, final Error.Type type, final Condition condition) {
         final var from = request.getFrom();
         final var id = request.getId();
         final var response = new Iq(Iq.Type.ERROR);
         response.setTo(from);
         response.setId(id);
         final Error error = response.addExtension(new Error());
+        error.setType(type);
         error.setCondition(condition);
         this.sendPacket(response);
     }

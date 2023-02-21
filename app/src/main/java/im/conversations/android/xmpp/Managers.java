@@ -12,6 +12,8 @@ import im.conversations.android.xmpp.manager.BookmarkManager;
 import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.ChatStateManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.manager.HttpUploadManager;
+import im.conversations.android.xmpp.manager.JingleConnectionManager;
 import im.conversations.android.xmpp.manager.NickManager;
 import im.conversations.android.xmpp.manager.PepManager;
 import im.conversations.android.xmpp.manager.PresenceManager;
@@ -36,6 +38,10 @@ public final class Managers {
                 .put(CarbonsManager.class, new CarbonsManager(context, connection))
                 .put(ChatStateManager.class, new ChatStateManager(context, connection))
                 .put(DiscoManager.class, new DiscoManager(context, connection))
+                .put(HttpUploadManager.class, new HttpUploadManager(context, connection))
+                .put(
+                        JingleConnectionManager.class,
+                        new JingleConnectionManager(context, connection))
                 .put(NickManager.class, new NickManager(context, connection))
                 .put(PepManager.class, new PepManager(context, connection))
                 .put(PresenceManager.class, new PresenceManager(context, connection))
