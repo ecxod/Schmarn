@@ -18,6 +18,9 @@ public interface AccountDao {
     @Query("SELECT EXISTS (SELECT id FROM account WHERE address=:address)")
     boolean hasAccount(BareJid address);
 
+    @Query("SELECT NOT EXISTS (SELECT id FROM account)")
+    LiveData<Boolean> hasNoAccounts();
+
     @Insert
     long insert(final AccountEntity account);
 

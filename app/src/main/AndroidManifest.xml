@@ -94,6 +94,7 @@
         <activity
             android:name="im.conversations.android.ui.activity.MainActivity"
             android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

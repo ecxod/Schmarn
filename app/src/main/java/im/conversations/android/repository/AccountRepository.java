@@ -114,6 +114,10 @@ public class AccountRepository extends AbstractRepository {
         return database.accountDao().getAccounts();
     }
 
+    public LiveData<Boolean> hasNoAccounts() {
+        return database.accountDao().hasNoAccounts();
+    }
+
     public static class AccountAlreadyExistsException extends IllegalStateException {
         public AccountAlreadyExistsException(BareJid address) {
             super(String.format("The account %s has already been setup", address));
