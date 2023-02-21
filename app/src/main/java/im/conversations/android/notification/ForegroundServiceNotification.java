@@ -23,9 +23,18 @@ public class ForegroundServiceNotification {
 
     public Notification build(final ConnectionPool.Summary summary) {
         final Notification.Builder builder = new Notification.Builder(service);
-        builder.setContentTitle(service.getString(R.string.app_name));
-        builder.setContentText(
-                service.getString(R.string.connected_accounts, summary.connected, summary.total));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            // starting with Android 7 the app name is displayed as part of the notification
+            // this means we do not have to repeat it in the 'content title'
+            builder.setContentTitle(
+                    service.getString(
+                            R.string.connected_accounts, summary.connected, summary.total));
+        } else {
+            builder.setContentTitle(service.getString(R.string.app_name));
+            builder.setContentText(
+                    service.getString(
+                            R.string.connected_accounts, summary.connected, summary.total));
+        }
         builder.setContentIntent(buildPendingIntent());
         builder.setWhen(0)
                 .setPriority(Notification.PRIORITY_MIN)
