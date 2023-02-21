@@ -36,6 +36,12 @@ public class InterfaceSettingsFragment extends PreferenceFragmentCompat {
                 });
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        requireActivity().setTitle(R.string.pref_title_interface);
+    }
+
     public SettingsActivity requireSettingsActivity() {
         final var activity = requireActivity();
         if (activity instanceof SettingsActivity) {

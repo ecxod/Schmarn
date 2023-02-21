@@ -11,4 +11,10 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         setPreferencesFromResource(R.xml.preferences_main, rootKey);
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        requireActivity().setTitle(R.string.title_activity_settings);
+    }
 }

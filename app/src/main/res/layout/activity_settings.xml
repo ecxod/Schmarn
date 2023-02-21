@@ -31,7 +31,6 @@
                 android:id="@+id/material_toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                app:title="@string/title_activity_settings"
                 app:navigationIcon="@drawable/ic_arrow_back_24dp"/>
         </com.google.android.material.appbar.AppBarLayout>
         <androidx.fragment.app.FragmentContainerView

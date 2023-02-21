@@ -10,7 +10,7 @@
         app:title="@string/pref_title_security"
         app:summary="@string/pref_summary_security"
         android:icon="@drawable/ic_security_24dp"
-        app:fragment="im.conversations.android.ui.fragment.MainSettingsFragment"/>
+        app:fragment="im.conversations.android.ui.fragment.settings.SecuritySettingsFragment"/>
     <Preference
         app:title="@string/unified_push_distributor"
         app:summary="@string/unified_push_summary"

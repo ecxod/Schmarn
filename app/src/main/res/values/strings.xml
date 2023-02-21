@@ -1026,5 +1026,9 @@
     <string name="pref_light_dark_mode">Light/dark mode</string>
     <string name="appearance">Appearance</string>
     <string name="pref_allow_screenshots">Allow screenshots</string>
+    <string name="pref_category_e2ee">End-to-end encryption</string>
+    <string name="pref_category_server_connection">Server connection</string>
+    <string name="detect_mim">Require channel binding</string>
+    <string name="detect_mim_summary">Channel binding can detect some machine-in-the-middle attacks</string>
 
 </resources>
