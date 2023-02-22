@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,8 +66,8 @@ public class DiscoManager extends AbstractManager {
                     Namespace.JINGLE_FEATURE_AUDIO,
                     Namespace.JINGLE_FEATURE_VIDEO,
                     Namespace.JINGLE_APPS_RTP,
-                    Namespace.JINGLE_APPS_DTLS,
-                    Namespace.JINGLE_MESSAGE);
+                    Namespace.JINGLE_APPS_DTLS /*,
+                    Namespace.JINGLE_MESSAGE*/);
 
     private static final Collection<String> FEATURES_IMPACTING_PRIVACY =
             Collections.singleton(Namespace.VERSION);
@@ -241,16 +240,28 @@ public class DiscoManager extends AbstractManager {
                 MoreExecutors.directExecutor());
     }
 
-    public boolean hasFeature(final Jid entity, final String feature) {
+    public boolean hasFeature(final Entity entity, final String feature) {
         return getDatabase().discoDao().hasFeature(getAccount().id, entity, feature);
     }
 
+    public ListenableFuture<Boolean> hasFeatureAsync(final Entity entity, final String feature) {
+        return Futures.submit(() -> hasFeature(entity, feature), getDatabase().getQueryExecutor());
+    }
+
     public boolean hasAccountFeature(final String feature) {
-        return hasFeature(getAccount().address, feature);
+        return hasFeature(Entity.discoItem(getAccount().address), feature);
+    }
+
+    public ListenableFuture<Boolean> hasAccountFeatureAsync(final String feature) {
+        return Futures.submit(() -> hasAccountFeature(feature), getDatabase().getQueryExecutor());
     }
 
     public boolean hasServerFeature(final String feature) {
-        return hasFeature(getAccount().address.asDomainBareJid(), feature);
+        return hasFeature(Entity.discoItem(getAccount().address.asDomainBareJid()), feature);
+    }
+
+    public ListenableFuture<Boolean> hasServerFeatureAsync(final String feature) {
+        return Futures.submit(() -> hasServerFeature(feature), getDatabase().getQueryExecutor());
     }
 
     public ServiceDescription getServiceDescription() {

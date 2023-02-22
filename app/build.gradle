@@ -109,6 +109,10 @@ dependencies {
     // XMPP Address library
     implementation 'org.jxmpp:jxmpp-jid:1.0.3'
 
+    // WebRTC
+    implementation 'im.conversations.webrtc:webrtc-android:104.0.0'
+
+
     // Consistent Color Generation
     implementation 'org.hsluv:hsluv:0.2'
 
@@ -116,14 +120,18 @@ dependencies {
     // DNS library (XMPP needs to resolve SRV records)
     implementation 'de.measite.minidns:minidns-hla:0.2.4'
 
+
     // Guava
     implementation 'com.google.guava:guava:31.1-android'
+
 
     // HTTP library
     implementation "com.squareup.okhttp3:okhttp:4.10.0"
 
+
     // JSON parser
     implementation 'com.google.code.gson:gson:2.10.1'
+
 
     // logging framework + logging api
     implementation 'org.slf4j:slf4j-api:1.7.36'

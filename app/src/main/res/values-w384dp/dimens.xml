@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="in_call_fab_margin">12dp</dimen>
+    <dimen name="in_call_fab_margin_center">16dp</dimen>
+</resources>

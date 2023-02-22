@@ -1,19 +1,16 @@
 package im.conversations.android.tls;
 
 import android.content.Context;
+import im.conversations.android.AbstractAccountService;
 import im.conversations.android.database.model.Account;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.X509TrustManager;
 
-public class TrustManager implements X509TrustManager {
-
-    private final Context context;
-    private final Account account;
+public class TrustManager extends AbstractAccountService implements X509TrustManager {
 
     public TrustManager(final Context context, final Account account) {
-        this.context = context;
-        this.account = account;
+        super(context, account);
     }
 
     @Override

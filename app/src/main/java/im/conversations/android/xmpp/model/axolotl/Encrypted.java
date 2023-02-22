@@ -13,4 +13,12 @@ public class Encrypted extends Extension {
     public boolean hasPayload() {
         return hasExtension(Payload.class);
     }
+
+    public Header getHeader() {
+        return getExtension(Header.class);
+    }
+
+    public Payload getPayload() {
+        return getExtension(Payload.class);
+    }
 }

@@ -1,4 +1,4 @@
-package im.conversations.android.xmpp.axolotl;
+package im.conversations.android.axolotl;
 
 import org.jxmpp.jid.BareJid;
 import org.whispersystems.libsignal.SignalProtocolAddress;

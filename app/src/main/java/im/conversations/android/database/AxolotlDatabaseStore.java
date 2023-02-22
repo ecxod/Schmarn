@@ -1,9 +1,10 @@
 package im.conversations.android.database;
 
 import android.content.Context;
+import im.conversations.android.AbstractAccountService;
+import im.conversations.android.axolotl.AxolotlAddress;
 import im.conversations.android.database.dao.AxolotlDao;
 import im.conversations.android.database.model.Account;
-import im.conversations.android.xmpp.axolotl.AxolotlAddress;
 import java.util.List;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
@@ -14,14 +15,10 @@ import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 
-public class AxolotlDatabaseStore implements SignalProtocolStore {
-
-    private final Context context;
-    private final Account account;
+public class AxolotlDatabaseStore extends AbstractAccountService implements SignalProtocolStore {
 
     public AxolotlDatabaseStore(final Context context, final Account account) {
-        this.context = context;
-        this.account = account;
+        super(context, account);
     }
 
     private AxolotlDao axolotlDao() {

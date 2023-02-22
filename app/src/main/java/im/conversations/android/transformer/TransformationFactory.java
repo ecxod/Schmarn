@@ -2,6 +2,7 @@ package im.conversations.android.transformer;
 
 import android.content.Context;
 import im.conversations.android.xml.Namespace;
+import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.model.occupant.OccupantId;
@@ -34,7 +35,8 @@ public class TransformationFactory extends XmppConnection.Delegate {
         if (message.getType() == Message.Type.GROUPCHAT && message.hasExtension(OccupantId.class)) {
             if (from != null
                     && getManager(DiscoManager.class)
-                            .hasFeature(from.asBareJid(), Namespace.OCCUPANT_ID)) {
+                            .hasFeature(
+                                    Entity.discoItem(from.asBareJid()), Namespace.OCCUPANT_ID)) {
                 occupantId = message.getExtension(OccupantId.class).getId();
             } else {
                 occupantId = null;

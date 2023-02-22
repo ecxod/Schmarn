@@ -2,6 +2,7 @@ package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
 import im.conversations.android.xml.Namespace;
+import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.stanza.Message;
 import im.conversations.android.xmpp.model.unique.StanzaId;
@@ -25,7 +26,8 @@ public class StanzaIdManager extends AbstractManager {
             by = connection.getBoundAddress().asBareJid();
         }
         if (message.hasExtension(StanzaId.class)
-                && getManager(DiscoManager.class).hasFeature(by, Namespace.STANZA_IDS)) {
+                && getManager(DiscoManager.class)
+                        .hasFeature(Entity.discoItem(by), Namespace.STANZA_IDS)) {
             return getStanzaIdBy(message, by);
         } else {
             return null;

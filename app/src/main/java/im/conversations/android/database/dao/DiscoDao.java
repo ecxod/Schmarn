@@ -26,6 +26,7 @@ import im.conversations.android.xmpp.model.disco.info.Identity;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import java.util.Collection;
+import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.parts.Resourcepart;
 
@@ -186,5 +187,44 @@ public abstract class DiscoDao {
             "SELECT EXISTS (SELECT disco_item.id FROM disco_item JOIN disco_feature on"
                     + " disco_item.discoId=disco_feature.discoId WHERE accountId=:account AND"
                     + " address=:entity AND feature=:feature)")
-    public abstract boolean hasFeature(final long account, final Jid entity, final String feature);
+    protected abstract boolean hasDiscoItemFeature(
+            final long account, final Jid entity, final String feature);
+
+    @Query(
+            "SELECT EXISTS (SELECT presence.id FROM presence JOIN disco_feature on"
+                    + " presence.discoId=disco_feature.discoId WHERE accountId=:account AND"
+                    + " address=:address AND resource=:resource AND feature=:feature)")
+    protected abstract boolean hasPresenceFeature(
+            final long account,
+            final BareJid address,
+            final Resourcepart resource,
+            final String feature);
+
+    @Query(
+            "SELECT count(presence.id) FROM presence JOIN disco_feature on"
+                    + " presence.discoId=disco_feature.discoId WHERE accountId=:account AND"
+                    + " address=:address AND feature=:feature")
+    public abstract int countPresencesWithFeature(
+            final long account, final BareJid address, final String feature);
+
+    public int countPresencesWithFeature(final Account account, final String feature) {
+        return countPresencesWithFeature(account.id, account.address, feature);
+    }
+
+    public boolean hasFeature(final long account, final Entity entity, final String feature) {
+        if (entity instanceof Entity.DiscoItem) {
+            return hasDiscoItemFeature(account, entity.address, feature);
+        }
+        if (entity instanceof Entity.Presence) {
+            return hasPresenceFeature(
+                    account,
+                    entity.address.asBareJid(),
+                    entity.address.getResourceOrEmpty(),
+                    feature);
+        }
+        throw new IllegalStateException(
+                String.format(
+                        "Discovering features for %s is not implemented",
+                        entity.getClass().getName()));
+    }
 }

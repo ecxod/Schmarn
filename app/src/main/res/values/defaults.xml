@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <bool name="scroll_to_bottom">true</bool>
+    <bool name="notifications_from_strangers">true</bool>
     <bool name="enter_is_send">false</bool>
     <bool name="allow_screenshots">true</bool>
     <bool name="btbv">true</bool>
     <string translatable="false" name="omemo_setting_default">default_on</string>
+    <string name="incoming_call_ringtone" translatable="false">content://settings/system/ringtone</string>
 </resources>

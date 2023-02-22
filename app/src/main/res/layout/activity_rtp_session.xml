@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/pip_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:id="@+id/pip_waiting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                android:indeterminateOnly="true"
+                android:indeterminateTint="@android:color/white"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/pip_warning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_warning_24dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/app_bar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:liftOnScroll="false"
+            android:visibility="visible">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize" />
+
+            <TextView
+                style="?textAppearanceDisplayMedium"
+                android:id="@+id/with"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:textColor="?colorOnSurface"
+                tools:text="Juliet Capulet" />
+            <TextView
+                style="?textAppearanceBodyMedium"
+                android:visibility="visible"
+                android:id="@+id/with_jid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:textColor="?colorOnSurface"
+                tools:text="jcapulet@example.com" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="32dp"/>
+
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/button_row"
+            android:layout_below="@id/app_bar_layout">
+
+            <TextView
+                style="?textAppearanceBodyLarge"
+                android:typeface="monospace"
+                android:id="@+id/duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="@dimen/rtp_session_duration_top_margin"
+                tools:text="01:23" />
+
+            <ImageView
+                android:id="@+id/contact_photo"
+                android:layout_width="@dimen/publish_avatar_size"
+                android:layout_height="@dimen/publish_avatar_size"
+                android:layout_centerInParent="true" />
+
+        </RelativeLayout>
+
+
+        <LinearLayout
+            android:id="@+id/remote_video_wrapper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/app_bar_layout"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:background="@android:color/black"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <im.conversations.android.ui.widget.SurfaceViewRenderer
+                android:id="@+id/remote_video"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <im.conversations.android.ui.widget.SurfaceViewRenderer
+            android:id="@+id/local_video"
+            android:layout_width="@dimen/local_video_preview_width"
+            android:layout_height="@dimen/local_video_preview_height"
+            android:layout_below="@+id/app_bar_layout"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="24dp"
+            android:visibility="gone"
+            app:elevation="4dp" />
+
+        <ImageView
+            android:id="@+id/verified"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_below="@+id/app_bar_layout"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="@dimen/rtp_session_duration_top_margin"
+            android:alpha="0.7"
+            app:tint="?colorPrimary"
+            android:src="@drawable/ic_verified_user_24dp" />
+
+        <ImageView
+            android:id="@+id/pip_local_mic_off_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="8dp"
+            android:alpha="0.7"
+            android:src="@drawable/ic_mic_off_24dp"
+            android:visibility="gone"
+            app:tint="@android:color/white" />
+
+        <RelativeLayout
+            android:id="@+id/button_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="24dp">
+
+            <RelativeLayout
+                android:layout_width="288dp"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    style="?attr/floatingActionButtonTertiaryStyle"
+                    android:id="@+id/reject_call"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:src="@drawable/ic_call_end_24dp"
+                    android:visibility="gone"
+                    app:backgroundTint="?colorErrorContainer"
+                    app:tint="?colorOnErrorContainer"
+                    app:elevation="4dp"
+                    app:fabCustomSize="72dp"
+                    app:maxImageSize="36dp"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    style="?attr/floatingActionButtonPrimaryStyle"
+                    android:id="@+id/accept_call"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:src="@drawable/ic_call_24dp"
+                    android:visibility="gone"
+                    app:elevation="4dp"
+                    app:fabCustomSize="72dp"
+                    app:maxImageSize="36dp"
+                    tools:visibility="visible" />
+
+            </RelativeLayout>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/in_call_action_left"
+                style="?attr/floatingActionButtonSmallTertiaryStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/in_call_fab_margin"
+                android:layout_marginTop="@dimen/in_call_fab_margin"
+                android:layout_marginEnd="@dimen/in_call_fab_margin"
+                android:layout_marginBottom="@dimen/in_call_fab_margin"
+                android:layout_toStartOf="@+id/end_call"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/end_call"
+                style="?attr/floatingActionButtonPrimaryStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="@dimen/in_call_fab_margin_center"
+                android:layout_marginTop="@dimen/in_call_fab_margin_center"
+                android:layout_marginEnd="@dimen/in_call_fab_margin_center"
+                android:layout_marginBottom="@dimen/in_call_fab_margin_center"
+                android:src="@drawable/ic_call_end_24dp"
+                android:visibility="visible"
+                app:backgroundTint="?colorErrorContainer"
+                app:fabCustomSize="72dp"
+                app:maxImageSize="36dp"
+                app:tint="?colorOnErrorContainer" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                style="?attr/floatingActionButtonSmallTertiaryStyle"
+                android:id="@+id/in_call_action_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_margin="@dimen/in_call_fab_margin"
+                android:layout_toEndOf="@+id/end_call"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                style="?attr/floatingActionButtonSmallTertiaryStyle"
+                android:id="@+id/in_call_action_far_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_margin="@dimen/in_call_fab_margin"
+                android:layout_toEndOf="@+id/in_call_action_right"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </RelativeLayout>
+
+        <TextView
+            style="?textAppearanceBodySmall"
+            android:id="@+id/using_account"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/using_account"/>
+
+    </RelativeLayout>
+</layout>

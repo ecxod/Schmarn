@@ -12,6 +12,7 @@ import im.conversations.android.database.entity.RosterItemGroupEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.model.roster.Item;
 import java.util.Collection;
+import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,9 @@ public abstract class RosterDao extends GroupDao {
 
     @Query("UPDATE account SET rosterVersion=:version WHERE id=:account")
     protected abstract void setRosterVersion(final long account, final String version);
+
+    @Query("SELECT EXISTS (SELECT id FROM roster WHERE accountId=:account AND address=:address)")
+    public abstract boolean isInRoster(final long account, final BareJid address);
 
     @Transaction
     public void set(

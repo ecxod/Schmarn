@@ -11,28 +11,26 @@ import im.conversations.android.R;
 import im.conversations.android.ui.activity.MainActivity;
 import im.conversations.android.xmpp.ConnectionPool;
 
-public class ForegroundServiceNotification {
+public class ForegroundServiceNotification extends AbstractNotification {
 
     public static final int ID = 1;
 
-    private final Service service;
-
     public ForegroundServiceNotification(final Service service) {
-        this.service = service;
+        super(service);
     }
 
     public Notification build(final ConnectionPool.Summary summary) {
-        final Notification.Builder builder = new Notification.Builder(service);
+        final Notification.Builder builder = new Notification.Builder(context);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             // starting with Android 7 the app name is displayed as part of the notification
             // this means we do not have to repeat it in the 'content title'
             builder.setContentTitle(
-                    service.getString(
+                    context.getString(
                             R.string.connected_accounts, summary.connected, summary.total));
         } else {
-            builder.setContentTitle(service.getString(R.string.app_name));
+            builder.setContentTitle(context.getString(R.string.app_name));
             builder.setContentText(
-                    service.getString(
+                    context.getString(
                             R.string.connected_accounts, summary.connected, summary.total));
         }
         builder.setContentIntent(buildPendingIntent());
@@ -53,15 +51,15 @@ public class ForegroundServiceNotification {
 
     private PendingIntent buildPendingIntent() {
         return PendingIntent.getActivity(
-                service,
+                context,
                 0,
-                new Intent(service, MainActivity.class),
+                new Intent(context, MainActivity.class),
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     public void update(final ConnectionPool.Summary summary) {
         final var notificationManager =
-                ContextCompat.getSystemService(service, NotificationManager.class);
+                ContextCompat.getSystemService(context, NotificationManager.class);
         if (notificationManager == null) {
             return;
         }

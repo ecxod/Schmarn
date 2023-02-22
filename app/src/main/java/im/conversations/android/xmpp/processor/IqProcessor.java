@@ -73,6 +73,7 @@ public class IqProcessor extends XmppConnection.Delegate implements Consumer<Iq>
 
         if (type == Iq.Type.SET && packet.hasExtension(Jingle.class)) {
             getManager(JingleConnectionManager.class).handleJingle(packet);
+            return;
         }
 
         final var extensionIds = packet.getExtensionIds();

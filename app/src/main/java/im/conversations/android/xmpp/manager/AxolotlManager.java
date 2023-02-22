@@ -2,23 +2,39 @@ package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import im.conversations.android.database.AxolotlDatabaseStore;
+import eu.siacs.conversations.Config;
+import eu.siacs.conversations.xmpp.jingle.OmemoVerification;
+import eu.siacs.conversations.xmpp.jingle.OmemoVerifiedRtpContentMap;
+import eu.siacs.conversations.xmpp.jingle.RtpContentMap;
+import eu.siacs.conversations.xmpp.jingle.stanzas.IceUdpTransportInfo;
+import eu.siacs.conversations.xmpp.jingle.stanzas.OmemoVerifiedIceUdpTransportInfo;
+import im.conversations.android.axolotl.AxolotlAddress;
+import im.conversations.android.axolotl.AxolotlDecryptionException;
+import im.conversations.android.axolotl.AxolotlEncryptionException;
+import im.conversations.android.axolotl.AxolotlPayload;
+import im.conversations.android.axolotl.AxolotlService;
+import im.conversations.android.axolotl.AxolotlSession;
+import im.conversations.android.axolotl.EncryptionBuilder;
+import im.conversations.android.xml.Element;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.IqErrorException;
 import im.conversations.android.xmpp.NodeConfiguration;
 import im.conversations.android.xmpp.XmppConnection;
-import im.conversations.android.xmpp.axolotl.AxolotlAddress;
 import im.conversations.android.xmpp.model.axolotl.Bundle;
 import im.conversations.android.xmpp.model.axolotl.DeviceList;
+import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.pubsub.Items;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import org.jxmpp.jid.BareJid;
@@ -28,7 +44,6 @@ import org.slf4j.LoggerFactory;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.SessionBuilder;
-import org.whispersystems.libsignal.SessionCipher;
 import org.whispersystems.libsignal.UntrustedIdentityException;
 import org.whispersystems.libsignal.state.PreKeyBundle;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
@@ -41,11 +56,11 @@ public class AxolotlManager extends AbstractManager {
 
     private static final int NUM_PRE_KEYS_IN_BUNDLE = 30;
 
-    private final SignalProtocolStore signalProtocolStore;
+    private final AxolotlService axolotlService;
 
     public AxolotlManager(Context context, XmppConnection connection) {
         super(context, connection);
-        this.signalProtocolStore = new AxolotlDatabaseStore(context, connection.getAccount());
+        this.axolotlService = new AxolotlService(context, connection.getAccount());
     }
 
     public void handleItems(final BareJid from, final Items items) {
@@ -103,25 +118,27 @@ public class AxolotlManager extends AbstractManager {
         return getManager(PubSubManager.class).fetchMostRecentItem(address, node, Bundle.class);
     }
 
-    public ListenableFuture<SessionCipher> getOrCreateSessionCipher(
+    public ListenableFuture<AxolotlSession> getOrCreateSessionCipher(
             final AxolotlAddress axolotlAddress) {
-        if (signalProtocolStore.containsSession(axolotlAddress)) {
-            return Futures.immediateFuture(new SessionCipher(signalProtocolStore, axolotlAddress));
+        final AxolotlSession session = axolotlService.getExistingSession(axolotlAddress);
+        if (session != null) {
+            return Futures.immediateFuture(session);
         } else {
             final var bundleFuture =
                     fetchBundle(axolotlAddress.getJid(), axolotlAddress.getDeviceId());
             return Futures.transform(
                     bundleFuture,
                     bundle -> {
-                        buildSession(axolotlAddress, bundle);
-                        return new SessionCipher(signalProtocolStore, axolotlAddress);
+                        final var identityKey = buildSession(axolotlAddress, bundle);
+                        return AxolotlSession.of(
+                                signalProtocolStore(), identityKey, axolotlAddress);
                     },
                     MoreExecutors.directExecutor());
         }
     }
 
-    private void buildSession(final AxolotlAddress address, final Bundle bundle) {
-        final var sessionBuilder = new SessionBuilder(signalProtocolStore, address);
+    private IdentityKey buildSession(final AxolotlAddress address, final Bundle bundle) {
+        final var sessionBuilder = new SessionBuilder(signalProtocolStore(), address);
         final var deviceId = address.getDeviceId();
         final var preKey = bundle.getRandomPreKey();
         final var signedPreKey = bundle.getSignedPreKey();
@@ -139,6 +156,7 @@ public class AxolotlManager extends AbstractManager {
         if (identityKey == null) {
             throw new IllegalArgumentException("No IdentityKey found in bundle");
         }
+        final var signalIdentityKey = new IdentityKey(identityKey.asECPublicKey());
         final var preKeyBundle =
                 new PreKeyBundle(
                         0,
@@ -148,9 +166,10 @@ public class AxolotlManager extends AbstractManager {
                         signedPreKey.getId(),
                         signedPreKey.asECPublicKey(),
                         signedPreKeySignature.asBytes(),
-                        new IdentityKey(identityKey.asECPublicKey()));
+                        signalIdentityKey);
         try {
             sessionBuilder.process(preKeyBundle);
+            return signalIdentityKey;
         } catch (final InvalidKeyException | UntrustedIdentityException e) {
             throw new RuntimeException(e);
         }
@@ -249,7 +268,7 @@ public class AxolotlManager extends AbstractManager {
                                     Locale.ROOT,
                                     "%s:%d",
                                     Namespace.AXOLOTL_BUNDLES,
-                                    signalProtocolStore.getLocalRegistrationId());
+                                    signalProtocolStore().getLocalRegistrationId());
                     return getManager(PepManager.class)
                             .publishSingleton(bundle, node, NodeConfiguration.OPEN);
                 },
@@ -260,7 +279,7 @@ public class AxolotlManager extends AbstractManager {
         refillPreKeys();
         final var bundle = new Bundle();
         bundle.setIdentityKey(
-                signalProtocolStore.getIdentityKeyPair().getPublicKey().getPublicKey());
+                signalProtocolStore().getIdentityKeyPair().getPublicKey().getPublicKey());
         final var signedPreKeyRecord =
                 getDatabase().axolotlDao().getLatestSignedPreKey(getAccount().id);
         if (signedPreKeyRecord == null) {
@@ -286,16 +305,177 @@ public class AxolotlManager extends AbstractManager {
             try {
                 signedPreKeyRecord =
                         KeyHelper.generateSignedPreKey(
-                                signalProtocolStore.getIdentityKeyPair(), signedPreKeyId);
+                                signalProtocolStore().getIdentityKeyPair(), signedPreKeyId);
             } catch (final InvalidKeyException e) {
                 throw new IllegalStateException("Could not generate SignedPreKey", e);
             }
-            signalProtocolStore.storeSignedPreKey(signedPreKeyRecord.getId(), signedPreKeyRecord);
+            signalProtocolStore().storeSignedPreKey(signedPreKeyRecord.getId(), signedPreKeyRecord);
             LOGGER.info("Generated SignedPreKey #{}", signedPreKeyRecord.getId());
         }
         axolotlDao.setPreKeys(getAccount(), preKeys);
         if (count > 0) {
             LOGGER.info("Generated {} PreKeys starting with {}", preKeys.size(), start);
         }
+    }
+
+    private OmemoVerifiedIceUdpTransportInfo encrypt(
+            final IceUdpTransportInfo element, final AxolotlSession session)
+            throws AxolotlEncryptionException {
+        final OmemoVerifiedIceUdpTransportInfo transportInfo =
+                new OmemoVerifiedIceUdpTransportInfo();
+        transportInfo.setAttributes(element.getAttributes());
+        for (final Element child : element.getChildren()) {
+            if ("fingerprint".equals(child.getName())
+                    && Namespace.JINGLE_APPS_DTLS.equals(child.getNamespace())) {
+                final Element fingerprint =
+                        new Element("fingerprint", Namespace.OMEMO_DTLS_SRTP_VERIFICATION);
+                fingerprint.setAttribute("setup", child.getAttribute("setup"));
+                fingerprint.setAttribute("hash", child.getAttribute("hash"));
+                final String content = child.getContent();
+                final var encrypted =
+                        new EncryptionBuilder()
+                                .sourceDeviceId(signalProtocolStore().getLocalRegistrationId())
+                                .payload(content)
+                                .session(session)
+                                .build();
+                fingerprint.addExtension(encrypted);
+                transportInfo.addChild(fingerprint);
+            } else {
+                transportInfo.addChild(child);
+            }
+        }
+        return transportInfo;
+    }
+
+    public ListenableFuture<AxolotlService.OmemoVerifiedPayload<OmemoVerifiedRtpContentMap>>
+            encrypt(final RtpContentMap rtpContentMap, final Jid jid, final int deviceId) {
+        final var axolotlAddress = new AxolotlAddress(jid.asBareJid(), deviceId);
+        final var sessionFuture = getOrCreateSessionCipher(axolotlAddress);
+        return Futures.transformAsync(
+                sessionFuture,
+                session -> encrypt(rtpContentMap, session),
+                MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<AxolotlService.OmemoVerifiedPayload<OmemoVerifiedRtpContentMap>>
+            encrypt(final RtpContentMap rtpContentMap, final AxolotlSession session) {
+        if (Config.REQUIRE_RTP_VERIFICATION) {
+            requireVerification(session);
+        }
+        final ImmutableMap.Builder<String, RtpContentMap.DescriptionTransport>
+                descriptionTransportBuilder = new ImmutableMap.Builder<>();
+        final OmemoVerification omemoVerification = new OmemoVerification();
+        omemoVerification.setDeviceId(session.axolotlAddress.getDeviceId());
+        omemoVerification.setSessionFingerprint(session.identityKey);
+        for (final Map.Entry<String, RtpContentMap.DescriptionTransport> content :
+                rtpContentMap.contents.entrySet()) {
+            final RtpContentMap.DescriptionTransport descriptionTransport = content.getValue();
+            final OmemoVerifiedIceUdpTransportInfo encryptedTransportInfo;
+            try {
+                encryptedTransportInfo = encrypt(descriptionTransport.transport, session);
+            } catch (final AxolotlEncryptionException e) {
+                return Futures.immediateFailedFuture(e);
+            }
+            descriptionTransportBuilder.put(
+                    content.getKey(),
+                    new RtpContentMap.DescriptionTransport(
+                            descriptionTransport.senders,
+                            descriptionTransport.description,
+                            encryptedTransportInfo));
+        }
+        return Futures.immediateFuture(
+                new AxolotlService.OmemoVerifiedPayload<>(
+                        omemoVerification,
+                        new OmemoVerifiedRtpContentMap(
+                                rtpContentMap.group, descriptionTransportBuilder.build())));
+    }
+
+    public ListenableFuture<AxolotlService.OmemoVerifiedPayload<RtpContentMap>> decrypt(
+            OmemoVerifiedRtpContentMap omemoVerifiedRtpContentMap, final Jid from) {
+        final ImmutableMap.Builder<String, RtpContentMap.DescriptionTransport>
+                descriptionTransportBuilder = new ImmutableMap.Builder<>();
+        final OmemoVerification omemoVerification = new OmemoVerification();
+        final ImmutableList.Builder<ListenableFuture<AxolotlSession>> pepVerificationFutures =
+                new ImmutableList.Builder<>();
+        for (final Map.Entry<String, RtpContentMap.DescriptionTransport> content :
+                omemoVerifiedRtpContentMap.contents.entrySet()) {
+            final RtpContentMap.DescriptionTransport descriptionTransport = content.getValue();
+            final AxolotlService.OmemoVerifiedPayload<IceUdpTransportInfo> decryptedTransport;
+            try {
+                decryptedTransport =
+                        decrypt(
+                                (OmemoVerifiedIceUdpTransportInfo) descriptionTransport.transport,
+                                from,
+                                pepVerificationFutures);
+            } catch (final AxolotlDecryptionException e) {
+                return Futures.immediateFailedFuture(e);
+            }
+            omemoVerification.setOrEnsureEqual(decryptedTransport);
+            descriptionTransportBuilder.put(
+                    content.getKey(),
+                    new RtpContentMap.DescriptionTransport(
+                            descriptionTransport.senders,
+                            descriptionTransport.description,
+                            decryptedTransport.getPayload()));
+        }
+        final ImmutableList<ListenableFuture<AxolotlSession>> sessionFutures =
+                pepVerificationFutures.build();
+        return Futures.transform(
+                Futures.allAsList(sessionFutures),
+                sessions -> {
+                    if (Config.REQUIRE_RTP_VERIFICATION) {
+                        for (final AxolotlSession session : sessions) {
+                            requireVerification(session);
+                        }
+                    }
+                    return new AxolotlService.OmemoVerifiedPayload<>(
+                            omemoVerification,
+                            new RtpContentMap(
+                                    omemoVerifiedRtpContentMap.group,
+                                    descriptionTransportBuilder.build()));
+                },
+                MoreExecutors.directExecutor());
+    }
+
+    private AxolotlService.OmemoVerifiedPayload<IceUdpTransportInfo> decrypt(
+            final OmemoVerifiedIceUdpTransportInfo verifiedIceUdpTransportInfo,
+            final Jid from,
+            ImmutableList.Builder<ListenableFuture<AxolotlSession>> pepVerificationFutures)
+            throws AxolotlDecryptionException {
+        final IceUdpTransportInfo transportInfo = new IceUdpTransportInfo();
+        transportInfo.setAttributes(verifiedIceUdpTransportInfo.getAttributes());
+        final OmemoVerification omemoVerification = new OmemoVerification();
+        for (final Element child : verifiedIceUdpTransportInfo.getChildren()) {
+            if ("fingerprint".equals(child.getName())
+                    && Namespace.OMEMO_DTLS_SRTP_VERIFICATION.equals(child.getNamespace())) {
+                final Element fingerprint = new Element("fingerprint", Namespace.JINGLE_APPS_DTLS);
+                fingerprint.setAttribute("setup", child.getAttribute("setup"));
+                fingerprint.setAttribute("hash", child.getAttribute("hash"));
+                final Encrypted encrypted = child.getExtension(Encrypted.class);
+                final AxolotlPayload axolotlPayload = axolotlService.decrypt(from, encrypted);
+                fingerprint.setContent(axolotlPayload.payloadAsString());
+                omemoVerification.setDeviceId(axolotlPayload.axolotlAddress.getDeviceId());
+                omemoVerification.setSessionFingerprint(axolotlPayload.identityKey);
+                transportInfo.addChild(fingerprint);
+            } else {
+                transportInfo.addChild(child);
+            }
+        }
+        return new AxolotlService.OmemoVerifiedPayload<>(omemoVerification, transportInfo);
+    }
+
+    private static void requireVerification(final AxolotlSession session) {
+        // TODO fix me; check if identity key is trusted
+
+        /*if (session.getTrust().isVerified()) {
+            return;
+        }*/
+        throw new AxolotlService.NotVerifiedException(
+                String.format(
+                        "session with %s was not verified", session.identityKey.getFingerprint()));
+    }
+
+    private SignalProtocolStore signalProtocolStore() {
+        return this.axolotlService.getSignalProtocolStore();
     }
 }

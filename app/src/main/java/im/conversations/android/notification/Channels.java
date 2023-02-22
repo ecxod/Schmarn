@@ -11,10 +11,11 @@ import im.conversations.android.R;
 
 public final class Channels {
 
-    private final Application application;
-
-    private static final String CHANNEL_GROUP_STATUS = "status";
     static final String CHANNEL_FOREGROUND = "foreground";
+    static final String INCOMING_CALLS_NOTIFICATION_CHANNEL = "incoming_calls_channel";
+    static final String CHANNEL_GROUP_STATUS = "status";
+    static final String CHANNEL_GROUP_CALLS = "calls";
+    private final Application application;
 
     public Channels(final Application application) {
         this.application = application;
@@ -29,6 +30,8 @@ public final class Channels {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             this.initializeGroups(notificationManager);
             this.initializeForegroundChannel(notificationManager);
+
+            this.initializeIncomingCallChannel(notificationManager);
         }
     }
 
@@ -38,6 +41,10 @@ public final class Channels {
                 new NotificationChannelGroup(
                         CHANNEL_GROUP_STATUS,
                         application.getString(R.string.notification_group_status_information)));
+        notificationManager.createNotificationChannelGroup(
+                new NotificationChannelGroup(
+                        CHANNEL_GROUP_CALLS,
+                        application.getString(R.string.notification_group_calls)));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -54,5 +61,22 @@ public final class Channels {
         foregroundServiceChannel.setShowBadge(false);
         foregroundServiceChannel.setGroup(CHANNEL_GROUP_STATUS);
         notificationManager.createNotificationChannel(foregroundServiceChannel);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void initializeIncomingCallChannel(final NotificationManager notificationManager) {
+        final NotificationChannel incomingCallsChannel =
+                new NotificationChannel(
+                        INCOMING_CALLS_NOTIFICATION_CHANNEL,
+                        application.getString(R.string.incoming_calls_channel_name),
+                        NotificationManager.IMPORTANCE_HIGH);
+        incomingCallsChannel.setSound(null, null);
+        incomingCallsChannel.setShowBadge(false);
+        incomingCallsChannel.setLightColor(RtpSessionNotification.LED_COLOR);
+        incomingCallsChannel.enableLights(true);
+        incomingCallsChannel.setGroup(CHANNEL_GROUP_CALLS);
+        incomingCallsChannel.setBypassDnd(true);
+        incomingCallsChannel.enableVibration(false);
+        notificationManager.createNotificationChannel(incomingCallsChannel);
     }
 }

@@ -155,6 +155,10 @@ public class Element {
         return this.setAttribute(name, value == null ? null : value.toString());
     }
 
+    public void setAttribute(final String name, final boolean value) {
+        this.setAttribute(name, value ? "1" : "0");
+    }
+
     public void removeAttribute(final String name) {
         this.attributes.remove(name);
     }

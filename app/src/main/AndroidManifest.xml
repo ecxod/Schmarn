@@ -106,6 +106,11 @@
         <activity
             android:name="im.conversations.android.ui.activity.SetupActivity"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.activity.RtpSessionActivity"
+            android:autoRemoveFromRecents="true"
+            android:launchMode="singleInstance"
+            android:supportsPictureInPicture="true" />
     </application>
 
 </manifest>
