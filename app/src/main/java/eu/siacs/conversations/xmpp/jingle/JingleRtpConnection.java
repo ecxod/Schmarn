@@ -52,6 +52,7 @@ import im.conversations.android.xmpp.model.jmi.Reject;
 import im.conversations.android.xmpp.model.jmi.Retract;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import im.conversations.android.xmpp.model.stanza.Message;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -179,8 +180,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private final Queue<PeerConnection.PeerConnectionState> stateHistory = new LinkedList<>();
     private final RtpSessionNotification rtpSessionNotification;
     private ScheduledFuture<?> ringingTimeoutFuture;
-    private final CallLogTransformation.Builder callLogTransformationBuilder =
-            new CallLogTransformation.Builder();
+    private final CallLogTransformation.Builder callLogTransformationBuilder;
     private final ListenableFuture<Boolean> remoteHasVideoFeature;
 
     public JingleRtpConnection(
@@ -194,6 +194,9 @@ public class JingleRtpConnection extends AbstractJingleConnection
         this.remoteHasVideoFeature =
                 getManager(DiscoManager.class)
                         .hasFeatureAsync(Entity.presence(id.with), Namespace.JINGLE_FEATURE_VIDEO);
+        final Jid to = isInitiator() ? id.with : connection.getBoundAddress();
+        this.callLogTransformationBuilder =
+                new CallLogTransformation.Builder(id.with, to, initiator, id.sessionId);
     }
 
     private static State reasonToState(Reason reason) {
@@ -1347,7 +1350,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
     private void acceptedOnOtherDevice(final String serverMsgId) {
         if (serverMsgId != null) {
-            this.callLogTransformationBuilder.setServerMsgId(serverMsgId);
+            this.callLogTransformationBuilder.setStanzaId(serverMsgId);
         }
         this.callLogTransformationBuilder.setCarbon(
                 true); // indicate that call was accepted on other device
@@ -1388,7 +1391,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
             this.rtpSessionNotification.cancelIncomingCallNotification();
             this.finish();
             if (serverMsgId != null) {
-                this.callLogTransformationBuilder.setServerMsgId(serverMsgId);
+                this.callLogTransformationBuilder.setStanzaId(serverMsgId);
             }
             this.callLogTransformationBuilder.setCarbon(
                     true); // indicate that call was rejected on other device
@@ -1448,7 +1451,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
                     this.proposedMedia = Sets.newHashSet(media);
                 })) {
             if (serverMsgId != null) {
-                this.callLogTransformationBuilder.setServerMsgId(serverMsgId);
+                this.callLogTransformationBuilder.setStanzaId(serverMsgId);
             }
             startRinging();
         } else {
@@ -1502,7 +1505,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
             if (isInitiator()) {
                 if (transition(State.PROCEED)) {
                     if (serverMsgId != null) {
-                        this.callLogTransformationBuilder.setServerMsgId(serverMsgId);
+                        this.callLogTransformationBuilder.setStanzaId(serverMsgId);
                     }
                     final Integer remoteDeviceId = proceed.getDeviceId();
                     if (isOmemoEnabled()) {
@@ -1561,7 +1564,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
                                 + serverMsgId
                                 + ")");
                 if (serverMsgId != null) {
-                    this.callLogTransformationBuilder.setServerMsgId(serverMsgId);
+                    this.callLogTransformationBuilder.setStanzaId(serverMsgId);
                 }
                 if (target == State.RETRACTED) {
                     this.callLogTransformationBuilder.markUnread();
@@ -2618,17 +2621,20 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private void writeLogMessageSuccess(final long duration) {
-        this.callLogTransformationBuilder.setDuration(duration);
-        // this.message.setBody(new RtpSessionStatus(true, duration).toString());
+        this.callLogTransformationBuilder.setMedia(getMedia());
+        this.callLogTransformationBuilder.setDuration(Duration.ofMillis(duration));
         this.writeMessage();
     }
 
     private void writeLogMessageMissed() {
-        // this.message.setBody(new RtpSessionStatus(false, 0).toString());
+        this.callLogTransformationBuilder.setIsMissedCall();
         this.writeMessage();
     }
 
     private void writeMessage() {
+        final CallLogTransformation callLogTransformation =
+                this.callLogTransformationBuilder.build();
+        LOGGER.info("writing log message to DB {}", callLogTransformation);
         // TODO write CallLogEntry to DB
     }
 

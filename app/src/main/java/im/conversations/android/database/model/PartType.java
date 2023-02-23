@@ -4,5 +4,8 @@ public enum PartType {
     TEXT,
     FILE,
     RETRACTION,
-    MODERATION
+    MODERATION,
+    VIDEO_CALL,
+    AUDIO_CALL,
+    MISSED_CALL
 }
