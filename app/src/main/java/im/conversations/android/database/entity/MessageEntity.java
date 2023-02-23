@@ -6,7 +6,7 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import im.conversations.android.transformer.Transformation;
+import im.conversations.android.transformer.MessageTransformation;
 import java.time.Instant;
 import java.util.Objects;
 import org.jxmpp.jid.BareJid;
@@ -69,7 +69,7 @@ public class MessageEntity {
     public String inReplyToStanzaId;
     @Nullable public Long inReplyToMessageEntityId;
 
-    public static MessageEntity of(final long chatId, final Transformation transformation) {
+    public static MessageEntity of(final long chatId, final MessageTransformation transformation) {
         final var entity = new MessageEntity();
         entity.chatId = chatId;
         entity.receivedAt = transformation.receivedAt;
@@ -87,7 +87,7 @@ public class MessageEntity {
     }
 
     public static MessageEntity stub(
-            final long chatId, String messageId, Transformation transformation) {
+            final long chatId, String messageId, MessageTransformation transformation) {
         final var entity = new MessageEntity();
         entity.chatId = chatId;
         entity.fromBare = transformation.fromBare();

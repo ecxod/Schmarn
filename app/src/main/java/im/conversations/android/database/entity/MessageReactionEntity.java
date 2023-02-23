@@ -5,7 +5,7 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-import im.conversations.android.transformer.Transformation;
+import im.conversations.android.transformer.MessageTransformation;
 import java.time.Instant;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.parts.Resourcepart;
@@ -37,7 +37,9 @@ public class MessageReactionEntity {
     public String reaction;
 
     public static MessageReactionEntity of(
-            long messageEntityId, final String reaction, final Transformation transformation) {
+            long messageEntityId,
+            final String reaction,
+            final MessageTransformation transformation) {
         final var entity = new MessageReactionEntity();
         entity.messageEntityId = messageEntityId;
         entity.reaction = reaction;

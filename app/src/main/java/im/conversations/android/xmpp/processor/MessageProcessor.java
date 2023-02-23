@@ -8,11 +8,13 @@ import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.ArchiveManager;
 import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.ChatStateManager;
+import im.conversations.android.xmpp.manager.JingleConnectionManager;
 import im.conversations.android.xmpp.manager.PubSubManager;
 import im.conversations.android.xmpp.manager.ReceiptManager;
 import im.conversations.android.xmpp.manager.StanzaIdManager;
 import im.conversations.android.xmpp.model.carbons.Received;
 import im.conversations.android.xmpp.model.carbons.Sent;
+import im.conversations.android.xmpp.model.jmi.JingleMessage;
 import im.conversations.android.xmpp.model.mam.Result;
 import im.conversations.android.xmpp.model.pubsub.event.Event;
 import im.conversations.android.xmpp.model.stanza.Message;
@@ -62,7 +64,16 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
             return;
         }
 
-        // LOGGER.info("Message from {} with {}", message.getFrom(), message.getExtensionIds());
+        if (message.hasExtension(JingleMessage.class)) {
+            getManager(JingleConnectionManager.class).handle(message);
+            return;
+        }
+
+        LOGGER.info(
+                "Message from {} with {} in level {}",
+                message.getFrom(),
+                message.getExtensionIds(),
+                this.level);
 
         final var from = message.getFrom();
 

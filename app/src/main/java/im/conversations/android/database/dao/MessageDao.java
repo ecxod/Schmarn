@@ -21,7 +21,7 @@ import im.conversations.android.database.model.MessageIdentifier;
 import im.conversations.android.database.model.MessageState;
 import im.conversations.android.database.model.MessageWithContentReactions;
 import im.conversations.android.database.model.Modification;
-import im.conversations.android.transformer.Transformation;
+import im.conversations.android.transformer.MessageTransformation;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Collection;
@@ -72,7 +72,7 @@ public abstract class MessageDao {
     // will be upgraded to an original message (missing information filled in)
     @Transaction
     public MessageIdentifier getOrCreateMessage(
-            ChatIdentifier chatIdentifier, final Transformation transformation) {
+            ChatIdentifier chatIdentifier, final MessageTransformation transformation) {
         final MessageIdentifier messageIdentifier =
                 get(
                         chatIdentifier.id,
@@ -140,7 +140,7 @@ public abstract class MessageDao {
     private void mergeMessageStubs(
             ChatIdentifier chatIdentifier,
             MessageIdentifier messageIdentifier,
-            final Transformation transformation) {
+            final MessageTransformation transformation) {
         final Long stub;
         if (messageIdentifier.messageId == null && transformation.messageId != null) {
             stub = getMessageStubByMessageId(chatIdentifier.id, transformation.messageId);
@@ -199,7 +199,7 @@ public abstract class MessageDao {
 
     public MessageIdentifier getOrCreateVersion(
             ChatIdentifier chat,
-            Transformation transformation,
+            MessageTransformation transformation,
             final String messageId,
             final Modification modification) {
         Preconditions.checkArgument(
@@ -366,7 +366,7 @@ public abstract class MessageDao {
     protected abstract void insertReactions(Collection<MessageReactionEntity> reactionEntities);
 
     public void insertReactions(
-            ChatIdentifier chat, Reactions reactions, Transformation transformation) {
+            ChatIdentifier chat, Reactions reactions, MessageTransformation transformation) {
         final Message.Type messageType = transformation.type;
         final MessageIdentifier messageIdentifier =
                 getOrCreateStub(chat, messageType, reactions.getId());

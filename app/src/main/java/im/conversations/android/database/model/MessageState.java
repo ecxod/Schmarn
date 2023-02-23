@@ -1,7 +1,7 @@
 package im.conversations.android.database.model;
 
 import com.google.common.base.Preconditions;
-import im.conversations.android.transformer.Transformation;
+import im.conversations.android.transformer.MessageTransformation;
 import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.error.Text;
@@ -34,7 +34,7 @@ public class MessageState {
         this.errorText = errorText;
     }
 
-    public static MessageState error(final Transformation transformation) {
+    public static MessageState error(final MessageTransformation transformation) {
         Preconditions.checkArgument(transformation.type == Message.Type.ERROR);
         final Error error = transformation.getExtension(Error.class);
         final Condition condition = error == null ? null : error.getCondition();
@@ -47,7 +47,7 @@ public class MessageState {
                 text == null ? null : text.getContent());
     }
 
-    public static MessageState delivered(final Transformation transformation) {
+    public static MessageState delivered(final MessageTransformation transformation) {
         return new MessageState(
                 transformation.fromBare(),
                 transformation.fromResource(),
@@ -56,7 +56,7 @@ public class MessageState {
                 null);
     }
 
-    public static MessageState displayed(final Transformation transformation) {
+    public static MessageState displayed(final MessageTransformation transformation) {
         return new MessageState(
                 transformation.fromBare(),
                 transformation.fromResource(),

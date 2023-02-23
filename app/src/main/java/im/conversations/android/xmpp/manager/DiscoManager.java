@@ -66,8 +66,8 @@ public class DiscoManager extends AbstractManager {
                     Namespace.JINGLE_FEATURE_AUDIO,
                     Namespace.JINGLE_FEATURE_VIDEO,
                     Namespace.JINGLE_APPS_RTP,
-                    Namespace.JINGLE_APPS_DTLS /*,
-                    Namespace.JINGLE_MESSAGE*/);
+                    Namespace.JINGLE_APPS_DTLS,
+                    Namespace.JINGLE_MESSAGE);
 
     private static final Collection<String> FEATURES_IMPACTING_PRIVACY =
             Collections.singleton(Namespace.VERSION);

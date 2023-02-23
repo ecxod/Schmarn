@@ -16,11 +16,11 @@ public class TransformationFactory extends XmppConnection.Delegate {
         super(context, connection);
     }
 
-    public Transformation create(final Message message, final String stanzaId) {
+    public MessageTransformation create(final Message message, final String stanzaId) {
         return create(message, stanzaId, Instant.now());
     }
 
-    public Transformation create(
+    public MessageTransformation create(
             final Message message, final String stanzaId, final Instant receivedAt) {
         final var boundAddress = connection.getBoundAddress().asBareJid();
         final var from = message.getFrom();
@@ -44,6 +44,6 @@ public class TransformationFactory extends XmppConnection.Delegate {
         } else {
             occupantId = null;
         }
-        return Transformation.of(message, receivedAt, remote, stanzaId, occupantId);
+        return MessageTransformation.of(message, receivedAt, remote, stanzaId, occupantId);
     }
 }

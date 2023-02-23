@@ -226,11 +226,18 @@ public class JingleConnectionManager extends AbstractManager {
 
     private void respondWithJingleError(
             final Iq original, String jingleCondition, final Error.Type type, Condition condition) {
-        // TODO add jingle condation
+        // TODO add jingle condition
         connection.sendErrorFor(original, type, condition);
     }
 
-    public void deliverMessage(
+    public void handle(final Message message) {
+        final String id = message.getId();
+        final String stanzaId = getManager(StanzaIdManager.class).getStanzaId(message);
+        final JingleMessage jingleMessage = message.getExtension(JingleMessage.class);
+        this.deliverMessage(message.getTo(), message.getFrom(), jingleMessage, id, stanzaId);
+    }
+
+    private void deliverMessage(
             final Jid to,
             final Jid from,
             final JingleMessage message,

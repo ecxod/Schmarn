@@ -42,7 +42,7 @@ public class Transformer {
         this.account = account;
     }
 
-    public boolean transform(final Transformation transformation) {
+    public boolean transform(final MessageTransformation transformation) {
         return database.runInTransaction(() -> transform(database, transformation));
     }
 
@@ -53,7 +53,7 @@ public class Transformer {
      *     updated a status somewhere
      */
     private boolean transform(
-            final ConversationsDatabase database, final Transformation transformation) {
+            final ConversationsDatabase database, final MessageTransformation transformation) {
         final var remote = transformation.remote;
         final var messageType = transformation.type;
         final var muc = transformation.getExtension(MultiUserChat.class);
@@ -141,7 +141,7 @@ public class Transformer {
         return true;
     }
 
-    protected List<MessageContent> parseContent(final Transformation transformation) {
+    protected List<MessageContent> parseContent(final MessageTransformation transformation) {
         final var encrypted = transformation.getExtension(Encrypted.class);
         final var encryptedWithPayload = encrypted != null && encrypted.hasPayload();
         final Collection<Body> bodies = transformation.getExtensions(Body.class);
@@ -178,7 +178,7 @@ public class Transformer {
     }
 
     private void transformMessageState(
-            final ChatIdentifier chat, final Transformation transformation) {
+            final ChatIdentifier chat, final MessageTransformation transformation) {
         final var displayed = transformation.getExtension(Displayed.class);
         if (displayed != null) {
             if (transformation.outgoing()) {

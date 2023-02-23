@@ -7,7 +7,7 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import com.google.common.base.Preconditions;
 import im.conversations.android.database.model.Modification;
-import im.conversations.android.transformer.Transformation;
+import im.conversations.android.transformer.MessageTransformation;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
 import org.jxmpp.jid.BareJid;
@@ -45,7 +45,7 @@ public class MessageVersionEntity {
     public static MessageVersionEntity of(
             long messageEntityId,
             final Modification modification,
-            final Transformation transformation) {
+            final MessageTransformation transformation) {
         if (transformation.type == Message.Type.GROUPCHAT
                 && modification != Modification.ORIGINAL) {
             Preconditions.checkState(

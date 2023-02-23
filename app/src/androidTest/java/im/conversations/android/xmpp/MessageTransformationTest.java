@@ -11,7 +11,7 @@ import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.model.MessageEmbedded;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.database.model.PartType;
-import im.conversations.android.transformer.Transformation;
+import im.conversations.android.transformer.MessageTransformation;
 import im.conversations.android.transformer.Transformer;
 import im.conversations.android.xmpp.model.correction.Replace;
 import im.conversations.android.xmpp.model.jabber.Body;
@@ -33,7 +33,7 @@ import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 @RunWith(AndroidJUnit4.class)
-public class TransformationTest {
+public class MessageTransformationTest {
 
     private static final BareJid ACCOUNT = JidCreate.bareFromOrThrowUnchecked("user@example.com");
     private static final BareJid REMOTE = JidCreate.bareFromOrThrowUnchecked("juliet@example.com");
@@ -68,7 +68,7 @@ public class TransformationTest {
         final var reaction = reactions.addExtension(new Reaction());
         reaction.setContent("Y");
         this.transformer.transform(
-                Transformation.of(reactionMessage, Instant.now(), REMOTE, "stanza-b", null));
+                MessageTransformation.of(reactionMessage, Instant.now(), REMOTE, "stanza-b", null));
         final var originalMessage = new Message();
         originalMessage.setId("1");
         originalMessage.setTo(REMOTE);
@@ -76,7 +76,7 @@ public class TransformationTest {
         final var body = originalMessage.addExtension(new Body());
         body.setContent(GREETING);
         this.transformer.transform(
-                Transformation.of(originalMessage, Instant.now(), REMOTE, "stanza-a", null));
+                MessageTransformation.of(originalMessage, Instant.now(), REMOTE, "stanza-a", null));
 
         final var messages = database.messageDao().getMessages(1L);
         Assert.assertEquals(1, messages.size());
@@ -95,19 +95,21 @@ public class TransformationTest {
         message.addExtension(new Body("Please give me a thumbs up"));
         message.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-a")));
         this.transformer.transform(
-                Transformation.of(message, Instant.now(), REMOTE, "stanza-a", "id-user-a"));
+                MessageTransformation.of(message, Instant.now(), REMOTE, "stanza-a", "id-user-a"));
 
         final var reactionA = new Message(Message.Type.GROUPCHAT);
         reactionA.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-b")));
         reactionA.addExtension(Reactions.to("stanza-a")).addExtension(new Reaction("Y"));
         this.transformer.transform(
-                Transformation.of(reactionA, Instant.now(), REMOTE, "stanza-b", "id-user-b"));
+                MessageTransformation.of(
+                        reactionA, Instant.now(), REMOTE, "stanza-b", "id-user-b"));
 
         final var reactionB = new Message(Message.Type.GROUPCHAT);
         reactionB.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-c")));
         reactionB.addExtension(Reactions.to("stanza-a")).addExtension(new Reaction("Y"));
         this.transformer.transform(
-                Transformation.of(reactionB, Instant.now(), REMOTE, "stanza-c", "id-user-c"));
+                MessageTransformation.of(
+                        reactionB, Instant.now(), REMOTE, "stanza-c", "id-user-c"));
 
         final var reactionC = new Message(Message.Type.GROUPCHAT);
         reactionC.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-d")));
@@ -115,7 +117,8 @@ public class TransformationTest {
         reactions.addExtension(new Reaction("Y"));
         reactions.addExtension(new Reaction("Z"));
         this.transformer.transform(
-                Transformation.of(reactionC, Instant.now(), REMOTE, "stanza-d", "id-user-d"));
+                MessageTransformation.of(
+                        reactionC, Instant.now(), REMOTE, "stanza-d", "id-user-d"));
 
         final var messages = database.messageDao().getMessages(1L);
         Assert.assertEquals(1, messages.size());
@@ -141,7 +144,8 @@ public class TransformationTest {
         messageCorrection.addExtension(new Replace()).setId("1");
 
         this.transformer.transform(
-                Transformation.of(messageCorrection, Instant.now(), REMOTE, "stanza-a", null));
+                MessageTransformation.of(
+                        messageCorrection, Instant.now(), REMOTE, "stanza-a", null));
 
         // the correction should not show up as a message
         Assert.assertEquals(0, database.messageDao().getMessages(1L).size());
@@ -153,7 +157,7 @@ public class TransformationTest {
         messageWithTypo.addExtension(new Body()).setContent("Hii example!");
 
         this.transformer.transform(
-                Transformation.of(messageWithTypo, Instant.now(), REMOTE, "stanza-b", null));
+                MessageTransformation.of(messageWithTypo, Instant.now(), REMOTE, "stanza-b", null));
 
         final var messages = database.messageDao().getMessages(1L);
 
@@ -175,7 +179,7 @@ public class TransformationTest {
         messageWithTypo.addExtension(new Body()).setContent("Hii example!");
 
         this.transformer.transform(
-                Transformation.of(messageWithTypo, Instant.now(), REMOTE, "stanza-a", null));
+                MessageTransformation.of(messageWithTypo, Instant.now(), REMOTE, "stanza-a", null));
 
         Assert.assertEquals(1, database.messageDao().getMessages(1L).size());
 
@@ -187,7 +191,8 @@ public class TransformationTest {
         messageCorrection.addExtension(new Replace()).setId("1");
 
         this.transformer.transform(
-                Transformation.of(messageCorrection, Instant.now(), REMOTE, "stanza-b", null));
+                MessageTransformation.of(
+                        messageCorrection, Instant.now(), REMOTE, "stanza-b", null));
 
         final var messages = database.messageDao().getMessages(1L);
 
@@ -206,19 +211,21 @@ public class TransformationTest {
         message.addExtension(new Body("Please give me a thumbs up"));
         message.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-a")));
         this.transformer.transform(
-                Transformation.of(message, Instant.now(), REMOTE, "stanza-a", "id-user-a"));
+                MessageTransformation.of(message, Instant.now(), REMOTE, "stanza-a", "id-user-a"));
 
         final var reactionA = new Message(Message.Type.GROUPCHAT);
         reactionA.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-b")));
         reactionA.addExtension(Reactions.to("stanza-a")).addExtension(new Reaction("N"));
         this.transformer.transform(
-                Transformation.of(reactionA, Instant.now(), REMOTE, "stanza-b", "id-user-b"));
+                MessageTransformation.of(
+                        reactionA, Instant.now(), REMOTE, "stanza-b", "id-user-b"));
 
         final var reactionB = new Message(Message.Type.GROUPCHAT);
         reactionB.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-b")));
         reactionB.addExtension(Reactions.to("stanza-a")).addExtension(new Reaction("Y"));
         this.transformer.transform(
-                Transformation.of(reactionB, Instant.now(), REMOTE, "stanza-c", "id-user-b"));
+                MessageTransformation.of(
+                        reactionB, Instant.now(), REMOTE, "stanza-c", "id-user-b"));
 
         final var messages = database.messageDao().getMessages(1L);
         Assert.assertEquals(1, messages.size());
@@ -240,7 +247,7 @@ public class TransformationTest {
         m1.addExtension(new Replace()).setId(ogMessageId);
         m1.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-a")));
         this.transformer.transform(
-                Transformation.of(
+                MessageTransformation.of(
                         m1,
                         Instant.ofEpochMilli(2000),
                         REMOTE,
@@ -254,7 +261,7 @@ public class TransformationTest {
         m2.addExtension(new Replace()).setId(ogMessageId);
         m2.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-a")));
         this.transformer.transform(
-                Transformation.of(
+                MessageTransformation.of(
                         m2,
                         Instant.ofEpochMilli(3000),
                         REMOTE,
@@ -266,7 +273,7 @@ public class TransformationTest {
         reactionB.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-b")));
         reactionB.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
         this.transformer.transform(
-                Transformation.of(
+                MessageTransformation.of(
                         reactionB, Instant.now(), REMOTE, "irrelevant-stanza-id3", "id-user-b"));
 
         // the original message
@@ -275,7 +282,8 @@ public class TransformationTest {
         m4.addExtension(new Body("Please give me thumbs up"));
         m4.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-a")));
         this.transformer.transform(
-                Transformation.of(m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
+                MessageTransformation.of(
+                        m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
 
         final var messages = database.messageDao().getMessages(1L);
         Assert.assertEquals(1, messages.size());
@@ -298,7 +306,7 @@ public class TransformationTest {
         reactionA.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-b")));
         reactionA.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
         this.transformer.transform(
-                Transformation.of(
+                MessageTransformation.of(
                         reactionA, Instant.now(), REMOTE, "irrelevant-stanza-id1", "id-user-b"));
 
         // second reaction
@@ -306,7 +314,7 @@ public class TransformationTest {
         reactionB.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-c")));
         reactionB.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
         this.transformer.transform(
-                Transformation.of(
+                MessageTransformation.of(
                         reactionB, Instant.now(), REMOTE, "irrelevant-stanza-id2", "id-user-c"));
 
         // a correction
@@ -315,7 +323,7 @@ public class TransformationTest {
         m1.addExtension(new Replace()).setId(ogMessageId);
         m1.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-a")));
         this.transformer.transform(
-                Transformation.of(
+                MessageTransformation.of(
                         m1,
                         Instant.ofEpochMilli(2000),
                         REMOTE,
@@ -328,7 +336,8 @@ public class TransformationTest {
         m4.addExtension(new Body("Please give me thumbs up (Typo)"));
         m4.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-a")));
         this.transformer.transform(
-                Transformation.of(m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
+                MessageTransformation.of(
+                        m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
 
         final var messages = database.messageDao().getMessages(1L);
         Assert.assertEquals(1, messages.size());
@@ -353,14 +362,15 @@ public class TransformationTest {
         m4.addExtension(new Body("Please give me a thumbs up"));
         m4.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-a")));
         this.transformer.transform(
-                Transformation.of(m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
+                MessageTransformation.of(
+                        m4, Instant.ofEpochMilli(1000), REMOTE, ogStanzaId, "id-user-a"));
 
         // first reaction
         final var reactionA = new Message(Message.Type.GROUPCHAT);
         reactionA.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-b")));
         reactionA.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
         this.transformer.transform(
-                Transformation.of(
+                MessageTransformation.of(
                         reactionA, Instant.now(), REMOTE, "irrelevant-stanza-id1", "id-user-b"));
 
         // second reaction
@@ -368,7 +378,7 @@ public class TransformationTest {
         reactionB.setFrom(JidCreate.fullFrom(group, Resourcepart.from("user-c")));
         reactionB.addExtension(Reactions.to(ogStanzaId)).addExtension(new Reaction("Y"));
         this.transformer.transform(
-                Transformation.of(
+                MessageTransformation.of(
                         reactionB, Instant.now(), REMOTE, "irrelevant-stanza-id2", "id-user-c"));
 
         final var messages = database.messageDao().getMessages(1L);
@@ -390,7 +400,8 @@ public class TransformationTest {
         m1.setFrom(JidCreate.fullFrom(REMOTE, Resourcepart.from("junit")));
         m1.addExtension(new Body("Hi. How are you?"));
 
-        this.transformer.transform(Transformation.of(m1, Instant.now(), REMOTE, "stanza-a", null));
+        this.transformer.transform(
+                MessageTransformation.of(m1, Instant.now(), REMOTE, "stanza-a", null));
 
         final var m2 = new Message();
         m2.setId("2");
@@ -401,7 +412,8 @@ public class TransformationTest {
         reply.setId("1");
         reply.setTo(REMOTE);
 
-        this.transformer.transform(Transformation.of(m2, Instant.now(), REMOTE, "stanza-b", null));
+        this.transformer.transform(
+                MessageTransformation.of(m2, Instant.now(), REMOTE, "stanza-b", null));
 
         final var messages = database.messageDao().getMessages(1L);
         Assert.assertEquals(2, messages.size());
@@ -423,14 +435,14 @@ public class TransformationTest {
         m1.setFrom(JidCreate.fullFrom(ACCOUNT, Resourcepart.from("junit")));
         m1.addExtension(new Body("Hi. How are you?"));
 
-        this.transformer.transform(Transformation.of(m1, Instant.now(), REMOTE, null, null));
+        this.transformer.transform(MessageTransformation.of(m1, Instant.now(), REMOTE, null, null));
 
         final var m2 = new Message();
         m2.setTo(JidCreate.fullFrom(ACCOUNT, Resourcepart.from("junit")));
         m2.setFrom(JidCreate.fullFrom(REMOTE, Resourcepart.from("junit")));
         m2.addExtension(new Received()).setId("1");
 
-        this.transformer.transform(Transformation.of(m2, Instant.now(), REMOTE, null, null));
+        this.transformer.transform(MessageTransformation.of(m2, Instant.now(), REMOTE, null, null));
 
         final var messages = database.messageDao().getMessages(1L);
         final var message = Iterables.getOnlyElement(messages);
@@ -446,14 +458,14 @@ public class TransformationTest {
         m1.setId("m1");
         m1.addExtension(new Body("It is raining outside"));
 
-        this.transformer.transform(Transformation.of(m1, Instant.now(), REMOTE, null, null));
+        this.transformer.transform(MessageTransformation.of(m1, Instant.now(), REMOTE, null, null));
 
         final var m2 = new Message();
         m2.setTo(ACCOUNT);
         m2.setFrom(JidCreate.fullFrom(REMOTE, Resourcepart.from("junit")));
         m2.addExtension(new Retract()).setId("m1");
 
-        this.transformer.transform(Transformation.of(m2, Instant.now(), REMOTE, null, null));
+        this.transformer.transform(MessageTransformation.of(m2, Instant.now(), REMOTE, null, null));
 
         final var messages = database.messageDao().getMessages(1L);
         final var message = Iterables.getOnlyElement(messages);

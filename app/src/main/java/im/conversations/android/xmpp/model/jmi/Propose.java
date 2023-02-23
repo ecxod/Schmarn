@@ -4,10 +4,12 @@ import com.google.common.collect.ImmutableList;
 import eu.siacs.conversations.xmpp.jingle.stanzas.FileTransferDescription;
 import eu.siacs.conversations.xmpp.jingle.stanzas.GenericDescription;
 import eu.siacs.conversations.xmpp.jingle.stanzas.RtpDescription;
+import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.xml.Element;
 import im.conversations.android.xml.Namespace;
 import java.util.List;
 
+@XmlElement
 public class Propose extends JingleMessage {
 
     public Propose() {

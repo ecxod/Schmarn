@@ -27,7 +27,7 @@ import eu.siacs.conversations.xmpp.jingle.Media;
 import im.conversations.android.R;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.service.RtpSessionService;
-import im.conversations.android.transformer.CallLogEntry;
+import im.conversations.android.transformer.CallLogTransformation;
 import im.conversations.android.ui.activity.RtpSessionActivity;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
@@ -271,7 +271,7 @@ public class RtpSessionNotification extends AbstractNotification {
         mBuilder.setColor(ContextCompat.getColor(context, R.color.seed));
     }
 
-    public void pushMissedCallNow(CallLogEntry message) {}
+    public void pushMissedCallNow(CallLogTransformation message) {}
 
     private class VibrationRunnable implements Runnable {
 

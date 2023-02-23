@@ -1,8 +1,10 @@
 package im.conversations.android.xmpp.model.jmi;
 
 import com.google.common.primitives.Ints;
+import im.conversations.android.annotation.XmlElement;
 import im.conversations.android.xml.Element;
 
+@XmlElement
 public class Proceed extends JingleMessage {
 
     public Proceed() {
