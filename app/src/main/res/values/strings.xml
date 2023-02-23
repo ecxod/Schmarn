@@ -437,6 +437,8 @@
     <string name="title_undo_swipe_out_conversation">Conversation closed</string>
     <string name="title_undo_swipe_out_group_chat">Left private group chat</string>
     <string name="title_undo_swipe_out_channel">Left public channel</string>
+    <string name="pref_title_trust_system_ca_store">Certificate authorities</string>
+    <string name="pref_title_trust_system_ca_store_summary">Trust the system’s CA certificates</string>
     <string name="pref_dont_trust_system_cas_title">Don’t trust system CAs</string>
     <string name="pref_dont_trust_system_cas_summary">All certificates must be manually approved</string>
     <string name="pref_remove_trusted_certificates_title">Remove certificates</string>
