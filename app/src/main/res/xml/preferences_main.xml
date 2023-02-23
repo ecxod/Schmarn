@@ -2,19 +2,32 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
-        app:title="@string/pref_title_interface"
-        app:summary="@string/pref_summary_appearance"
         android:icon="@drawable/ic_touch_app_24dp"
-        app:fragment="im.conversations.android.ui.fragment.settings.InterfaceSettingsFragment"/>
+        app:fragment="im.conversations.android.ui.fragment.settings.InterfaceSettingsFragment"
+        app:summary="@string/pref_summary_appearance"
+        app:title="@string/pref_title_interface" />
     <Preference
-        app:title="@string/pref_title_security"
-        app:summary="@string/pref_summary_security"
         android:icon="@drawable/ic_security_24dp"
-        app:fragment="im.conversations.android.ui.fragment.settings.SecuritySettingsFragment"/>
+        app:fragment="im.conversations.android.ui.fragment.settings.SecuritySettingsFragment"
+        app:summary="@string/pref_summary_security"
+        app:title="@string/pref_title_security" />
     <Preference
-        app:title="@string/unified_push_distributor"
-        app:summary="@string/unified_push_summary"
+        android:icon="@drawable/ic_notifications_24dp"
+        android:summary="@string/pref_notifications_summary"
+        android:title="@string/notifications"
+        app:fragment="im.conversations.android.ui.fragment.settings.NotificationsSettingsFragment" />
+    <Preference
+        android:icon="@drawable/ic_attachment_24dp"
+        android:summary="@string/pref_attachments_summary"
+        android:title="@string/pref_attachments"
+        app:fragment="im.conversations.android.ui.fragment.settings.AttachmentsSettingsFragment" />
+    <Preference
         android:icon="@drawable/ic_cloud_sync_24dp"
-        app:fragment="im.conversations.android.ui.fragment.MainSettingsFragment"/>
+        app:fragment="im.conversations.android.ui.fragment.settings.UpSettingsFragment"
+        app:summary="@string/unified_push_summary"
+        app:title="@string/unified_push_distributor" />
+    <Preference android:key="about" android:title="@string/title_activity_about_x">
+
+    </Preference>
 
 </PreferenceScreen>
