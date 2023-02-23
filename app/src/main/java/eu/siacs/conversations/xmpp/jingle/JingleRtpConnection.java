@@ -32,6 +32,7 @@ import im.conversations.android.axolotl.AxolotlService;
 import im.conversations.android.dns.IP;
 import im.conversations.android.notification.RtpSessionNotification;
 import im.conversations.android.transformer.CallLogEntry;
+import im.conversations.android.util.BooleanFutures;
 import im.conversations.android.xml.Element;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
@@ -179,6 +180,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private final RtpSessionNotification rtpSessionNotification;
     private ScheduledFuture<?> ringingTimeoutFuture;
     private CallLogEntry message = null;
+    private final ListenableFuture<Boolean> remoteHasVideoFeature;
 
     public JingleRtpConnection(
             final Context context,
@@ -186,7 +188,11 @@ public class JingleRtpConnection extends AbstractJingleConnection
             final Id id,
             final Jid initiator) {
         super(context, connection, id, initiator);
-        this.rtpSessionNotification = new RtpSessionNotification(context);
+        this.rtpSessionNotification =
+                getManager(JingleConnectionManager.class).getNotificationService();
+        this.remoteHasVideoFeature =
+                getManager(DiscoManager.class)
+                        .hasFeatureAsync(Entity.presence(id.with), Namespace.JINGLE_FEATURE_VIDEO);
     }
 
     private static State reasonToState(Reason reason) {
@@ -2662,8 +2668,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
     }
 
     private boolean remoteHasVideoFeature() {
-        return getManager(DiscoManager.class)
-                .hasFeature(Entity.presence(id.with), Namespace.JINGLE_FEATURE_VIDEO);
+        return BooleanFutures.isDoneAndTrue(this.remoteHasVideoFeature);
     }
 
     private interface OnIceServersDiscovered {

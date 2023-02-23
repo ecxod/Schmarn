@@ -4,16 +4,14 @@ import android.content.Context;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.disco.external.Service;
 import im.conversations.android.xmpp.model.disco.external.Services;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ExternalDiscoManager extends AbstractManager {
 
