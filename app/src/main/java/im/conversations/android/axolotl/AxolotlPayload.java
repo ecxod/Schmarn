@@ -24,4 +24,8 @@ public class AxolotlPayload {
     public String payloadAsString() {
         return new String(payload, StandardCharsets.UTF_8);
     }
+
+    public boolean hasPayload() {
+        return payload != null;
+    }
 }

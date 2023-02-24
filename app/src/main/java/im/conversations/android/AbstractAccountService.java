@@ -1,15 +1,15 @@
 package im.conversations.android;
 
-import android.content.Context;
+import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 
 public abstract class AbstractAccountService {
 
-    protected Context context;
     protected Account account;
+    protected ConversationsDatabase database;
 
-    protected AbstractAccountService(final Context context, final Account account) {
-        this.context = context;
+    protected AbstractAccountService(final Account account, final ConversationsDatabase database) {
         this.account = account;
+        this.database = database;
     }
 }

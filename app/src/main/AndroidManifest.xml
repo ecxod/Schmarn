@@ -79,9 +79,12 @@
 
         <service
             android:name=".service.ForegroundService"
-            android:exported="false" />
+            android:exported="false"/>
 
-        <service android:name=".service.RtpSessionService" android:exported="false" android:foregroundServiceType="phoneCall"/>
+        <service
+            android:name=".service.RtpSessionService"
+            android:exported="false"
+            android:foregroundServiceType="phoneCall" />
 
         <receiver
             android:name=".receiver.EventReceiver"
@@ -95,16 +98,15 @@
 
         <activity
             android:name="im.conversations.android.ui.activity.MainActivity"
-            android:windowSoftInputMode="adjustResize"
+            android:exported="true"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="im.conversations.android.ui.activity.SettingsActivity" />
+        <activity android:name="im.conversations.android.ui.activity.SettingsActivity" />
         <activity
             android:name="im.conversations.android.ui.activity.SetupActivity"
             android:windowSoftInputMode="adjustResize" />

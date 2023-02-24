@@ -54,7 +54,7 @@ public class MessageTransformationTest {
         final long id = database.accountDao().insert(account);
 
         this.transformer =
-                new Transformer(database, database.accountDao().getEnabledAccount(id).get());
+                new Transformer(database.accountDao().getEnabledAccount(id).get(), database);
     }
 
     @Test

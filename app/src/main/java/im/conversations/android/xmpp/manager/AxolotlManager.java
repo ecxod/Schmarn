@@ -22,6 +22,7 @@ import im.conversations.android.axolotl.AxolotlPayload;
 import im.conversations.android.axolotl.AxolotlService;
 import im.conversations.android.axolotl.AxolotlSession;
 import im.conversations.android.axolotl.EncryptionBuilder;
+import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.xml.Element;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.IqErrorException;
@@ -60,7 +61,13 @@ public class AxolotlManager extends AbstractManager {
 
     public AxolotlManager(Context context, XmppConnection connection) {
         super(context, connection);
-        this.axolotlService = new AxolotlService(context, connection.getAccount());
+        this.axolotlService =
+                new AxolotlService(
+                        connection.getAccount(), ConversationsDatabase.getInstance(context));
+    }
+
+    public AxolotlService getAxolotlService() {
+        return this.axolotlService;
     }
 
     public void handleItems(final BareJid from, final Items items) {
@@ -286,8 +293,11 @@ public class AxolotlManager extends AbstractManager {
             throw new IllegalStateException("No signed PreKeys have been created yet");
         }
         bundle.setSignedPreKey(
-                signedPreKeyRecord.getKeyPair().getPublicKey(), signedPreKeyRecord.getSignature());
-        bundle.setPreKeys(getDatabase().axolotlDao().getPreKeys(getAccount().id));
+                signedPreKeyRecord.getId(),
+                signedPreKeyRecord.getKeyPair().getPublicKey(),
+                signedPreKeyRecord.getSignature());
+        bundle.addPreKeys(getDatabase().axolotlDao().getPreKeys(getAccount().id));
+        LOGGER.info("bundle {}", bundle);
         return bundle;
     }
 

@@ -5,7 +5,7 @@ import im.conversations.android.annotation.XmlElement;
 @XmlElement
 public class Composing extends ChatStateNotification {
 
-    protected Composing() {
+    public Composing() {
         super(Composing.class);
     }
 }

@@ -5,7 +5,7 @@ import im.conversations.android.annotation.XmlElement;
 @XmlElement
 public class Gone extends ChatStateNotification {
 
-    protected Gone() {
+    public Gone() {
         super(Gone.class);
     }
 }

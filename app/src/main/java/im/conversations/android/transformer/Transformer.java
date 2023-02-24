@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import im.conversations.android.axolotl.AxolotlDecryptionException;
+import im.conversations.android.axolotl.AxolotlService;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
@@ -36,10 +38,20 @@ public class Transformer {
     private final ConversationsDatabase database;
     private final Account account;
 
-    public Transformer(final ConversationsDatabase database, final Account account) {
+    private final AxolotlService axolotlService;
+
+    public Transformer(final Account account, final ConversationsDatabase conversationsDatabase) {
+        this(account, conversationsDatabase, new AxolotlService(account, conversationsDatabase));
+    }
+
+    public Transformer(
+            final Account account,
+            final ConversationsDatabase database,
+            final AxolotlService axolotlService) {
         Preconditions.checkArgument(account != null, "Account must not be null");
         this.database = database;
         this.account = account;
+        this.axolotlService = axolotlService;
     }
 
     public boolean transform(final MessageTransformation transformation) {
@@ -72,11 +84,30 @@ public class Transformer {
                             chat, transformation.messageId, MessageState.error(transformation));
             return false;
         }
+
         final Replace messageCorrection = transformation.getExtension(Replace.class);
         final Reactions reactions = transformation.getExtension(Reactions.class);
         final Retract retract = transformation.getExtension(Retract.class);
-        // TODO we need to remove fallbacks for reactions, retractions and potentially other things
-        final List<MessageContent> contents = parseContent(transformation);
+        final Encrypted encrypted = transformation.getExtension(Encrypted.class);
+        final List<MessageContent> contents;
+        if (encrypted != null) {
+            try {
+                final var payload = axolotlService.decrypt(transformation.from, encrypted);
+                if (payload.hasPayload()) {
+                    contents = ImmutableList.of(MessageContent.text(payload.payloadAsString(),null));
+                } else {
+                    return true;
+                }
+            } catch (final AxolotlDecryptionException e) {
+                LOGGER.error("Could not decrypt message", e);
+                // TODO if message had payload create error message entry
+                return false;
+            }
+        } else {
+            // TODO we need to remove fallbacks for reactions, retractions and potentially other
+            // things
+            contents = parseContent(transformation);
+        }
 
         final boolean identifiableSender =
                 Arrays.asList(Message.Type.NORMAL, Message.Type.CHAT).contains(messageType)

@@ -6,6 +6,7 @@ import im.conversations.android.transformer.TransformationFactory;
 import im.conversations.android.transformer.Transformer;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.ArchiveManager;
+import im.conversations.android.xmpp.manager.AxolotlManager;
 import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.ChatStateManager;
 import im.conversations.android.xmpp.manager.JingleConnectionManager;
@@ -83,7 +84,9 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
         final boolean sendReceipts;
         if (transformation.isAnythingToTransform()) {
             final var database = ConversationsDatabase.getInstance(context);
-            final var transformer = new Transformer(database, getAccount());
+            final var axolotlService =
+                    connection.getManager(AxolotlManager.class).getAxolotlService();
+            final var transformer = new Transformer(getAccount(), database, axolotlService);
             sendReceipts = transformer.transform(transformation);
         } else {
             sendReceipts = true;
@@ -96,8 +99,6 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
         if (chatState != null) {
             getManager(ChatStateManager.class).handle(from, chatState);
         }
-
-        // TODO pass JMI to JingleManager
     }
 
     private boolean isRoot() {

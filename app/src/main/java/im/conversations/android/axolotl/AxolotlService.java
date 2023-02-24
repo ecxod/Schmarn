@@ -1,11 +1,11 @@
 package im.conversations.android.axolotl;
 
-import android.content.Context;
 import android.os.Build;
 import com.google.common.base.Optional;
 import eu.siacs.conversations.xmpp.jingle.OmemoVerification;
 import im.conversations.android.AbstractAccountService;
 import im.conversations.android.database.AxolotlDatabaseStore;
+import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.axolotl.Header;
@@ -22,6 +22,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.jxmpp.jid.Jid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.whispersystems.libsignal.DuplicateMessageException;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -38,6 +40,8 @@ import org.whispersystems.libsignal.state.SignalProtocolStore;
 
 public class AxolotlService extends AbstractAccountService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AxolotlService.class);
+
     public static final String KEY_TYPE = "AES";
     public static final String CIPHER_MODE = "AES/GCM/NoPadding";
 
@@ -45,9 +49,10 @@ public class AxolotlService extends AbstractAccountService {
 
     private final SignalProtocolStore signalProtocolStore;
 
-    public AxolotlService(final Context context, final Account account) {
-        super(context, account);
-        this.signalProtocolStore = new AxolotlDatabaseStore(context, account);
+    public AxolotlService(
+            final Account account, final ConversationsDatabase conversationsDatabase) {
+        super(account, conversationsDatabase);
+        this.signalProtocolStore = new AxolotlDatabaseStore(account, conversationsDatabase);
     }
 
     private AxolotlSession buildReceivingSession(
@@ -119,6 +124,10 @@ public class AxolotlService extends AbstractAccountService {
         final Header header = encrypted.getHeader();
         final Key ourKey = header.getKey(signalProtocolStore.getLocalRegistrationId());
         if (ourKey == null) {
+            LOGGER.info(
+                    "looking for {} in {}",
+                    signalProtocolStore.getLocalRegistrationId(),
+                    header.getKeys());
             throw new NotEncryptedForThisDeviceException();
         }
         final byte[] keyWithAuthTag;

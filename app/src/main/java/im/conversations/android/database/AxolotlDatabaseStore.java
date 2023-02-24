@@ -1,6 +1,5 @@
 package im.conversations.android.database;
 
-import android.content.Context;
 import im.conversations.android.AbstractAccountService;
 import im.conversations.android.axolotl.AxolotlAddress;
 import im.conversations.android.database.dao.AxolotlDao;
@@ -17,12 +16,13 @@ import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 
 public class AxolotlDatabaseStore extends AbstractAccountService implements SignalProtocolStore {
 
-    public AxolotlDatabaseStore(final Context context, final Account account) {
-        super(context, account);
+    public AxolotlDatabaseStore(
+            final Account account, final ConversationsDatabase conversationsDatabase) {
+        super(account, conversationsDatabase);
     }
 
     private AxolotlDao axolotlDao() {
-        return ConversationsDatabase.getInstance(context).axolotlDao();
+        return database.axolotlDao();
     }
 
     @Override

@@ -14,4 +14,8 @@ public class SignedPreKey extends Extension implements ECPublicKeyContent {
     public int getId() {
         return Ints.saturatedCast(this.getLongAttribute("signedPreKeyId"));
     }
+
+    public void setId(final int id) {
+        this.setAttribute("signedPreKeyId", id);
+    }
 }

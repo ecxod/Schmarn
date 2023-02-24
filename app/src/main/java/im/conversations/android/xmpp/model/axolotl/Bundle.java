@@ -40,14 +40,16 @@ public class Bundle extends Extension {
         identityKey.setContent(ecPublicKey);
     }
 
-    public void setSignedPreKey(final ECPublicKey ecPublicKey, final byte[] signature) {
+    public void setSignedPreKey(
+            final int id, final ECPublicKey ecPublicKey, final byte[] signature) {
         final var signedPreKey = this.addExtension(new SignedPreKey());
+        signedPreKey.setId(id);
         signedPreKey.setContent(ecPublicKey);
         final var signedPreKeySignature = this.addExtension(new SignedPreKeySignature());
         signedPreKeySignature.setContent(signature);
     }
 
-    public void setPreKeys(final List<PreKeyRecord> preKeyRecords) {
+    public void addPreKeys(final List<PreKeyRecord> preKeyRecords) {
         final var preKeys = this.addExtension(new PreKeys());
         for (final PreKeyRecord preKeyRecord : preKeyRecords) {
             final var preKey = preKeys.addExtension(new PreKey());

@@ -5,7 +5,7 @@ import im.conversations.android.annotation.XmlElement;
 @XmlElement
 public class Inactive extends ChatStateNotification {
 
-    protected Inactive() {
+    public Inactive() {
         super(Inactive.class);
     }
 }

@@ -17,7 +17,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import im.conversations.android.AbstractAccountService;
 import im.conversations.android.BuildConfig;
 import im.conversations.android.Conversations;
 import im.conversations.android.IDs;
@@ -106,12 +105,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 
-public class XmppConnection extends AbstractAccountService implements Runnable {
+public class XmppConnection implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XmppConnection.class);
 
     private static final boolean EXTENDED_SM_LOGGING = false;
     private static final int CONNECT_DISCO_TIMEOUT = 20;
+
+    private final Context context;
+    private final Account account;
 
     private final SparseArray<Stanza> mStanzaQueue = new SparseArray<>();
     private final Hashtable<String, Pair<Iq, Consumer<Iq>>> packetCallbacks = new Hashtable<>();
@@ -155,7 +157,8 @@ public class XmppConnection extends AbstractAccountService implements Runnable {
     private CountDownLatch mStreamCountDownLatch;
 
     public XmppConnection(final Context context, final Account account) {
-        super(context, account);
+        this.context = context;
+        this.account = account;
         this.connectionAddress = account.address;
 
         // these consumers are pure listeners; they don’t have public method except for accept|apply
