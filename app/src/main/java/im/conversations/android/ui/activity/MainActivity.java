@@ -15,7 +15,6 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ForegroundService.start(this);
         final ActivityMainBinding binding =
                 DataBindingUtil.setContentView(this, R.layout.activity_main);
         final ViewModelProvider viewModelProvider =
@@ -32,5 +31,11 @@ public class MainActivity extends BaseActivity {
                             }
                         });
         Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ForegroundService.start(this);
     }
 }

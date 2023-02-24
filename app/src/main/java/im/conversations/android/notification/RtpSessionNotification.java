@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -40,6 +41,7 @@ public class RtpSessionNotification extends AbstractNotification {
     private static final Logger LOGGER = LoggerFactory.getLogger(RtpSessionNotification.class);
 
     public static final int INCOMING_CALL_ID = 2;
+    public static final int ONGOING_CALL_ID = 3;
 
     public static final int LED_COLOR = 0xff00ff00;
 
@@ -149,8 +151,7 @@ public class RtpSessionNotification extends AbstractNotification {
         fullScreenIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         fullScreenIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         final NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(
-                        context, Channels.INCOMING_CALLS_NOTIFICATION_CHANNEL);
+                new NotificationCompat.Builder(context, Channels.CHANNEL_INCOMING_CALL);
         if (media.contains(Media.VIDEO)) {
             builder.setSmallIcon(R.drawable.ic_videocam_24dp);
             builder.setContentTitle(context.getString(R.string.rtp_state_incoming_video_call));
@@ -181,7 +182,7 @@ public class RtpSessionNotification extends AbstractNotification {
                                 R.drawable.ic_call_end_24dp,
                                 context.getString(R.string.dismiss_call),
                                 createCallAction(
-                                        id.sessionId, RtpSessionService.ACTION_DISMISS_CALL, 102))
+                                        account, id, RtpSessionService.ACTION_REJECT_CALL, 102))
                         .build());
         builder.addAction(
                 new NotificationCompat.Action.Builder(
@@ -199,7 +200,7 @@ public class RtpSessionNotification extends AbstractNotification {
     public Notification getOngoingCallNotification(final Account account, OngoingCall ongoingCall) {
         final AbstractJingleConnection.Id id = ongoingCall.id;
         final NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(context, "ongoing_calls");
+                new NotificationCompat.Builder(context, Channels.CHANNEL_ONGOING_CALL);
         if (ongoingCall.media.contains(Media.VIDEO)) {
             builder.setSmallIcon(R.drawable.ic_videocam_24dp);
             if (ongoingCall.reconnecting) {
@@ -216,7 +217,8 @@ public class RtpSessionNotification extends AbstractNotification {
             }
         }
         // TODO fix me when we have a Contact model
-        // builder.setContentText(id.account.getRoster().getContact(id.with).getDisplayName());
+        builder.setContentText(
+                "Contact Name"); // id.account.getRoster().getContact(id.with).getDisplayName());
         builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
         builder.setPriority(NotificationCompat.PRIORITY_HIGH);
         builder.setCategory(NotificationCompat.CATEGORY_CALL);
@@ -227,9 +229,24 @@ public class RtpSessionNotification extends AbstractNotification {
                                 R.drawable.ic_call_end_24dp,
                                 context.getString(R.string.hang_up),
                                 createCallAction(
-                                        id.sessionId, RtpSessionService.ACTION_END_CALL, 104))
+                                        account, id, RtpSessionService.ACTION_END_CALL, 104))
                         .build());
         return builder.build();
+    }
+
+    public static boolean isShowingOngoingCallNotification(final Context context) {
+        final var notificationManager =
+                ContextCompat.getSystemService(context, NotificationManager.class);
+        if (notificationManager == null) {
+            return false;
+        }
+        for (final StatusBarNotification statusBarNotification :
+                notificationManager.getActiveNotifications()) {
+            if (statusBarNotification.getId() == ONGOING_CALL_ID) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private PendingIntent createPendingRtpSession(
@@ -249,11 +266,14 @@ public class RtpSessionNotification extends AbstractNotification {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    private PendingIntent createCallAction(String sessionId, final String action, int requestCode) {
+    private PendingIntent createCallAction(
+            Account account, AbstractJingleConnection.Id id, final String action, int requestCode) {
         final Intent intent = new Intent(context, RtpSessionService.class);
         intent.setAction(action);
         intent.setPackage(context.getPackageName());
-        intent.putExtra(RtpSessionActivity.EXTRA_SESSION_ID, sessionId);
+        intent.putExtra(RtpSessionActivity.EXTRA_ACCOUNT, account.id);
+        intent.putExtra(RtpSessionActivity.EXTRA_SESSION_ID, id.sessionId);
+        intent.putExtra(RtpSessionActivity.EXTRA_WITH, id.with.toString());
         return PendingIntent.getService(
                 context,
                 requestCode,
@@ -272,6 +292,8 @@ public class RtpSessionNotification extends AbstractNotification {
     }
 
     public void pushMissedCallNow(CallLogTransformation message) {}
+
+    public void cancelOngoingCallNotification() {}
 
     private class VibrationRunnable implements Runnable {
 

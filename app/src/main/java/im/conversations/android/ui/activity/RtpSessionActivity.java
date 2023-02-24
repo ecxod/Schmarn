@@ -732,7 +732,7 @@ public class RtpSessionActivity extends BaseActivity
     private boolean initializeActivityWithRunningRtpSession(
             final Account account, Jid with, String sessionId) {
         final WeakReference<JingleRtpConnection> reference =
-                requireJingleConnectionManager().findJingleRtpConnection(with, sessionId);
+                requireJingleConnectionManager().getWeakJingleRtpConnection(with, sessionId);
         if (reference == null || reference.get() == null) {
             final JingleConnectionManager.TerminatedRtpSession terminatedRtpSession =
                     requireJingleConnectionManager().getTerminalSessionState(with, sessionId);

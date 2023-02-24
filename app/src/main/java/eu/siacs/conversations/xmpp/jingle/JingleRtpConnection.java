@@ -30,7 +30,9 @@ import im.conversations.android.BuildConfig;
 import im.conversations.android.axolotl.AxolotlEncryptionException;
 import im.conversations.android.axolotl.AxolotlService;
 import im.conversations.android.dns.IP;
+import im.conversations.android.notification.OngoingCall;
 import im.conversations.android.notification.RtpSessionNotification;
+import im.conversations.android.service.RtpSessionService;
 import im.conversations.android.transformer.CallLogTransformation;
 import im.conversations.android.util.BooleanFutures;
 import im.conversations.android.xml.Element;
@@ -592,7 +594,10 @@ public class JingleRtpConnection extends AbstractJingleConnection
             this.incomingContentAdd = null;
             updateEndUserState();
         } else {
-            LOGGER.info("content add summary {} did not match remove summary {}", contentAddSummary, removeSummary);
+            LOGGER.info(
+                    "content add summary {} did not match remove summary {}",
+                    contentAddSummary,
+                    removeSummary);
             webRTCWrapper.close();
             sendSessionTerminate(
                     Reason.FAILED_APPLICATION,
@@ -2424,6 +2429,7 @@ public class JingleRtpConnection extends AbstractJingleConnection
         this.webRTCWrapper.switchSpeakerPhonePreference(
                 AppRTCAudioManager.SpeakerPhonePreference.of(activeContents.getMedia()));
         updateEndUserState();
+        updateOngoingCallNotification();
     }
 
     private SessionDescription setLocalSessionDescription()
@@ -2505,21 +2511,26 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private void updateOngoingCallNotification() {
         final State state = this.state;
         if (STATES_SHOWING_ONGOING_CALL.contains(state)) {
-            final boolean reconnecting;
+            RtpSessionService.updateOngoingCall(context, getAccount().id, id);
+        } else {
+            RtpSessionService.stop(context);
+        }
+    }
+
+    public OngoingCall getOngoingCall() {
+        final State state = this.state;
+        final boolean reconnecting;
+        if (STATES_SHOWING_ONGOING_CALL.contains(state)) {
             if (state == State.SESSION_ACCEPTED) {
                 reconnecting =
                         getPeerConnectionStateAsEndUserState() == RtpEndUserState.RECONNECTING;
             } else {
                 reconnecting = false;
             }
-
-            // TODO decide what we want to do with ongoing call? create a foreground service of
-            // RtpSessionService?
-
-            // xmppConnectionService.setOngoingCall(id, getMedia(), reconnecting);
         } else {
-            // xmppConnectionService.removeOngoingCall();
+            reconnecting = false;
         }
+        return new OngoingCall(id, getMedia(), reconnecting);
     }
 
     private void discoverIceServers(final OnIceServersDiscovered onIceServersDiscovered) {

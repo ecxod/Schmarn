@@ -12,7 +12,8 @@ import im.conversations.android.R;
 public final class Channels {
 
     static final String CHANNEL_FOREGROUND = "foreground";
-    static final String INCOMING_CALLS_NOTIFICATION_CHANNEL = "incoming_calls_channel";
+    static final String CHANNEL_INCOMING_CALL = "incoming_calls_channel";
+    static final String CHANNEL_ONGOING_CALL = "ongoing_call";
     static final String CHANNEL_GROUP_STATUS = "status";
     static final String CHANNEL_GROUP_CALLS = "calls";
     private final Application application;
@@ -32,7 +33,20 @@ public final class Channels {
             this.initializeForegroundChannel(notificationManager);
 
             this.initializeIncomingCallChannel(notificationManager);
+            this.initializeOngoingCallChannel(notificationManager);
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void initializeOngoingCallChannel(NotificationManager notificationManager) {
+        final NotificationChannel ongoingCallsChannel =
+                new NotificationChannel(
+                        CHANNEL_ONGOING_CALL,
+                        application.getString(R.string.ongoing_calls_channel_name),
+                        NotificationManager.IMPORTANCE_LOW);
+        ongoingCallsChannel.setShowBadge(false);
+        ongoingCallsChannel.setGroup(CHANNEL_GROUP_CALLS);
+        notificationManager.createNotificationChannel(ongoingCallsChannel);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -67,7 +81,7 @@ public final class Channels {
     private void initializeIncomingCallChannel(final NotificationManager notificationManager) {
         final NotificationChannel incomingCallsChannel =
                 new NotificationChannel(
-                        INCOMING_CALLS_NOTIFICATION_CHANNEL,
+                        CHANNEL_INCOMING_CALL,
                         application.getString(R.string.incoming_calls_channel_name),
                         NotificationManager.IMPORTANCE_HIGH);
         incomingCallsChannel.setSound(null, null);

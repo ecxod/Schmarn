@@ -81,6 +81,8 @@
             android:name=".service.ForegroundService"
             android:exported="false" />
 
+        <service android:name=".service.RtpSessionService" android:exported="false" android:foregroundServiceType="phoneCall"/>
+
         <receiver
             android:name=".receiver.EventReceiver"
             android:exported="true">

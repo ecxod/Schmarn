@@ -1,6 +1,7 @@
 package eu.siacs.conversations.xmpp.jingle;
 
 import android.content.Context;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import eu.siacs.conversations.xmpp.jingle.stanzas.JinglePacket;
@@ -83,6 +84,14 @@ public abstract class AbstractJingleConnection extends XmppConnection.Delegate {
         @Override
         public int hashCode() {
             return Objects.hashCode(with, sessionId);
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("with", with)
+                    .add("sessionId", sessionId)
+                    .toString();
         }
     }
 

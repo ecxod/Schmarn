@@ -109,6 +109,10 @@ public class ConnectionPool {
                 reconfigurationExecutor);
     }
 
+    public synchronized Optional<XmppConnection> getOptional(final long id) {
+        return Iterables.tryFind(this.connections, c -> id == c.getAccount().id);
+    }
+
     public synchronized ListenableFuture<XmppConnection> get(final long id) {
         final var configured = Iterables.tryFind(this.connections, c -> id == c.getAccount().id);
         if (configured.isPresent()) {

@@ -26,6 +26,7 @@ import eu.siacs.conversations.xmpp.jingle.stanzas.Reason;
 import eu.siacs.conversations.xmpp.jingle.stanzas.RtpDescription;
 import im.conversations.android.IDs;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.notification.OngoingCall;
 import im.conversations.android.notification.RtpSessionNotification;
 import im.conversations.android.xml.Element;
 import im.conversations.android.xml.Namespace;
@@ -522,6 +523,18 @@ public class JingleConnectionManager extends AbstractManager {
         return Optional.absent();
     }
 
+    public OngoingCall getOngoingCall(final String sessionId) {
+        for (final Map.Entry<AbstractJingleConnection.Id, AbstractJingleConnection> entry :
+                this.connections.entrySet()) {
+            if (entry.getValue() instanceof JingleRtpConnection
+                    && entry.getKey().sessionId.equals(sessionId)) {
+                final var jingleRtpConnection = (JingleRtpConnection) entry.getValue();
+                return jingleRtpConnection.getOngoingCall();
+            }
+        }
+        return null;
+    }
+
     void finishConnection(final AbstractJingleConnection connection) {
         this.connections.remove(connection.getId());
     }
@@ -646,13 +659,21 @@ public class JingleConnectionManager extends AbstractManager {
         resendSessionProposals();
     }
 
-    public WeakReference<JingleRtpConnection> findJingleRtpConnection(Jid with, String sessionId) {
+    public WeakReference<JingleRtpConnection> getWeakJingleRtpConnection(
+            Jid with, String sessionId) {
+        final var jingleRtpConnection = getJingleRtpConnection(with, sessionId);
+        return jingleRtpConnection.isPresent()
+                ? new WeakReference<>(jingleRtpConnection.get())
+                : null;
+    }
+
+    public Optional<JingleRtpConnection> getJingleRtpConnection(Jid with, String sessionId) {
         final AbstractJingleConnection.Id id = AbstractJingleConnection.Id.of(with, sessionId);
         final AbstractJingleConnection connection = connections.get(id);
         if (connection instanceof JingleRtpConnection) {
-            return new WeakReference<>((JingleRtpConnection) connection);
+            return Optional.of((JingleRtpConnection) connection);
         }
-        return null;
+        return Optional.absent();
     }
 
     private void resendSessionProposals() {
@@ -698,34 +719,6 @@ public class JingleConnectionManager extends AbstractManager {
                             + sessionId
                             + " as "
                             + target);
-        }
-    }
-
-    public void rejectRtpSession(final String sessionId) {
-        for (final AbstractJingleConnection connection : this.connections.values()) {
-            if (connection.getId().sessionId.equals(sessionId)) {
-                if (connection instanceof JingleRtpConnection) {
-                    try {
-                        ((JingleRtpConnection) connection).rejectCall();
-                        return;
-                    } catch (final IllegalStateException e) {
-                        Log.w(
-                                Config.LOGTAG,
-                                "race condition on rejecting call from notification",
-                                e);
-                    }
-                }
-            }
-        }
-    }
-
-    public void endRtpSession(final String sessionId) {
-        for (final AbstractJingleConnection connection : this.connections.values()) {
-            if (connection.getId().sessionId.equals(sessionId)) {
-                if (connection instanceof JingleRtpConnection) {
-                    ((JingleRtpConnection) connection).endCall();
-                }
-            }
         }
     }
 

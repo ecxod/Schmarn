@@ -13,7 +13,6 @@ public class SettingsActivity extends BaseActivity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ForegroundService.start(this);
         final ActivitySettingsBinding binding =
                 DataBindingUtil.setContentView(this, R.layout.activity_settings);
         setSupportActionBar(binding.materialToolbar);
@@ -35,5 +34,11 @@ public class SettingsActivity extends BaseActivity {
                         fragmentManager.popBackStack();
                     }
                 });
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ForegroundService.start(this);
     }
 }

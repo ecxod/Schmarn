@@ -1,5 +1,6 @@
 package im.conversations.android.notification;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import eu.siacs.conversations.xmpp.jingle.AbstractJingleConnection;
 import eu.siacs.conversations.xmpp.jingle.Media;
@@ -30,5 +31,14 @@ public class OngoingCall {
     @Override
     public int hashCode() {
         return Objects.hashCode(id, media, reconnecting);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("id", id)
+                .add("media", media)
+                .add("reconnecting", reconnecting)
+                .toString();
     }
 }
