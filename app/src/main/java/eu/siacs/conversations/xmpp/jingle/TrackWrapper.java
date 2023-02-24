@@ -38,7 +38,7 @@ class TrackWrapper<T extends MediaStreamTrack> {
         final RtpTransceiver transceiver =
                 peerConnection == null ? null : getTransceiver(peerConnection, trackWrapper);
         if (transceiver == null) {
-            Log.w(Config.LOGTAG, "unable to detect transceiver for " + trackWrapper.rtpSender.id());
+            Log.w(Config.LOGTAG, "unable to detect transceiver for " + trackWrapper.getRtpSenderId());
             return Optional.of(trackWrapper.track);
         }
         final RtpTransceiver.RtpTransceiverDirection direction = transceiver.getDirection();
@@ -51,13 +51,21 @@ class TrackWrapper<T extends MediaStreamTrack> {
         }
     }
 
+    public String getRtpSenderId() {
+        try {
+            return track.id();
+        } catch (final IllegalStateException e) {
+            return null;
+        }
+    }
+
     public static <T extends MediaStreamTrack> RtpTransceiver getTransceiver(
             @Nonnull final PeerConnection peerConnection, final TrackWrapper<T> trackWrapper) {
-        final RtpSender rtpSender = trackWrapper.rtpSender;
+        final String rtpSenderId = trackWrapper.getRtpSenderId();
         for (final RtpTransceiver transceiver : peerConnection.getTransceivers()) {
-            if (transceiver.getSender().id().equals(rtpSender.id())) {
-                return transceiver;
-            }
+                if (transceiver.getSender().id().equals(rtpSenderId)) {
+                    return transceiver;
+                }
         }
         return null;
     }

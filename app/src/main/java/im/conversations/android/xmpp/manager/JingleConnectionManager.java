@@ -32,6 +32,7 @@ import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.error.Error;
+import im.conversations.android.xmpp.model.jingle.error.JingleCondition;
 import im.conversations.android.xmpp.model.jmi.Accept;
 import im.conversations.android.xmpp.model.jmi.JingleMessage;
 import im.conversations.android.xmpp.model.jmi.Proceed;
@@ -87,7 +88,10 @@ public class JingleConnectionManager extends AbstractManager {
         final String sessionId = packet.getSessionId();
         if (sessionId == null) {
             respondWithJingleError(
-                    iq, "unknown-session", Error.Type.CANCEL, new Condition.ItemNotFound());
+                    iq,
+                    new JingleCondition.UnknownSession(),
+                    Error.Type.CANCEL,
+                    new Condition.ItemNotFound());
             return;
         }
         final AbstractJingleConnection.Id id = AbstractJingleConnection.Id.of(packet);
@@ -123,9 +127,10 @@ public class JingleConnectionManager extends AbstractManager {
                 }
                 connection = new JingleRtpConnection(context, this.connection, id, from);
             } else {
+                // TODO this is probably the wrong jingle error condition
                 respondWithJingleError(
                         packet,
-                        "unsupported-info",
+                        new JingleCondition.UnsupportedInfo(),
                         Error.Type.CANCEL,
                         new Condition.FeatureNotImplemented());
                 return;
@@ -135,7 +140,10 @@ public class JingleConnectionManager extends AbstractManager {
         } else {
             Log.d(Config.LOGTAG, "unable to route jingle packet: " + packet);
             respondWithJingleError(
-                    packet, "unknown-session", Error.Type.CANCEL, new Condition.ItemNotFound());
+                    packet,
+                    new JingleCondition.UnknownSession(),
+                    Error.Type.CANCEL,
+                    new Condition.ItemNotFound());
         }
     }
 
@@ -225,9 +233,11 @@ public class JingleConnectionManager extends AbstractManager {
     }
 
     private void respondWithJingleError(
-            final Iq original, String jingleCondition, final Error.Type type, Condition condition) {
-        // TODO add jingle condition
-        connection.sendErrorFor(original, type, condition);
+            final Iq original,
+            final JingleCondition jingleCondition,
+            final Error.Type type,
+            Condition condition) {
+        connection.sendErrorFor(original, type, condition, jingleCondition);
     }
 
     public void handle(final Message message) {
@@ -769,6 +779,12 @@ public class JingleConnectionManager extends AbstractManager {
 
     public void setOnJingleRtpConnectionUpdate(final OnJingleRtpConnectionUpdate listener) {
         this.onJingleRtpConnectionUpdate = listener;
+    }
+
+    public void removeOnJingleRtpConnectionUpdate(final OnJingleRtpConnectionUpdate listener) {
+        if (this.onJingleRtpConnectionUpdate == listener) {
+            this.onJingleRtpConnectionUpdate = null;
+        }
     }
 
     public RtpSessionNotification getNotificationService() {

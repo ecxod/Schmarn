@@ -1791,7 +1791,11 @@ public class XmppConnection extends AbstractAccountService implements Runnable {
         this.sendPacket(response);
     }
 
-    public void sendErrorFor(final Iq request, final Error.Type type, final Condition condition) {
+    public void sendErrorFor(
+            final Iq request,
+            final Error.Type type,
+            final Condition condition,
+            final Error.Extension... extensions) {
         final var from = request.getFrom();
         final var id = request.getId();
         final var response = new Iq(Iq.Type.ERROR);
@@ -1800,6 +1804,7 @@ public class XmppConnection extends AbstractAccountService implements Runnable {
         final Error error = response.addExtension(new Error());
         error.setType(type);
         error.setCondition(condition);
+        error.addExtensions(extensions);
         this.sendPacket(response);
     }
 

@@ -216,6 +216,14 @@ public class WebRTCWrapper {
         }
     }
 
+    private static void dispose(final VideoTrack videoTrack) {
+        try {
+            videoTrack.dispose();
+        } catch (final IllegalStateException e) {
+            Log.e(Config.LOGTAG, "unable to dispose of video track", e);
+        }
+    }
+
     public void setup(
             final Context service,
             @Nonnull final AppRTCAudioManager.SpeakerPhonePreference speakerPhonePreference)
@@ -441,6 +449,7 @@ public class WebRTCWrapper {
         final VideoSourceWrapper videoSourceWrapper = this.videoSourceWrapper;
         final AppRTCAudioManager audioManager = this.appRTCAudioManager;
         final EglBase eglBase = this.eglBase;
+        final var localVideoTrack = this.localVideoTrack;
         if (peerConnection != null) {
             this.peerConnection = null;
             dispose(peerConnection);
@@ -449,7 +458,10 @@ public class WebRTCWrapper {
             ToneManager.getInstance(context).setAppRtcAudioManagerHasControl(false);
             mainHandler.post(audioManager::stop);
         }
-        this.localVideoTrack = null;
+        if (localVideoTrack != null) {
+            this.localVideoTrack = null;
+            dispose(localVideoTrack.track);
+        }
         this.remoteVideoTrack = null;
         if (videoSourceWrapper != null) {
             this.videoSourceWrapper = null;
@@ -461,8 +473,8 @@ public class WebRTCWrapper {
             videoSourceWrapper.dispose();
         }
         if (eglBase != null) {
-            eglBase.release();
             this.eglBase = null;
+            eglBase.release();
         }
         if (peerConnectionFactory != null) {
             this.peerConnectionFactory = null;

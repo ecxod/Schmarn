@@ -610,8 +610,12 @@ public class RtpSessionActivity extends BaseActivity
         final WeakReference<JingleRtpConnection> weakReference = this.rtpConnectionReference;
         final JingleRtpConnection jingleRtpConnection =
                 weakReference == null ? null : weakReference.get();
+        final var jmc = this.jingleConnectionManager;
         if (jingleRtpConnection != null) {
             releaseVideoTracks(jingleRtpConnection);
+        }
+        if (jmc != null) {
+            jmc.removeOnJingleRtpConnectionUpdate(this);
         }
         releaseProximityWakeLock();
         super.onStop();

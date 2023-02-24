@@ -44,6 +44,7 @@ import im.conversations.android.xmpp.manager.JingleConnectionManager;
 import im.conversations.android.xmpp.model.disco.external.Service;
 import im.conversations.android.xmpp.model.error.Condition;
 import im.conversations.android.xmpp.model.error.Error;
+import im.conversations.android.xmpp.model.jingle.error.JingleCondition;
 import im.conversations.android.xmpp.model.jmi.Accept;
 import im.conversations.android.xmpp.model.jmi.JingleMessage;
 import im.conversations.android.xmpp.model.jmi.Proceed;
@@ -587,9 +588,11 @@ public class JingleRtpConnection extends AbstractJingleConnection
         final Set<ContentAddition.Summary> removeSummary =
                 ContentAddition.summary(receivedContentRemove);
         if (contentAddSummary.equals(removeSummary)) {
+            LOGGER.info("Retracting content {}", removeSummary);
             this.incomingContentAdd = null;
             updateEndUserState();
         } else {
+            LOGGER.info("content add summary {} did not match remove summary {}", contentAddSummary, removeSummary);
             webRTCWrapper.close();
             sendSessionTerminate(
                     Reason.FAILED_APPLICATION,
@@ -1767,7 +1770,6 @@ public class JingleRtpConnection extends AbstractJingleConnection
     private void send(final JinglePacket jinglePacket) {
         jinglePacket.setTo(id.with);
         connection.sendIqPacket(jinglePacket, this::handleIqResponse);
-        connection.sendIqPacket(jinglePacket, this::handleIqResponse);
     }
 
     private synchronized void handleIqResponse(final Iq response) {
@@ -1840,18 +1842,26 @@ public class JingleRtpConnection extends AbstractJingleConnection
 
     private void respondWithTieBreak(final Iq jinglePacket) {
         respondWithJingleError(
-                jinglePacket, "tie-break", Error.Type.CANCEL, new Condition.Conflict());
+                jinglePacket,
+                new JingleCondition.TieBreak(),
+                Error.Type.CANCEL,
+                new Condition.Conflict());
     }
 
     private void respondWithOutOfOrder(final Iq jinglePacket) {
         respondWithJingleError(
-                jinglePacket, "out-of-order", Error.Type.WAIT, new Condition.UnexpectedRequest());
+                jinglePacket,
+                new JingleCondition.OutOfOrder(),
+                Error.Type.WAIT,
+                new Condition.UnexpectedRequest());
     }
 
     private void respondWithJingleError(
-            final Iq original, String jingleCondition, final Error.Type type, Condition condition) {
-        // TODO add jingle condition
-        connection.sendErrorFor(original, type, condition);
+            final Iq original,
+            JingleCondition jingleCondition,
+            final Error.Type type,
+            Condition condition) {
+        connection.sendErrorFor(original, type, condition, jingleCondition);
     }
 
     private void respondOk(final Iq jinglePacket) {

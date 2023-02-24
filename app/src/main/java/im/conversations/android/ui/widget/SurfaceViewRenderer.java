@@ -20,6 +20,7 @@ public class SurfaceViewRenderer extends org.webrtc.SurfaceViewRenderer {
         super(context, attrs);
     }
 
+    @Override
     public void onFrameResolutionChanged(int videoWidth, int videoHeight, int rotation) {
         super.onFrameResolutionChanged(videoWidth, videoHeight, rotation);
         final int rotatedWidth = rotation != 0 && rotation != 180 ? videoHeight : videoWidth;
