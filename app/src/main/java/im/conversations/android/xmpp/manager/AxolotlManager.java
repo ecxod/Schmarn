@@ -265,8 +265,7 @@ public class AxolotlManager extends AbstractManager {
     }
 
     private ListenableFuture<Void> publishBundle() {
-        final ListenableFuture<Bundle> bundleFuture =
-                Futures.submit(this::prepareBundle, IO_EXECUTOR);
+        final ListenableFuture<Bundle> bundleFuture = prepareBundle();
         return Futures.transformAsync(
                 bundleFuture,
                 bundle -> {
@@ -282,8 +281,13 @@ public class AxolotlManager extends AbstractManager {
                 MoreExecutors.directExecutor());
     }
 
-    private Bundle prepareBundle() {
-        refillPreKeys();
+    private ListenableFuture<Bundle> prepareBundle() {
+        final var refillFuture = Futures.submit(this::refillPreKeys, CPU_EXECUTOR);
+        return Futures.transform(
+                refillFuture, this::prepareBundle, getDatabase().getQueryExecutor());
+    }
+
+    private Bundle prepareBundle(Void v) {
         final var bundle = new Bundle();
         bundle.setIdentityKey(
                 signalProtocolStore().getIdentityKeyPair().getPublicKey().getPublicKey());

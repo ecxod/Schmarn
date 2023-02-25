@@ -101,7 +101,8 @@ public class AvatarManager extends AbstractManager {
     }
 
     private ListenableFuture<byte[]> getCachedOrFetch(final Jid address, final String id) {
-        final var cachedFuture = Futures.submit(() -> getCachedAvatar(address, id), IO_EXECUTOR);
+        final var cachedFuture =
+                Futures.submit(() -> getCachedAvatar(address, id), FILE_IO_EXECUTOR);
         return Futures.catchingAsync(
                 cachedFuture,
                 Exception.class,
@@ -133,7 +134,7 @@ public class AvatarManager extends AbstractManager {
                     }
                     throw new IllegalStateException("Avatar sha1hash did not match expected value");
                 },
-                IO_EXECUTOR);
+                FILE_IO_EXECUTOR);
     }
 
     private File getCacheFile(final Jid address, final String id) {

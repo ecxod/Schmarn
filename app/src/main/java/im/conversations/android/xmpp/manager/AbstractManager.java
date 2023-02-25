@@ -7,7 +7,8 @@ import java.util.concurrent.Executors;
 
 public class AbstractManager extends XmppConnection.Delegate {
 
-    protected static final Executor IO_EXECUTOR = Executors.newSingleThreadExecutor();
+    protected static final Executor FILE_IO_EXECUTOR = Executors.newSingleThreadExecutor();
+    protected static final Executor CPU_EXECUTOR = Executors.newSingleThreadExecutor();
 
     protected AbstractManager(final Context context, final XmppConnection connection) {
         super(context, connection);

@@ -94,7 +94,8 @@ public class Transformer {
             try {
                 final var payload = axolotlService.decrypt(transformation.from, encrypted);
                 if (payload.hasPayload()) {
-                    contents = ImmutableList.of(MessageContent.text(payload.payloadAsString(),null));
+                    contents =
+                            ImmutableList.of(MessageContent.text(payload.payloadAsString(), null));
                 } else {
                     return true;
                 }
