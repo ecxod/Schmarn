@@ -8,6 +8,7 @@ import com.google.common.collect.Iterables;
 import im.conversations.android.IDs;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.entity.AccountEntity;
+import im.conversations.android.database.model.Encryption;
 import im.conversations.android.database.model.MessageEmbedded;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.database.model.PartType;
@@ -83,6 +84,7 @@ public class MessageTransformationTest {
         final var message = Iterables.getOnlyElement(messages);
         final var onlyContent = Iterables.getOnlyElement(message.contents);
         Assert.assertEquals(GREETING, onlyContent.body);
+        Assert.assertEquals(Encryption.CLEARTEXT,message.encryption);
         final var onlyReaction = Iterables.getOnlyElement(message.reactions);
         Assert.assertEquals("Y", onlyReaction.reaction);
         Assert.assertEquals(REMOTE, onlyReaction.reactionBy);

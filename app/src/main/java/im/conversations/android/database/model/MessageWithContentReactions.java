@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.jxmpp.jid.Jid;
+import org.whispersystems.libsignal.IdentityKey;
 
 public class MessageWithContentReactions {
 
@@ -31,6 +32,8 @@ public class MessageWithContentReactions {
     public Modification modification;
     public long version;
     public Long inReplyToMessageEntityId;
+    public Encryption encryption;
+    public IdentityKey identityKey;
 
     @Relation(
             entity = MessageEntity.class,

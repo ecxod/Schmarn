@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6186e2691813f4fbd804b90fd770e18b",
+    "identityHash": "a619bdeae0408fc2250a0bf2b9ab1f4e",
     "entities": [
       {
         "tableName": "account",
@@ -1834,7 +1834,7 @@
       },
       {
         "tableName": "message_version",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `messageEntityId` INTEGER NOT NULL, `messageId` TEXT, `stanzaId` TEXT, `modification` TEXT, `modifiedBy` TEXT, `modifiedByResource` TEXT, `occupantId` TEXT, `receivedAt` INTEGER, FOREIGN KEY(`messageEntityId`) REFERENCES `message`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `messageEntityId` INTEGER NOT NULL, `messageId` TEXT, `stanzaId` TEXT, `modification` TEXT, `modifiedBy` TEXT, `modifiedByResource` TEXT, `occupantId` TEXT, `receivedAt` INTEGER, `encryption` TEXT, `identityKey` BLOB, FOREIGN KEY(`messageEntityId`) REFERENCES `message`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1888,6 +1888,18 @@
             "fieldPath": "receivedAt",
             "columnName": "receivedAt",
             "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "encryption",
+            "columnName": "encryption",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "identityKey",
+            "columnName": "identityKey",
+            "affinity": "BLOB",
             "notNull": false
           }
         ],
@@ -2352,7 +2364,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6186e2691813f4fbd804b90fd770e18b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a619bdeae0408fc2250a0bf2b9ab1f4e')"
     ]
   }
 }

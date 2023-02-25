@@ -1,32 +1,24 @@
 package im.conversations.android.transformer;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import im.conversations.android.axolotl.AxolotlDecryptionException;
 import im.conversations.android.axolotl.AxolotlService;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
-import im.conversations.android.database.model.MessageContent;
 import im.conversations.android.database.model.MessageIdentifier;
 import im.conversations.android.database.model.MessageState;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.xmpp.model.DeliveryReceipt;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.correction.Replace;
-import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.markers.Displayed;
 import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
-import im.conversations.android.xmpp.model.oob.OutOfBandData;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.reply.Reply;
 import im.conversations.android.xmpp.model.retract.Retract;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,13 +81,12 @@ public class Transformer {
         final Reactions reactions = transformation.getExtension(Reactions.class);
         final Retract retract = transformation.getExtension(Retract.class);
         final Encrypted encrypted = transformation.getExtension(Encrypted.class);
-        final List<MessageContent> contents;
+        final MessageContentWrapper contents;
         if (encrypted != null) {
             try {
                 final var payload = axolotlService.decrypt(transformation.from, encrypted);
                 if (payload.hasPayload()) {
-                    contents =
-                            ImmutableList.of(MessageContent.text(payload.payloadAsString(), null));
+                    contents = MessageContentWrapper.ofAxolotl(payload);
                 } else {
                     return true;
                 }
@@ -107,7 +98,7 @@ public class Transformer {
         } else {
             // TODO we need to remove fallbacks for reactions, retractions and potentially other
             // things
-            contents = parseContent(transformation);
+            contents = MessageContentWrapper.parseCleartext(transformation);
         }
 
         final boolean identifiableSender =
@@ -131,7 +122,8 @@ public class Transformer {
                             .getOrCreateVersion(
                                     chat, transformation, retract.getId(), Modification.RETRACTION);
             database.messageDao()
-                    .insertMessageContent(messageIdentifier.version, MessageContent.RETRACTION);
+                    .insertMessageContent(
+                            messageIdentifier.version, MessageContentWrapper.RETRACTION);
             return true;
         } else if (contents.isEmpty()) {
             LOGGER.info("Received message from {} w/o contents", transformation.from);
@@ -171,42 +163,6 @@ public class Transformer {
             return true;
         }
         return true;
-    }
-
-    protected List<MessageContent> parseContent(final MessageTransformation transformation) {
-        final var encrypted = transformation.getExtension(Encrypted.class);
-        final var encryptedWithPayload = encrypted != null && encrypted.hasPayload();
-        final Collection<Body> bodies = transformation.getExtensions(Body.class);
-        final Collection<OutOfBandData> outOfBandData =
-                transformation.getExtensions(OutOfBandData.class);
-        final ImmutableList.Builder<MessageContent> messageContentBuilder = ImmutableList.builder();
-
-        // TODO decrypt
-
-        if (bodies.size() == 1 && outOfBandData.size() == 1) {
-            final String text = Iterables.getOnlyElement(bodies).getContent();
-            final String url = Iterables.getOnlyElement(outOfBandData).getURL();
-            if (!Strings.isNullOrEmpty(url) && url.equals(text)) {
-                return ImmutableList.of(MessageContent.file(url));
-            }
-        }
-
-        // TODO verify that body is not fallback
-        for (final Body body : bodies) {
-            final String text = body.getContent();
-            if (Strings.isNullOrEmpty(text)) {
-                continue;
-            }
-            messageContentBuilder.add(MessageContent.text(text, body.getLang()));
-        }
-        for (final OutOfBandData data : outOfBandData) {
-            final String url = data.getURL();
-            if (Strings.isNullOrEmpty(url)) {
-                continue;
-            }
-            messageContentBuilder.add(MessageContent.file(url));
-        }
-        return messageContentBuilder.build();
     }
 
     private void transformMessageState(

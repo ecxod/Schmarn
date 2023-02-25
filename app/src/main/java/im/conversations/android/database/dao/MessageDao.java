@@ -16,11 +16,12 @@ import im.conversations.android.database.entity.MessageStateEntity;
 import im.conversations.android.database.entity.MessageVersionEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
-import im.conversations.android.database.model.MessageContent;
+import im.conversations.android.database.model.Encryption;
 import im.conversations.android.database.model.MessageIdentifier;
 import im.conversations.android.database.model.MessageState;
 import im.conversations.android.database.model.MessageWithContentReactions;
 import im.conversations.android.database.model.Modification;
+import im.conversations.android.transformer.MessageContentWrapper;
 import im.conversations.android.transformer.MessageTransformation;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.stanza.Message;
@@ -31,6 +32,7 @@ import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whispersystems.libsignal.IdentityKey;
 
 @Dao
 public abstract class MessageDao {
@@ -324,18 +326,36 @@ public abstract class MessageDao {
                     + " chatId=:chatId AND stanzaId=:stanzaId")
     protected abstract MessageIdentifier getByStanzaId(final long chatId, final String stanzaId);
 
-    public void insertMessageContent(Long latestVersion, List<MessageContent> contents) {
+    public void insertMessageContent(
+            final Long latestVersion, final MessageContentWrapper messageContentWrapper) {
         Preconditions.checkNotNull(
                 latestVersion, "Contents can only be inserted for a specific version");
         Preconditions.checkArgument(
-                contents.size() > 0,
+                messageContentWrapper.contents.size() > 0,
                 "If you are trying to insert empty contents something went wrong");
         insertMessageContent(
-                Lists.transform(contents, c -> MessageContentEntity.of(latestVersion, c)));
+                Lists.transform(
+                        messageContentWrapper.contents,
+                        c -> MessageContentEntity.of(latestVersion, c)));
+        final int rows =
+                updateMessageVersionEncryption(
+                        latestVersion,
+                        messageContentWrapper.encryption,
+                        messageContentWrapper.identityKey);
+        if (rows != 1) {
+            throw new IllegalStateException(
+                    "We expected to update encryption information on exactly 1 row");
+        }
     }
 
     @Insert
     protected abstract void insertMessageContent(Collection<MessageContentEntity> contentEntities);
+
+    @Query(
+            "UPDATE message_version SET encryption=:encryption,identityKey=:identityKey WHERE"
+                    + " id=:messageVersionId")
+    protected abstract int updateMessageVersionEncryption(
+            long messageVersionId, Encryption encryption, IdentityKey identityKey);
 
     public void insertMessageState(
             ChatIdentifier chatIdentifier,
@@ -402,9 +422,10 @@ public abstract class MessageDao {
     @Query(
             "SELECT message.id as"
                 + " id,sentAt,outgoing,toBare,toResource,fromBare,fromResource,modification,latestVersion"
-                + " as version,inReplyToMessageEntityId FROM message JOIN message_version ON"
-                + " message.latestVersion=message_version.id WHERE message.chatId=:chatId AND"
-                + " latestVersion IS NOT NULL ORDER BY message.receivedAt")
+                + " as version,inReplyToMessageEntityId,encryption,identityKey FROM message JOIN"
+                + " message_version ON message.latestVersion=message_version.id WHERE"
+                + " message.chatId=:chatId AND latestVersion IS NOT NULL ORDER BY"
+                + " message.receivedAt")
     public abstract List<MessageWithContentReactions> getMessages(long chatId);
 
     public void setInReplyTo(

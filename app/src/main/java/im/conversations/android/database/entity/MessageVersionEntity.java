@@ -1,17 +1,20 @@
 package im.conversations.android.database.entity;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import com.google.common.base.Preconditions;
+import im.conversations.android.database.model.Encryption;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.transformer.MessageTransformation;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.parts.Resourcepart;
+import org.whispersystems.libsignal.IdentityKey;
 
 @Entity(
         tableName = "message_version",
@@ -36,6 +39,8 @@ public class MessageVersionEntity {
     public Resourcepart modifiedByResource;
     public String occupantId;
     public Instant receivedAt;
+    @Nullable public Encryption encryption;
+    @Nullable public IdentityKey identityKey;
 
     // the version order is determined by the receivedAt
     // the actual display time and display order comes from the parent MessageEntity
