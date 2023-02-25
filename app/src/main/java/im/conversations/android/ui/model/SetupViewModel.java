@@ -34,6 +34,9 @@ public class SetupViewModel extends AndroidViewModel {
     private final MutableLiveData<String> xmppAddressError = new MutableLiveData<>();
     private final MutableLiveData<String> password = new MutableLiveData<>();
     private final MutableLiveData<String> passwordError = new MutableLiveData<>();
+    private final MutableLiveData<String> hostname = new MutableLiveData<>();
+    private final MutableLiveData<String> port = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> opportunisticTls = new MutableLiveData<>();
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
 
     private final MutableLiveData<Event<Target>> redirection = new MutableLiveData<>();
@@ -67,6 +70,18 @@ public class SetupViewModel extends AndroidViewModel {
 
     public MutableLiveData<String> getPassword() {
         return password;
+    }
+
+    public MutableLiveData<String> getHostname() {
+        return hostname;
+    }
+
+    public MutableLiveData<String> getPort() {
+        return port;
+    }
+
+    public MutableLiveData<Boolean> getOpportunisticTls() {
+        return this.opportunisticTls;
     }
 
     public LiveData<String> getPasswordError() {
@@ -207,6 +222,16 @@ public class SetupViewModel extends AndroidViewModel {
 
     private boolean redirect(final Target next) {
         this.redirection.postValue(new Event<>(next));
+        return true;
+    }
+
+    public boolean submitHostname() {
+        final var account = this.account;
+        if (account == null) {
+            this.redirectIfNecessary(Target.ENTER_HOSTNAME, Target.ENTER_ADDRESS);
+            return true;
+        }
+
         return true;
     }
 

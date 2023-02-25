@@ -41,6 +41,9 @@ public class SetupActivity extends BaseActivity {
                 case ENTER_PASSWORD:
                     navController.navigate(SetupNavigationDirections.enterPassword());
                     break;
+                case ENTER_HOSTNAME:
+                    navController.navigate(SetupNavigationDirections.enterHostname());
+                    break;
                 case DONE:
                     startActivity(new Intent(this, MainActivity.class));
                     finish();

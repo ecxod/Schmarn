@@ -84,7 +84,7 @@ public class MessageTransformationTest {
         final var message = Iterables.getOnlyElement(messages);
         final var onlyContent = Iterables.getOnlyElement(message.contents);
         Assert.assertEquals(GREETING, onlyContent.body);
-        Assert.assertEquals(Encryption.CLEARTEXT,message.encryption);
+        Assert.assertEquals(Encryption.CLEARTEXT, message.encryption);
         final var onlyReaction = Iterables.getOnlyElement(message.reactions);
         Assert.assertEquals("Y", onlyReaction.reaction);
         Assert.assertEquals(REMOTE, onlyReaction.reactionBy);

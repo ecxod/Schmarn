@@ -25,12 +25,28 @@
         app:enterAnim="@anim/slide_from_right"
         app:exitAnim="@anim/slide_to_left"
         app:popEnterAnim="@anim/slide_from_left"
-        app:popExitAnim="@anim/slide_to_right" />
+        app:popExitAnim="@anim/slide_to_right"
+        app:popUpTo="@+id/hostname" />
+
+    <action
+        android:id="@+id/enterHostname"
+        app:destination="@+id/hostname"
+        app:enterAnim="@anim/slide_from_right"
+        app:exitAnim="@anim/slide_to_left"
+        app:popEnterAnim="@anim/slide_from_left"
+        app:popExitAnim="@anim/slide_to_right"
+        app:popUpTo="@+id/signIn" />
+
 
     <fragment
         android:id="@+id/signIn"
         android:name="im.conversations.android.ui.fragment.setup.SignInFragment"
         tools:layout="@layout/fragment_sign_in" />
+
+    <fragment
+        android:id="@+id/hostname"
+        android:name="im.conversations.android.ui.fragment.setup.HostnameFragment"
+        tools:layout="@layout/fragment_hostname" />
 
     <fragment
         android:id="@+id/password"
