@@ -2,9 +2,19 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/account_settings"
-        android:icon="@drawable/ic_settings_24dp"
-        android:title="@string/account_settings"
+        android:id="@+id/scan_qr_code"
+        android:icon="@drawable/ic_qr_code_scanner_24dp"
+        android:title="@string/scan_qr_code"
+        android:visible="false"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/account_settings"
+        android:title="@string/account_settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/certificate_login"
+        android:title="@string/certificate_login"
+        android:visible="false"
+        app:showAsAction="never" />
 
 </menu>

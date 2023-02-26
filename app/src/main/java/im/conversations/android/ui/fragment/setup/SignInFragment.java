@@ -15,10 +15,13 @@ public class SignInFragment extends AbstractSetupFragment {
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        FragmentSignInBinding binding =
+        final FragmentSignInBinding binding =
                 DataBindingUtil.inflate(inflater, R.layout.fragment_sign_in, container, false);
         binding.setSetupViewModel(setupViewModel);
         binding.setLifecycleOwner(getViewLifecycleOwner());
+        final var menu = binding.materialToolbar.getMenu();
+        menu.findItem(R.id.scan_qr_code).setVisible(true);
+        menu.findItem(R.id.certificate_login).setVisible(true);
         return binding.getRoot();
     }
 }

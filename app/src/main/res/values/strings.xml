@@ -1041,5 +1041,6 @@
     <string name="use_opportunistic_tls">Opportunistic TLS (STARTTLS)</string>
     <string name="info_required">Info required</string>
     <string name="invalid">Invalid!</string>
+    <string name="certificate_login">Certificate login</string>
 
 </resources>
