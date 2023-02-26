@@ -31,6 +31,7 @@ public class AccountIdentifier implements ChatFilter {
     }
 
     @Override
+    @NonNull
     public String toString() {
         return MoreObjects.toStringHelper(this).add("id", id).add("address", address).toString();
     }

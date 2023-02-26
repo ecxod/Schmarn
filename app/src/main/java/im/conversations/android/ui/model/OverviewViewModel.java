@@ -46,12 +46,11 @@ public class OverviewViewModel extends AndroidViewModel {
     }
 
     public LiveData<List<AccountIdentifier>> getAccounts() {
-        return Transformations.distinctUntilChanged(this.accountRepository.getAccounts());
+        return Transformations.distinctUntilChanged(this.accounts);
     }
 
-    // TODO change into GroupIdentifier
     public LiveData<List<GroupIdentifier>> getGroups() {
-        return Transformations.distinctUntilChanged(this.chatRepository.getGroups());
+        return Transformations.distinctUntilChanged(this.groups);
     }
 
     public LiveData<Boolean> getChatFilterAvailable() {

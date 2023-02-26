@@ -4,11 +4,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteSource;
 import java.io.IOException;
+import java.util.Random;
 import java.util.UUID;
 
 public class IDs {
 
+    private static final Random RANDOM = new Random();
+
     private static final long UUID_VERSION_MASK = 4 << 12;
+
+    public static int quickInt() {
+        return RANDOM.nextInt();
+    }
 
     public static String huge() {
         final var random = new byte[96];

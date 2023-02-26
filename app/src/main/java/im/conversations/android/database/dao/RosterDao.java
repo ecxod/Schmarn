@@ -50,6 +50,7 @@ public abstract class RosterDao extends GroupDao {
         deleteEmptyGroups();
     }
 
+    @Transaction
     public void update(
             final Account account, final String version, final Collection<Item> updates) {
         for (final Item item : updates) {

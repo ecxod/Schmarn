@@ -3,6 +3,7 @@ package im.conversations.android.ui.fragment.main;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.elevation.SurfaceColors;
 import com.google.android.material.search.SearchView;
+import im.conversations.android.IDs;
 import im.conversations.android.R;
 import im.conversations.android.database.model.AccountIdentifier;
 import im.conversations.android.database.model.ChatFilter;
@@ -59,7 +61,9 @@ public class OverviewFragment extends Fragment {
                     }
                 });
         binding.navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
-        binding.navigationView.setCheckedItem(R.id.chats);
+        if (this.overviewViewModel.getChatFilter() == null) {
+            binding.navigationView.setCheckedItem(R.id.chats);
+        }
         this.overviewViewModel
                 .getAccounts()
                 .observe(getViewLifecycleOwner(), this::onAccountsUpdated);
@@ -117,14 +121,18 @@ public class OverviewFragment extends Fragment {
             menuItemSpaces.setVisible(false);
             return;
         }
+        final var chatFilter = this.overviewViewModel.getChatFilter();
         menuItemSpaces.setVisible(true);
         final var subMenu = menuItemSpaces.getSubMenu();
         subMenu.clear();
         for (final GroupIdentifier group : groups) {
-            final var menuItemSpace = subMenu.add(group.name);
+            final var menuItemSpace = subMenu.add(Menu.NONE, IDs.quickInt(), Menu.NONE, group.name);
             menuItemSpace.setCheckable(true);
             menuItemSpace.setIcon(R.drawable.ic_workspaces_24dp);
             menuItemSpace.setIntent(Intents.of(group));
+            if (group.equals(chatFilter)) {
+                this.binding.navigationView.setCheckedItem(menuItemSpace);
+            }
         }
     }
 
@@ -135,14 +143,19 @@ public class OverviewFragment extends Fragment {
             menuItemAccounts.setVisible(false);
             return;
         }
+        final var chatFilter = this.overviewViewModel.getChatFilter();
         menuItemAccounts.setVisible(true);
         final var subMenu = menuItemAccounts.getSubMenu();
         subMenu.clear();
         for (final AccountIdentifier account : accounts) {
-            final var menuItemAccount = subMenu.add(account.address);
+            final var menuItemAccount =
+                    subMenu.add(Menu.NONE, IDs.quickInt(), Menu.NONE, account.address);
             menuItemAccount.setCheckable(true);
             menuItemAccount.setIcon(R.drawable.ic_person_24dp);
             menuItemAccount.setIntent(Intents.of(account));
+            if (account.equals(chatFilter)) {
+                this.binding.navigationView.setCheckedItem(menuItemAccount);
+            }
         }
     }
 }
