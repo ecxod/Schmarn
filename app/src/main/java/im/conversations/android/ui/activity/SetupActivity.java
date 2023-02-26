@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import im.conversations.android.R;
 import im.conversations.android.SetupNavigationDirections;
 import im.conversations.android.databinding.ActivitySetupBinding;
@@ -30,7 +31,17 @@ public class SetupActivity extends BaseActivity {
                 new ViewModelProvider(this, getDefaultViewModelProviderFactory());
         this.setupViewModel = viewModelProvider.get(SetupViewModel.class);
         this.setupViewModel.getRedirection().observe(this, this::onRedirectionEvent);
+        this.setupViewModel.getGenericErrorEvent().observe(this, this::onGenericErrorEvent);
         Activities.setStatusAndNavigationBarColors(this, binding.getRoot());
+    }
+
+    private void onGenericErrorEvent(final Event<String> errorEvent) {
+        if (errorEvent.isConsumable()) {
+            new MaterialAlertDialogBuilder(this)
+                    .setMessage(errorEvent.consume())
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+        }
     }
 
     private void onRedirectionEvent(final Event<SetupViewModel.Target> targetEvent) {

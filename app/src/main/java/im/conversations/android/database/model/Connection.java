@@ -1,5 +1,7 @@
 package im.conversations.android.database.model;
 
+import com.google.common.base.MoreObjects;
+
 public class Connection {
 
     public final String hostname;
@@ -10,5 +12,14 @@ public class Connection {
         this.hostname = hostname;
         this.port = port;
         this.directTls = directTls;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("hostname", hostname)
+                .add("port", port)
+                .add("directTls", directTls)
+                .toString();
     }
 }

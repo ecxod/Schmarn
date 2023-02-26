@@ -11,6 +11,7 @@ import im.conversations.android.database.CredentialStore;
 import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.AccountIdentifier;
+import im.conversations.android.database.model.Connection;
 import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.RegistrationManager;
@@ -74,7 +75,7 @@ public class AccountRepository extends AbstractRepository {
     }
 
     public ListenableFuture<Void> deleteAccountAsync(@NonNull Account account) {
-        return Futures.submit(() -> deleteAccount(account), IO_EXECUTOR);
+        return Futures.submit(() -> deleteAccount(account), database.getQueryExecutor());
     }
 
     private Void deleteAccount(@NonNull Account account) {
@@ -86,7 +87,7 @@ public class AccountRepository extends AbstractRepository {
     public ListenableFuture<XmppConnection> getConnectedFuture(@NonNull final Account account) {
         final var optional = ConnectionPool.getInstance(context).get(account);
         if (optional.isPresent()) {
-            return optional.get().asConnectedFuture();
+            return optional.get().asConnectedFuture(false);
         } else {
             return Futures.immediateFailedFuture(
                     new IllegalStateException(
@@ -102,6 +103,18 @@ public class AccountRepository extends AbstractRepository {
     private Account setPassword(@NonNull Account account, @NonNull String password)
             throws GeneralSecurityException, IOException {
         CredentialStore.getInstance(context).setPassword(account, password);
+        ConnectionPool.getInstance(context).reconnect(account);
+        return account;
+    }
+
+    public ListenableFuture<Account> setConnectionAsync(
+            final Account account, final Connection connection) {
+        return Futures.submit(
+                () -> setConnection(account, connection), database.getQueryExecutor());
+    }
+
+    public Account setConnection(final Account account, final Connection connection) {
+        database.accountDao().setConnection(account, connection);
         ConnectionPool.getInstance(context).reconnect(account);
         return account;
     }

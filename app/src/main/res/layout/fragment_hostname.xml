@@ -102,10 +102,10 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginHorizontal="4dp"
-                            android:layout_weight="3"
+                            android:layout_weight="5"
                             android:enabled="@{!setupViewModel.isLoading()}"
                             android:hint="@string/account_settings_hostname"
-                            app:errorText="@{setupViewModel.xmppAddressError}">
+                            app:errorText="@{setupViewModel.hostnameError}">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/hostname"
@@ -124,10 +124,10 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginHorizontal="4dp"
-                            android:layout_weight="1"
+                            android:layout_weight="2"
                             android:enabled="@{!setupViewModel.isLoading()}"
                             android:hint="@string/account_settings_port"
-                            app:errorText="@{setupViewModel.xmppAddressError}">
+                            app:errorText="@{setupViewModel.portError}">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/port"
@@ -136,6 +136,7 @@
                                 android:imeOptions="flagNoExtractUi|actionNext"
                                 android:inputType="number"
                                 android:maxLines="1"
+                                android:maxLength="5"
                                 android:text="@={setupViewModel.port}"
                                 app:editorAction="@{()->setupViewModel.submitHostname()}" />
                         </com.google.android.material.textfield.TextInputLayout>

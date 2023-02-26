@@ -6,19 +6,24 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Strings;
+import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import im.conversations.android.R;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.database.model.Connection;
 import im.conversations.android.repository.AccountRepository;
 import im.conversations.android.ui.Event;
+import im.conversations.android.util.ConnectionStates;
 import im.conversations.android.xmpp.ConnectionException;
 import im.conversations.android.xmpp.ConnectionState;
 import im.conversations.android.xmpp.XmppConnection;
 import java.util.Arrays;
+import java.util.Locale;
 import org.jetbrains.annotations.NotNull;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -35,8 +40,12 @@ public class SetupViewModel extends AndroidViewModel {
     private final MutableLiveData<String> password = new MutableLiveData<>();
     private final MutableLiveData<String> passwordError = new MutableLiveData<>();
     private final MutableLiveData<String> hostname = new MutableLiveData<>();
+    private final MutableLiveData<String> hostnameError = new MutableLiveData<>();
     private final MutableLiveData<String> port = new MutableLiveData<>();
+    private final MutableLiveData<String> portError = new MutableLiveData<>();
     private final MutableLiveData<Boolean> opportunisticTls = new MutableLiveData<>();
+
+    private final MutableLiveData<Event<String>> genericErrorEvent = new MutableLiveData<>();
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
 
     private final MutableLiveData<Event<Target>> redirection = new MutableLiveData<>();
@@ -54,6 +63,9 @@ public class SetupViewModel extends AndroidViewModel {
                 .observeForever(s -> xmppAddressError.postValue(null));
         Transformations.distinctUntilChanged(password)
                 .observeForever(s -> passwordError.postValue(null));
+        Transformations.distinctUntilChanged(port).observeForever(s -> portError.postValue(null));
+        Transformations.distinctUntilChanged(hostname)
+                .observeForever(s -> hostnameError.postValue(null));
     }
 
     public LiveData<Boolean> isLoading() {
@@ -76,8 +88,16 @@ public class SetupViewModel extends AndroidViewModel {
         return hostname;
     }
 
+    public LiveData<String> getHostnameError() {
+        return this.hostnameError;
+    }
+
     public MutableLiveData<String> getPort() {
         return port;
+    }
+
+    public LiveData<String> getPortError() {
+        return this.portError;
     }
 
     public MutableLiveData<Boolean> getOpportunisticTls() {
@@ -86,6 +106,10 @@ public class SetupViewModel extends AndroidViewModel {
 
     public LiveData<String> getPasswordError() {
         return Transformations.distinctUntilChanged(this.passwordError);
+    }
+
+    public LiveData<Event<String>> getGenericErrorEvent() {
+        return this.genericErrorEvent;
     }
 
     public boolean submitXmppAddress() {
@@ -111,6 +135,14 @@ public class SetupViewModel extends AndroidViewModel {
                 return true;
             } else {
                 this.account = null;
+
+                // when the XMPP address changes we want to reset connection info too
+                // this is partially to indicate that Conversations might not actually use those
+                // connection settings if the connection works without them
+                this.hostname.setValue(null);
+                this.port.setValue(null);
+                this.opportunisticTls.setValue(false);
+
                 this.accountRepository.deleteAccountAsync(account);
             }
         }
@@ -210,7 +242,8 @@ public class SetupViewModel extends AndroidViewModel {
                 return;
             }
         }
-        // TODO show generic error
+        this.genericErrorEvent.postValue(
+                new Event<>(getApplication().getString(ConnectionStates.toStringRes(state))));
     }
 
     private boolean redirectIfNecessary(final Target current, final Target next) {
@@ -231,7 +264,37 @@ public class SetupViewModel extends AndroidViewModel {
             this.redirectIfNecessary(Target.ENTER_HOSTNAME, Target.ENTER_ADDRESS);
             return true;
         }
+        final String hostname =
+                Strings.nullToEmpty(this.hostname.getValue()).trim().toLowerCase(Locale.ROOT);
+        if (hostname.isEmpty() || CharMatcher.whitespace().matchesAnyOf(hostname)) {
+            this.hostnameError.postValue(getApplication().getString(R.string.not_valid_hostname));
+            return true;
+        }
+        final Integer port = Ints.tryParse(Strings.nullToEmpty(this.port.getValue()));
+        if (port == null || port < 0 || port > 65535) {
+            this.portError.postValue(getApplication().getString(R.string.invalid));
+            return true;
+        }
+        final boolean directTls = Boolean.FALSE.equals(this.opportunisticTls.getValue());
+        final var connection = new Connection(hostname, port, directTls);
+        final var setConnectionFuture =
+                this.accountRepository.setConnectionAsync(account, connection);
+        this.setCurrentOperation(setConnectionFuture);
+        Futures.addCallback(
+                setConnectionFuture,
+                new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(final Account result) {
+                        decideNextStep(Target.ENTER_HOSTNAME, account);
+                    }
 
+                    @Override
+                    public void onFailure(@NonNull final Throwable throwable) {
+                        loading.postValue(false);
+                        // TODO error message?!
+                    }
+                },
+                MoreExecutors.directExecutor());
         return true;
     }
 

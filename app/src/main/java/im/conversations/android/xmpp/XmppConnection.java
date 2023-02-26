@@ -78,6 +78,7 @@ import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -97,7 +98,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
-import okhttp3.HttpUrl;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
@@ -151,7 +151,6 @@ public class XmppConnection implements Runnable {
     private final PendingItem<SettableFuture<XmppConnection>> connectedFuture = new PendingItem<>();
     private SaslMechanism saslMechanism;
     private HashedToken.Mechanism hashTokenRequest;
-    private HttpUrl redirectionUrl = null;
     private String verifiedHostname = null;
     private volatile Thread mThread;
     private CountDownLatch mStreamCountDownLatch;
@@ -1392,26 +1391,12 @@ public class XmppConnection implements Runnable {
         return bind;
     }
 
-    private void setAccountCreationFailed(final String url) {
-        final HttpUrl httpUrl = url == null ? null : HttpUrl.parse(url);
-        if (httpUrl != null && httpUrl.isHttps()) {
-            this.redirectionUrl = httpUrl;
-            throw new StateChangingError(ConnectionState.REGISTRATION_WEB);
-        }
-        throw new StateChangingError(ConnectionState.REGISTRATION_FAILED);
-    }
-
-    public HttpUrl getRedirectionUrl() {
-        return this.redirectionUrl;
-    }
-
     public void resetEverything() {
         resetAttemptCount(true);
         resetStreamId();
         clearIqCallbacks();
         this.stanzasSent = 0;
         mStanzaQueue.clear();
-        this.redirectionUrl = null;
         this.saslMechanism = null;
     }
 
@@ -1892,13 +1877,19 @@ public class XmppConnection implements Runnable {
         this.statusListener = listener;
     }
 
-    public ListenableFuture<XmppConnection> asConnectedFuture() {
+    public ListenableFuture<XmppConnection> asConnectedFuture(final boolean waitOnError) {
         synchronized (this) {
+            final var state = this.connectionState;
             // TODO some more permanent errors like 'unauthorized' should also return immediate
             if (this.connectionState == ConnectionState.ONLINE) {
                 return Futures.immediateFuture(this);
+            } else if (Arrays.asList(ConnectionState.OFFLINE, ConnectionState.CONNECTING)
+                            .contains(state)
+                    || waitOnError) {
+                return this.connectedFuture.peekOrCreate(SettableFuture::create);
+            } else {
+                return Futures.immediateFailedFuture(new ConnectionException(state));
             }
-            return this.connectedFuture.peekOrCreate(SettableFuture::create);
         }
     }
 
