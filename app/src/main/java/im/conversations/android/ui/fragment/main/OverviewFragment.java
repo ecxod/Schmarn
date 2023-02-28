@@ -7,9 +7,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.elevation.SurfaceColors;
@@ -71,7 +73,35 @@ public class OverviewFragment extends Fragment {
         this.overviewViewModel
                 .getChatFilterAvailable()
                 .observe(getViewLifecycleOwner(), this::onChatFilterAvailable);
+        this.configureDrawerLayoutToCloseOnBackPress();
         return binding.getRoot();
+    }
+
+    private void configureDrawerLayoutToCloseOnBackPress() {
+        final OnBackPressedCallback onBackPressedCallback =
+                new OnBackPressedCallback(false) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        binding.drawerLayout.close();
+                    }
+                };
+        this.binding.drawerLayout.addDrawerListener(
+                new DrawerLayout.SimpleDrawerListener() {
+                    @Override
+                    public void onDrawerOpened(View drawerView) {
+                        super.onDrawerOpened(drawerView);
+                        onBackPressedCallback.setEnabled(true);
+                    }
+
+                    @Override
+                    public void onDrawerClosed(View drawerView) {
+                        super.onDrawerClosed(drawerView);
+                        onBackPressedCallback.setEnabled(false);
+                    }
+                });
+        requireActivity()
+                .getOnBackPressedDispatcher()
+                .addCallback(getViewLifecycleOwner(), onBackPressedCallback);
     }
 
     private boolean onNavigationItemSelected(final MenuItem menuItem) {
