@@ -15,7 +15,9 @@ import im.conversations.android.database.entity.AxolotlPreKeyEntity;
 import im.conversations.android.database.entity.AxolotlSessionEntity;
 import im.conversations.android.database.entity.AxolotlSignedPreKeyEntity;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.database.model.Trust;
 import im.conversations.android.xmpp.model.error.Condition;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -123,15 +125,30 @@ public abstract class AxolotlDao {
 
     @Transaction
     public boolean setIdentity(
-            Account account, BareJid address, int deviceId, IdentityKey identityKey) {
+            final Account account,
+            final BareJid address,
+            final int deviceId,
+            final IdentityKey identityKey,
+            final Trust trust) {
         final var existing = getIdentityKey(account.id, address, deviceId);
         if (existing == null || !existing.equals(identityKey)) {
-            insert(AxolotlIdentityEntity.of(account, address, deviceId, identityKey));
+            insert(AxolotlIdentityEntity.of(account, address, deviceId, identityKey, trust));
             return true;
         } else {
             return false;
         }
     }
+
+    public boolean isAnyIdentityVerified(final Account account, final BareJid address) {
+        return isAnyIdentityTrustStatus(
+                account.id, address, Arrays.asList(Trust.VERIFIED, Trust.VERIFIED_X509));
+    }
+
+    @Query(
+            "SELECT EXISTS (SELECT id FROM axolotl_identity WHERE accountId=:account AND"
+                    + " address=:address AND trust IN(:trusts))")
+    abstract boolean isAnyIdentityTrustStatus(
+            long account, BareJid address, Collection<Trust> trusts);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     protected abstract void insert(AxolotlIdentityEntity axolotlIdentityEntity);

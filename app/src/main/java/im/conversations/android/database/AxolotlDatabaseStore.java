@@ -4,6 +4,7 @@ import im.conversations.android.AbstractAccountService;
 import im.conversations.android.axolotl.AxolotlAddress;
 import im.conversations.android.database.dao.AxolotlDao;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.database.model.Trust;
 import java.util.List;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
@@ -39,8 +40,24 @@ public class AxolotlDatabaseStore extends AbstractAccountService implements Sign
     public boolean saveIdentity(
             final SignalProtocolAddress signalProtocolAddress, IdentityKey identityKey) {
         final var address = AxolotlAddress.cast(signalProtocolAddress);
-        return axolotlDao()
-                .setIdentity(account, address.getJid(), address.getDeviceId(), identityKey);
+        final boolean isBTBVEnabled = true;
+        return database.runInTransaction(
+                () -> {
+                    final Trust trust;
+                    if (!isBTBVEnabled
+                            || axolotlDao().isAnyIdentityVerified(account, address.getJid())) {
+                        trust = Trust.UNDECIDED;
+                    } else {
+                        trust = Trust.TRUSTED;
+                    }
+                    return axolotlDao()
+                            .setIdentity(
+                                    account,
+                                    address.getJid(),
+                                    address.getDeviceId(),
+                                    identityKey,
+                                    trust);
+                });
     }
 
     @Override

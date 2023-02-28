@@ -46,7 +46,7 @@ public class MessageTransformationTest {
 
     @Before
     public void setupTransformer() throws ExecutionException, InterruptedException {
-        Context context = ApplicationProvider.getApplicationContext();
+        final Context context = ApplicationProvider.getApplicationContext();
         this.database = Room.inMemoryDatabaseBuilder(context, ConversationsDatabase.class).build();
         final var account = new AccountEntity();
         account.address = ACCOUNT;
