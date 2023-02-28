@@ -2,9 +2,12 @@ package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -51,7 +54,7 @@ import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.KeyHelper;
 
-public class AxolotlManager extends AbstractManager {
+public class AxolotlManager extends AbstractManager implements AxolotlService.PostDecryptionHook {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AxolotlManager.class);
 
@@ -64,6 +67,7 @@ public class AxolotlManager extends AbstractManager {
         this.axolotlService =
                 new AxolotlService(
                         connection.getAccount(), ConversationsDatabase.getInstance(context));
+        this.axolotlService.setPostDecryptionHook(this);
     }
 
     public AxolotlService getAxolotlService() {
@@ -301,7 +305,6 @@ public class AxolotlManager extends AbstractManager {
                 signedPreKeyRecord.getKeyPair().getPublicKey(),
                 signedPreKeyRecord.getSignature());
         bundle.addPreKeys(getDatabase().axolotlDao().getPreKeys(getAccount().id));
-        LOGGER.info("bundle {}", bundle);
         return bundle;
     }
 
@@ -491,5 +494,64 @@ public class AxolotlManager extends AbstractManager {
 
     private SignalProtocolStore signalProtocolStore() {
         return this.axolotlService.getSignalProtocolStore();
+    }
+
+    @Override
+    public void executeHook(final Set<AxolotlAddress> freshSessions) {
+        for (final AxolotlAddress axolotlAddress : freshSessions) {
+            LOGGER.info(
+                    "fresh session from {}/{}",
+                    axolotlAddress.getJid(),
+                    axolotlAddress.getDeviceId());
+        }
+    }
+
+    @Override
+    public void executeHook(Multimap<BareJid, Integer> devicesNotInPep) {
+        for (final Map.Entry<BareJid, Collection<Integer>> entries :
+                devicesNotInPep.asMap().entrySet()) {
+            if (entries.getValue().isEmpty()) {
+                continue;
+            }
+            // Warning. This will leak our resource to anyone who knows our jid + device id
+            // TODO we could limit this to addresses in our roster; however the point of this
+            // exercise is mostly to improve reliability with people not in our roster
+            confirmDeviceInPep(entries.getKey(), ImmutableSet.copyOf(entries.getValue()));
+        }
+    }
+
+    private void confirmDeviceInPep(final BareJid address, final Set<Integer> devices) {
+        final var deviceListFuture = this.fetchDeviceIds(address);
+        final var caughtDeviceListFuture =
+                Futures.catching(
+                        deviceListFuture,
+                        Exception.class,
+                        (Function<Exception, Set<Integer>>) input -> Collections.emptySet(),
+                        MoreExecutors.directExecutor());
+        Futures.addCallback(
+                caughtDeviceListFuture,
+                new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(final Set<Integer> devicesInPep) {
+                        final Set<Integer> unconfirmedDevices =
+                                Sets.difference(devices, devicesInPep);
+                        if (unconfirmedDevices.isEmpty()) {
+                            return;
+                        }
+                        LOGGER.info(
+                                "Found unconfirmed devices for {}: {}",
+                                address,
+                                unconfirmedDevices);
+                        getDatabase()
+                                .axolotlDao()
+                                .setUnconfirmedDevices(getAccount(), address, unconfirmedDevices);
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Throwable throwable) {
+                        LOGGER.error("Could not confirm device list for {}", address, throwable);
+                    }
+                },
+                getDatabase().getQueryExecutor());
     }
 }

@@ -29,10 +29,14 @@ public class AxolotlDeviceListItemEntity {
 
     public Integer deviceId;
 
-    public static AxolotlDeviceListItemEntity of(final long deviceListId, final int deviceId) {
+    public boolean confirmedInPep;
+
+    public static AxolotlDeviceListItemEntity of(
+            final long deviceListId, final int deviceId, final boolean confirmedInPep) {
         final var entity = new AxolotlDeviceListItemEntity();
         entity.deviceListId = deviceListId;
         entity.deviceId = deviceId;
+        entity.confirmedInPep = confirmedInPep;
         return entity;
     }
 }

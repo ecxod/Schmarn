@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a619bdeae0408fc2250a0bf2b9ab1f4e",
+    "identityHash": "983b8fb918cf0019a31e3a59b37dc368",
     "entities": [
       {
         "tableName": "account",
@@ -362,7 +362,7 @@
       },
       {
         "tableName": "axolotl_device_list_item",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `deviceListId` INTEGER NOT NULL, `deviceId` INTEGER, FOREIGN KEY(`deviceListId`) REFERENCES `axolotl_device_list`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `deviceListId` INTEGER NOT NULL, `deviceId` INTEGER, `confirmedInPep` INTEGER NOT NULL, FOREIGN KEY(`deviceListId`) REFERENCES `axolotl_device_list`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -381,6 +381,12 @@
             "columnName": "deviceId",
             "affinity": "INTEGER",
             "notNull": false
+          },
+          {
+            "fieldPath": "confirmedInPep",
+            "columnName": "confirmedInPep",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -2364,7 +2370,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a619bdeae0408fc2250a0bf2b9ab1f4e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '983b8fb918cf0019a31e3a59b37dc368')"
     ]
   }
 }

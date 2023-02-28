@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Transaction;
 import com.google.common.collect.Collections2;
+import im.conversations.android.axolotl.AxolotlAddress;
 import im.conversations.android.database.entity.AxolotlDeviceListEntity;
 import im.conversations.android.database.entity.AxolotlDeviceListItemEntity;
 import im.conversations.android.database.entity.AxolotlIdentityEntity;
@@ -35,13 +36,33 @@ public abstract class AxolotlDao {
     @Insert
     protected abstract void insert(Collection<AxolotlDeviceListItemEntity> entities);
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    protected abstract void insertUnconfirmed(Collection<AxolotlDeviceListItemEntity> entities);
+
     @Transaction
     public void setDeviceList(Account account, BareJid from, Set<Integer> deviceIds) {
         final var listId = insert(AxolotlDeviceListEntity.of(account.id, from));
         insert(
                 Collections2.transform(
-                        deviceIds, deviceId -> AxolotlDeviceListItemEntity.of(listId, deviceId)));
+                        deviceIds,
+                        deviceId -> AxolotlDeviceListItemEntity.of(listId, deviceId, true)));
     }
+
+    @Transaction
+    public void setUnconfirmedDevices(
+            final Account account, final BareJid address, Set<Integer> unconfirmedDeviceIds) {
+        final Long listId = getDeviceListId(account.id, address);
+        if (listId == null) {
+            return;
+        }
+        insertUnconfirmed(
+                Collections2.transform(
+                        unconfirmedDeviceIds,
+                        deviceId -> AxolotlDeviceListItemEntity.of(listId, deviceId, false)));
+    }
+
+    @Query("SELECT id FROM axolotl_device_list WHERE accountId=:account AND address=:address")
+    abstract Long getDeviceListId(long account, final BareJid address);
 
     @Query(
             "SELECT EXISTS(SELECT deviceId FROM axolotl_device_list JOIN axolotl_device_list_item"
@@ -49,6 +70,10 @@ public abstract class AxolotlDao {
                     + " accountId=:account AND address=:address AND deviceId=:deviceId)")
     public abstract boolean hasDeviceId(
             final long account, final BareJid address, final int deviceId);
+
+    public boolean hasDeviceId(final Account account, final AxolotlAddress axolotlAddress) {
+        return hasDeviceId(account.id, axolotlAddress.getJid(), axolotlAddress.getDeviceId());
+    }
 
     @Transaction
     public void setDeviceListError(

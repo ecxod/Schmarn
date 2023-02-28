@@ -2,6 +2,10 @@ package im.conversations.android.axolotl;
 
 import android.os.Build;
 import com.google.common.base.Optional;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 import eu.siacs.conversations.xmpp.jingle.OmemoVerification;
 import im.conversations.android.AbstractAccountService;
 import im.conversations.android.database.AxolotlDatabaseStore;
@@ -14,6 +18,8 @@ import im.conversations.android.xmpp.model.axolotl.Payload;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.util.HashSet;
+import java.util.Set;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -21,6 +27,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +56,19 @@ public class AxolotlService extends AbstractAccountService {
 
     private final SignalProtocolStore signalProtocolStore;
 
+    private PostDecryptionHook postDecryptionHook;
+
+    private final Set<AxolotlAddress> freshSessions = new HashSet<>();
+    private final Multimap<BareJid, Integer> devicesNotInPep = ArrayListMultimap.create();
+
     public AxolotlService(
             final Account account, final ConversationsDatabase conversationsDatabase) {
         super(account, conversationsDatabase);
         this.signalProtocolStore = new AxolotlDatabaseStore(account, conversationsDatabase);
+    }
+
+    public void setPostDecryptionHook(final PostDecryptionHook postDecryptionHook) {
+        this.postDecryptionHook = postDecryptionHook;
     }
 
     private AxolotlSession buildReceivingSession(
@@ -88,8 +104,9 @@ public class AxolotlService extends AbstractAccountService {
 
     public AxolotlPayload decrypt(final Jid from, final Encrypted encrypted)
             throws AxolotlDecryptionException {
+        final AxolotlPayload axolotlPayload;
         try {
-            return decryptOrThrow(from, encrypted);
+            axolotlPayload = decryptOrThrow(from, encrypted);
         } catch (final IllegalArgumentException
                 | NotEncryptedForThisDeviceException
                 | InvalidMessageException
@@ -110,6 +127,8 @@ public class AxolotlService extends AbstractAccountService {
                 | BadPaddingException e) {
             throw new AxolotlDecryptionException(e);
         }
+        registerForHook(axolotlPayload);
+        return axolotlPayload;
     }
 
     private AxolotlPayload decryptOrThrow(final Jid from, final Encrypted encrypted)
@@ -151,9 +170,10 @@ public class AxolotlService extends AbstractAccountService {
             throw new OutdatedSenderException(
                     "Key did not contain auth tag. Sender needs to update their OMEMO client");
         }
+        final var inDeviceList = database.axolotlDao().hasDeviceId(account, session.axolotlAddress);
         if (payload == null) {
             return new AxolotlPayload(
-                    session.axolotlAddress, session.identityKey, preKeyMessage, null);
+                    session.axolotlAddress, session.identityKey, preKeyMessage, inDeviceList, null);
         }
         final byte[] key = new byte[16];
         final byte[] authTag = new byte[16];
@@ -175,7 +195,44 @@ public class AxolotlService extends AbstractAccountService {
         System.arraycopy(authTag, 0, payloadWithAuthTag, payloadAsBytes.length, authTag.length);
         final byte[] decryptedPayload = cipher.doFinal(payloadWithAuthTag);
         return new AxolotlPayload(
-                session.axolotlAddress, session.identityKey, preKeyMessage, decryptedPayload);
+                session.axolotlAddress,
+                session.identityKey,
+                preKeyMessage,
+                inDeviceList,
+                decryptedPayload);
+    }
+
+    private void registerForHook(final AxolotlPayload axolotlPayload) {
+        synchronized (this.freshSessions) {
+            if (axolotlPayload.preKeyMessage) {
+                this.freshSessions.add(axolotlPayload.axolotlAddress);
+            }
+        }
+        synchronized (this.devicesNotInPep) {
+            if (!axolotlPayload.inDeviceList) {
+                this.devicesNotInPep.put(
+                        axolotlPayload.axolotlAddress.getJid(),
+                        axolotlPayload.axolotlAddress.getDeviceId());
+            }
+        }
+    }
+
+    public void executePostDecryptionHook() {
+        final var hook = this.postDecryptionHook;
+        if (hook == null) {
+            return;
+        }
+        final Set<AxolotlAddress> freshSessions;
+        synchronized (this.freshSessions) {
+            freshSessions = ImmutableSet.copyOf(this.freshSessions);
+            this.freshSessions.clear();
+        }
+        final Multimap<BareJid, Integer> devicesNotInPep;
+        synchronized (this.devicesNotInPep) {
+            devicesNotInPep = ImmutableMultimap.copyOf(this.devicesNotInPep);
+        }
+        hook.executeHook(freshSessions);
+        hook.executeHook(devicesNotInPep);
     }
 
     public SignalProtocolStore getSignalProtocolStore() {
@@ -211,5 +268,11 @@ public class AxolotlService extends AbstractAccountService {
         public NotVerifiedException(String message) {
             super(message);
         }
+    }
+
+    public interface PostDecryptionHook {
+        void executeHook(final Set<AxolotlAddress> freshSessions);
+
+        void executeHook(final Multimap<BareJid, Integer> devicesNotInPep);
     }
 }

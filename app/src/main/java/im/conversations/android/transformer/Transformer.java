@@ -47,7 +47,12 @@ public class Transformer {
     }
 
     public boolean transform(final MessageTransformation transformation) {
-        return database.runInTransaction(() -> transform(database, transformation));
+        return database.runInTransaction(
+                () -> {
+                    final var sendDeliveryReceipts = transform(database, transformation);
+                    axolotlService.executePostDecryptionHook();
+                    return sendDeliveryReceipts;
+                });
     }
 
     /**

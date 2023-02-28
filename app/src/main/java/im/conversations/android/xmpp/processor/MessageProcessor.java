@@ -70,7 +70,7 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
             return;
         }
 
-        LOGGER.info(
+        LOGGER.debug(
                 "Message from {} with {} in level {}",
                 message.getFrom(),
                 message.getExtensionIds(),
