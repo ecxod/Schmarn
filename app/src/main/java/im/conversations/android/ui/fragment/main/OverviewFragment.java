@@ -36,6 +36,14 @@ public class OverviewFragment extends Fragment {
 
     private FragmentOverviewBinding binding;
 
+    final OnBackPressedCallback drawerLayoutOnBackPressedCallback =
+            new OnBackPressedCallback(false) {
+                @Override
+                public void handleOnBackPressed() {
+                    binding.drawerLayout.close();
+                }
+            };
+
     private OverviewViewModel overviewViewModel;
 
     @Override
@@ -77,31 +85,32 @@ public class OverviewFragment extends Fragment {
         return binding.getRoot();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // after rotation (or similar) the drawer layout might get opened in restoreInstanceState
+        // therefor we need to check again if we need to enable the callback
+        this.drawerLayoutOnBackPressedCallback.setEnabled(this.binding.drawerLayout.isOpen());
+    }
+
     private void configureDrawerLayoutToCloseOnBackPress() {
-        final OnBackPressedCallback onBackPressedCallback =
-                new OnBackPressedCallback(false) {
-                    @Override
-                    public void handleOnBackPressed() {
-                        binding.drawerLayout.close();
-                    }
-                };
         this.binding.drawerLayout.addDrawerListener(
                 new DrawerLayout.SimpleDrawerListener() {
                     @Override
-                    public void onDrawerOpened(View drawerView) {
+                    public void onDrawerOpened(final View drawerView) {
                         super.onDrawerOpened(drawerView);
-                        onBackPressedCallback.setEnabled(true);
+                        drawerLayoutOnBackPressedCallback.setEnabled(true);
                     }
 
                     @Override
-                    public void onDrawerClosed(View drawerView) {
+                    public void onDrawerClosed(final View drawerView) {
                         super.onDrawerClosed(drawerView);
-                        onBackPressedCallback.setEnabled(false);
+                        drawerLayoutOnBackPressedCallback.setEnabled(false);
                     }
                 });
         requireActivity()
                 .getOnBackPressedDispatcher()
-                .addCallback(getViewLifecycleOwner(), onBackPressedCallback);
+                .addCallback(getViewLifecycleOwner(), this.drawerLayoutOnBackPressedCallback);
     }
 
     private boolean onNavigationItemSelected(final MenuItem menuItem) {

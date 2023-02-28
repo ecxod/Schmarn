@@ -38,7 +38,7 @@ public class AxolotlDatabaseStore extends AbstractAccountService implements Sign
 
     @Override
     public boolean saveIdentity(
-            final SignalProtocolAddress signalProtocolAddress, IdentityKey identityKey) {
+            final SignalProtocolAddress signalProtocolAddress, final IdentityKey identityKey) {
         final var address = AxolotlAddress.cast(signalProtocolAddress);
         final boolean isBTBVEnabled = true;
         return database.runInTransaction(
