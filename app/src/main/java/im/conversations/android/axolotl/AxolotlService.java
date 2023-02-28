@@ -96,6 +96,9 @@ public class AxolotlService extends AbstractAccountService {
             throws NoSessionException {
         final var session = getExistingSession(axolotlAddress);
         if (session == null) {
+            // TODO When receiving a message that is not an OMEMOKeyExchange from a device there is
+            // no session with, clients SHOULD create a session with that device and notify it about
+            // the new session by responding with an empty OMEMO message as per Sending a message.
             throw new NoSessionException(
                     String.format("No session for %s", axolotlAddress.toString()));
         }
@@ -166,14 +169,14 @@ public class AxolotlService extends AbstractAccountService {
                             new AxolotlAddress(from.asBareJid(), header.getSourceDevice().get()));
             keyWithAuthTag = session.sessionCipher.decrypt(signalMessage);
         }
-        if (keyWithAuthTag.length < 32) {
-            throw new OutdatedSenderException(
-                    "Key did not contain auth tag. Sender needs to update their OMEMO client");
-        }
         final var inDeviceList = database.axolotlDao().hasDeviceId(account, session.axolotlAddress);
         if (payload == null) {
             return new AxolotlPayload(
                     session.axolotlAddress, session.identityKey, preKeyMessage, inDeviceList, null);
+        }
+        if (keyWithAuthTag.length < 32) {
+            throw new OutdatedSenderException(
+                    "Key did not contain auth tag. Sender needs to update their OMEMO client");
         }
         final byte[] key = new byte[16];
         final byte[] authTag = new byte[16];

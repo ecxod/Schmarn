@@ -31,7 +31,7 @@ public class EncryptionBuilder {
 
     private Long sourceDeviceId;
 
-    private ArrayList<AxolotlSession> sessions;
+    private final ArrayList<AxolotlSession> sessions = new ArrayList<>();
 
     private byte[] payload;
 
@@ -76,6 +76,33 @@ public class EncryptionBuilder {
         return encrypted;
     }
 
+    public Encrypted buildKeyTransport() throws AxolotlEncryptionException {
+        try {
+            return buildKeyTransportOrThrow();
+        } catch (final UntrustedIdentityException e) {
+            throw new AxolotlEncryptionException(e);
+        }
+    }
+
+    private Encrypted buildKeyTransportOrThrow() throws UntrustedIdentityException {
+        final long sourceDeviceId =
+                Preconditions.checkNotNull(this.sourceDeviceId, "Specify a source device id");
+        Preconditions.checkState(
+                this.payload == null, "A key transport message should not have a payload");
+        // TODO key transport messages in twomemo (omemo:1) use 32 bytes of zeros instead of a key
+        // TODO if we are not using this using this for actual key transport we can do this in siacs
+        // omemo too (and get rid of the IV)
+        final var sessions = ImmutableList.copyOf(this.sessions);
+        final var key = generateKey();
+        final var iv = generateIv();
+        final var header = buildHeader(sessions, key);
+        header.addIv(iv);
+        header.setSourceDevice(sourceDeviceId);
+        final var encrypted = new Encrypted();
+        encrypted.addExtension(header);
+        return encrypted;
+    }
+
     public EncryptionBuilder payload(final String payload) {
         this.payload = payload.getBytes(StandardCharsets.UTF_8);
         return this;
@@ -97,6 +124,7 @@ public class EncryptionBuilder {
         for (final AxolotlSession session : sessions) {
             final var cipherMessage = session.sessionCipher.encrypt(keyWithAuthTag);
             final var key = header.addExtension(new Key());
+            key.setRemoteDeviceId(session.axolotlAddress.getDeviceId());
             key.setContent(cipherMessage.serialize());
             key.setIsPreKey(cipherMessage.getType() == CiphertextMessage.PREKEY_TYPE);
         }

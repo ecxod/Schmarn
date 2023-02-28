@@ -35,6 +35,7 @@ import im.conversations.android.xmpp.model.axolotl.Bundle;
 import im.conversations.android.xmpp.model.axolotl.DeviceList;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.pubsub.Items;
+import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
@@ -503,7 +504,40 @@ public class AxolotlManager extends AbstractManager implements AxolotlService.Po
                     "fresh session from {}/{}",
                     axolotlAddress.getJid(),
                     axolotlAddress.getDeviceId());
+            // After receiving an OMEMOKeyExchange and successfully building a new session, the
+            // receiving device SHOULD automatically respond with an empty OMEMO message (as per
+            // Sending a message) to the source of the OMEMOKeyExchange. This is to notify the
+            // device that the session initiation was completed successfully and that the device can
+            // stop sending OMEMOKeyExchanges.
+            sendKeyTransportToCompleteSession(axolotlAddress);
         }
+        // TODO republish device bundle
+    }
+
+    private void sendKeyTransportToCompleteSession(final AxolotlAddress axolotlAddress) {
+        final var existingSession = axolotlService.getExistingSession(axolotlAddress);
+        if (existingSession == null) {
+            return;
+        }
+        final Encrypted encrypted;
+        try {
+            encrypted =
+                    new EncryptionBuilder()
+                            .session(existingSession)
+                            .sourceDeviceId(signalProtocolStore().getLocalRegistrationId())
+                            .buildKeyTransport();
+        } catch (final AxolotlEncryptionException e) {
+            LOGGER.error("Could not create key transport message to complete session", e);
+            return;
+        }
+        final var message = new Message(Message.Type.NORMAL);
+        message.setTo(axolotlAddress.getJid());
+        message.addExtension(encrypted);
+        LOGGER.info(
+                "Sending KeyTransport Message to {}/{}",
+                axolotlAddress.getJid(),
+                axolotlAddress.getDeviceId());
+        connection.sendMessagePacket(message);
     }
 
     @Override
