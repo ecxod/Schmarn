@@ -35,6 +35,8 @@ public class EncryptionBuilder {
 
     private byte[] payload;
 
+    private KeyTransport keyTransport;
+
     public Encrypted build() throws AxolotlEncryptionException {
         try {
             return buildOrThrow();
@@ -57,6 +59,8 @@ public class EncryptionBuilder {
         final long sourceDeviceId =
                 Preconditions.checkNotNull(this.sourceDeviceId, "Specify a source device id");
         final var payloadCleartext = Preconditions.checkNotNull(this.payload, "Specify a payload");
+        Preconditions.checkState(
+                this.keyTransport == null, "A payload message should not have a keyTransport");
         Preconditions.checkState(sessions.size() > 0, "Add at least on session");
         final var sessions = ImmutableList.copyOf(this.sessions);
         final var key = generateKey();
@@ -89,14 +93,37 @@ public class EncryptionBuilder {
                 Preconditions.checkNotNull(this.sourceDeviceId, "Specify a source device id");
         Preconditions.checkState(
                 this.payload == null, "A key transport message should not have a payload");
+        final var keyTransport =
+                Preconditions.checkNotNull(this.keyTransport, "Specify a keyTransport");
         // TODO key transport messages in twomemo (omemo:1) use 32 bytes of zeros instead of a key
         // TODO if we are not using this using this for actual key transport we can do this in siacs
         // omemo too (and get rid of the IV)
         final var sessions = ImmutableList.copyOf(this.sessions);
-        final var key = generateKey();
-        final var iv = generateIv();
-        final var header = buildHeader(sessions, key);
-        header.addIv(iv);
+        final var header = buildHeader(sessions, keyTransport.key);
+        header.addIv(keyTransport.iv);
+        header.setSourceDevice(sourceDeviceId);
+        final var encrypted = new Encrypted();
+        encrypted.addExtension(header);
+        return encrypted;
+    }
+
+    public Encrypted buildEmpty() throws AxolotlEncryptionException {
+        try {
+            return buildEmptyOrThrow();
+        } catch (final UntrustedIdentityException e) {
+            throw new AxolotlEncryptionException(e);
+        }
+    }
+
+    private Encrypted buildEmptyOrThrow() throws UntrustedIdentityException {
+        final long sourceDeviceId =
+                Preconditions.checkNotNull(this.sourceDeviceId, "Specify a source device id");
+        Preconditions.checkState(
+                this.payload == null, "An empty message should not have a payload");
+        Preconditions.checkState(
+                this.keyTransport == null, "An empty message should not have a keyTransport");
+        final var sessions = ImmutableList.copyOf(this.sessions);
+        final var header = buildHeader(sessions, new byte[32]);
         header.setSourceDevice(sourceDeviceId);
         final var encrypted = new Encrypted();
         encrypted.addExtension(header);
@@ -105,6 +132,11 @@ public class EncryptionBuilder {
 
     public EncryptionBuilder payload(final String payload) {
         this.payload = payload.getBytes(StandardCharsets.UTF_8);
+        return this;
+    }
+
+    public EncryptionBuilder keyTransport(final KeyTransport keyTransport) {
+        this.keyTransport = keyTransport;
         return this;
     }
 
@@ -181,5 +213,19 @@ public class EncryptionBuilder {
         final byte[] iv = new byte[12];
         Conversations.SECURE_RANDOM.nextBytes(iv);
         return iv;
+    }
+
+    public static KeyTransport createKeyTransport() {
+        return new KeyTransport(generateKey(), generateIv());
+    }
+
+    public static class KeyTransport {
+        public final byte[] key;
+        public final byte[] iv;
+
+        private KeyTransport(byte[] key, byte[] iv) {
+            this.key = key;
+            this.iv = iv;
+        }
     }
 }

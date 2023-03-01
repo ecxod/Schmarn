@@ -525,7 +525,7 @@ public class AxolotlManager extends AbstractManager implements AxolotlService.Po
                     new EncryptionBuilder()
                             .session(existingSession)
                             .sourceDeviceId(signalProtocolStore().getLocalRegistrationId())
-                            .buildKeyTransport();
+                            .buildEmpty();
         } catch (final AxolotlEncryptionException e) {
             LOGGER.error("Could not create key transport message to complete session", e);
             return;
@@ -534,7 +534,7 @@ public class AxolotlManager extends AbstractManager implements AxolotlService.Po
         message.setTo(axolotlAddress.getJid());
         message.addExtension(encrypted);
         LOGGER.info(
-                "Sending KeyTransport Message to {}/{}",
+                "Sending empty axolotl message to {}/{}",
                 axolotlAddress.getJid(),
                 axolotlAddress.getDeviceId());
         connection.sendMessagePacket(message);
