@@ -1,6 +1,8 @@
 package im.conversations.android.database;
 
+import android.content.Context;
 import im.conversations.android.AbstractAccountService;
+import im.conversations.android.AppSettings;
 import im.conversations.android.axolotl.AxolotlAddress;
 import im.conversations.android.database.dao.AxolotlDao;
 import im.conversations.android.database.model.Account;
@@ -17,9 +19,14 @@ import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 
 public class AxolotlDatabaseStore extends AbstractAccountService implements SignalProtocolStore {
 
+    private AppSettings appSettings;
+
     public AxolotlDatabaseStore(
-            final Account account, final ConversationsDatabase conversationsDatabase) {
+            final Account account,
+            final Context context,
+            final ConversationsDatabase conversationsDatabase) {
         super(account, conversationsDatabase);
+        this.appSettings = new AppSettings(context);
     }
 
     private AxolotlDao axolotlDao() {
@@ -40,7 +47,7 @@ public class AxolotlDatabaseStore extends AbstractAccountService implements Sign
     public boolean saveIdentity(
             final SignalProtocolAddress signalProtocolAddress, final IdentityKey identityKey) {
         final var address = AxolotlAddress.cast(signalProtocolAddress);
-        final boolean isBTBVEnabled = true;
+        final boolean isBTBVEnabled = appSettings.isBTBVEnabled();
         return database.runInTransaction(
                 () -> {
                     final Trust trust;

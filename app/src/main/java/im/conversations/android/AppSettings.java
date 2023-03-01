@@ -36,7 +36,7 @@ public class AppSettings {
                 .apply();
     }
 
-    public boolean isBtbv() {
+    public boolean isBTBVEnabled() {
         final SharedPreferences sharedPreferences =
                 PreferenceManager.getDefaultSharedPreferences(context);
         return sharedPreferences.getBoolean(

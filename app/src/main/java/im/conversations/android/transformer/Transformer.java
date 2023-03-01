@@ -1,5 +1,6 @@
 package im.conversations.android.transformer;
 
+import android.content.Context;
 import com.google.common.base.Preconditions;
 import im.conversations.android.axolotl.AxolotlDecryptionException;
 import im.conversations.android.axolotl.AxolotlService;
@@ -32,8 +33,14 @@ public class Transformer {
 
     private final AxolotlService axolotlService;
 
-    public Transformer(final Account account, final ConversationsDatabase conversationsDatabase) {
-        this(account, conversationsDatabase, new AxolotlService(account, conversationsDatabase));
+    public Transformer(
+            final Account account,
+            final Context context,
+            final ConversationsDatabase conversationsDatabase) {
+        this(
+                account,
+                conversationsDatabase,
+                new AxolotlService(account, context, conversationsDatabase));
     }
 
     public Transformer(

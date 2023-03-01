@@ -1,5 +1,6 @@
 package im.conversations.android.axolotl;
 
+import android.content.Context;
 import android.os.Build;
 import com.google.common.base.Optional;
 import com.google.common.collect.ArrayListMultimap;
@@ -62,9 +63,12 @@ public class AxolotlService extends AbstractAccountService {
     private final Multimap<BareJid, Integer> devicesNotInPep = ArrayListMultimap.create();
 
     public AxolotlService(
-            final Account account, final ConversationsDatabase conversationsDatabase) {
+            final Account account,
+            final Context context,
+            final ConversationsDatabase conversationsDatabase) {
         super(account, conversationsDatabase);
-        this.signalProtocolStore = new AxolotlDatabaseStore(account, conversationsDatabase);
+        this.signalProtocolStore =
+                new AxolotlDatabaseStore(account, context, conversationsDatabase);
     }
 
     public void setPostDecryptionHook(final PostDecryptionHook postDecryptionHook) {

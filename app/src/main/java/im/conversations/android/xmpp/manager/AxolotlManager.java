@@ -67,7 +67,9 @@ public class AxolotlManager extends AbstractManager implements AxolotlService.Po
         super(context, connection);
         this.axolotlService =
                 new AxolotlService(
-                        connection.getAccount(), ConversationsDatabase.getInstance(context));
+                        connection.getAccount(),
+                        context,
+                        ConversationsDatabase.getInstance(context));
         this.axolotlService.setPostDecryptionHook(this);
     }
 
