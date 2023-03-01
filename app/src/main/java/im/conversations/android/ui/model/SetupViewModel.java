@@ -26,8 +26,11 @@ import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.ConnectionState;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.TrustManager;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jxmpp.jid.BareJid;
@@ -56,13 +59,24 @@ public class SetupViewModel extends AndroidViewModel {
     private final MutableLiveData<Event<Target>> redirection = new MutableLiveData<>();
 
     private final MutableLiveData<TrustDecision> trustDecision = new MutableLiveData<>();
+    private final HashMap<ByteBuffer, Boolean> trustDecisions = new HashMap<>();
 
     private final Function<byte[], ListenableFuture<Boolean>> trustDecisionCallback =
             fingerprint -> {
+                final var decision = this.trustDecisions.get(ByteBuffer.wrap(fingerprint));
+                if (decision != null) {
+                    LOGGER.info("Using previous trust decision ({})", decision);
+                    return Futures.immediateFuture(decision);
+                }
+                LOGGER.info("Trust decision arrived in UI");
                 final SettableFuture<Boolean> settableFuture = SettableFuture.create();
                 final var trustDecision = new TrustDecision(fingerprint, settableFuture);
-                LOGGER.debug("posting trust decision");
+                final var currentOperation = this.currentOperation;
+                if (currentOperation != null) {
+                    currentOperation.cancel(false);
+                }
                 this.trustDecision.postValue(trustDecision);
+                this.redirection.postValue(new Event<>(Target.TRUST_CERTIFICATE));
                 return settableFuture;
             };
 
@@ -143,7 +157,7 @@ public class SetupViewModel extends AndroidViewModel {
             this.xmppAddressError.postValue(getApplication().getString(R.string.invalid_jid));
             return true;
         }
-
+        this.trustDecisions.clear();
         if (account != null) {
             if (account.address.equals(address)) {
                 this.accountRepository.reconnect(account);
@@ -165,6 +179,51 @@ public class SetupViewModel extends AndroidViewModel {
         }
         createAccount(address);
         return true;
+    }
+
+    public boolean trustCertificate() {
+        final var trustDecision = this.trustDecision.getValue();
+        final var account = this.account;
+        if (trustDecision == null || account == null) {
+            // TODO navigate back to sign in or show error?
+            return true;
+        }
+        LOGGER.info(
+                "trying to commit trust for fingerprint {}",
+                TrustManager.fingerprint(trustDecision.fingerprint));
+        // in case the UI interface hook gets called again before this gets written to DB
+        this.trustDecisions.put(ByteBuffer.wrap(trustDecision.fingerprint), true);
+        if (trustDecision.decision.isDone()) {
+            ConnectionPool.getInstance(getApplication()).reconnect(account);
+            LOGGER.info("it was already done. we should reconnect");
+        }
+        trustDecision.decision.set(true);
+        decideNextStep(Target.TRUST_CERTIFICATE, account);
+        return true;
+    }
+
+    public void rejectTrustDecision() {
+        final var trustDecision = this.trustDecision.getValue();
+        if (trustDecision == null) {
+            return;
+        }
+        LOGGER.info(
+                "Rejecting trust decision for {}",
+                TrustManager.fingerprint(trustDecision.fingerprint));
+        trustDecision.decision.set(false);
+        this.trustDecisions.put(ByteBuffer.wrap(trustDecision.fingerprint), false);
+    }
+
+    public LiveData<String> getFingerprint() {
+        return Transformations.map(
+                this.trustDecision,
+                td -> {
+                    if (td == null) {
+                        return null;
+                    } else {
+                        return TrustManager.fingerprint(td.fingerprint, 8);
+                    }
+                });
     }
 
     private void createAccount(final BareJid address) {
@@ -229,6 +288,8 @@ public class SetupViewModel extends AndroidViewModel {
         final var optionalTrustManager = getTrustManager();
         if (optionalTrustManager.isPresent()) {
             optionalTrustManager.get().removeUserInterfaceCallback(this.trustDecisionCallback);
+        } else {
+            LOGGER.warn("No trust manager found");
         }
     }
 
@@ -243,6 +304,7 @@ public class SetupViewModel extends AndroidViewModel {
                     public void onSuccess(final XmppConnection result) {
                         // TODO only when configured for loginAndBind
                         LOGGER.info("Account setup successful");
+                        unregisterTrustDecisionCallback();
                         SetupViewModel.this.account = null;
                         redirect(Target.DONE);
                     }
@@ -250,6 +312,10 @@ public class SetupViewModel extends AndroidViewModel {
                     @Override
                     public void onFailure(@NonNull final Throwable throwable) {
                         loading.postValue(false);
+                        if (throwable instanceof CancellationException) {
+                            LOGGER.info("connection future was cancelled");
+                            return;
+                        }
                         if (throwable instanceof ConnectionException) {
                             decideNextStep(current, ((ConnectionException) throwable));
                         } else {
@@ -317,6 +383,7 @@ public class SetupViewModel extends AndroidViewModel {
             this.portError.postValue(getApplication().getString(R.string.invalid));
             return true;
         }
+        this.trustDecisions.clear();
         final boolean directTls = Boolean.FALSE.equals(this.opportunisticTls.getValue());
         final var connection = new Connection(hostname, port, directTls);
         final var setConnectionFuture =
@@ -388,15 +455,19 @@ public class SetupViewModel extends AndroidViewModel {
         return this.redirection;
     }
 
+    @Override
     public void onCleared() {
-        super.onCleared();
+        LOGGER.info("Clearing view model");
         this.unregisterTrustDecisionCallback();
+        super.onCleared();
     }
 
     public enum Target {
         ENTER_ADDRESS,
         ENTER_PASSWORD,
         ENTER_HOSTNAME,
+
+        TRUST_CERTIFICATE,
         DONE
     }
 

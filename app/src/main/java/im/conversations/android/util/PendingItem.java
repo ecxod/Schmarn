@@ -29,7 +29,7 @@
 
 package im.conversations.android.util;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class PendingItem<T> {
 
@@ -49,10 +49,9 @@ public class PendingItem<T> {
         return item;
     }
 
-    public synchronized T peekOrCreate(final Supplier<T> supplier) {
-        if (this.item == null) {
-            this.item = supplier.get();
-        }
+    public synchronized T peekOrSwap(final Function<T, T> swap) {
+        final T item = this.item;
+        this.item = swap.apply(item);
         return this.item;
     }
 

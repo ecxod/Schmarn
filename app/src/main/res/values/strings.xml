@@ -1042,5 +1042,9 @@
     <string name="info_required">Info required</string>
     <string name="invalid">Invalid!</string>
     <string name="certificate_login">Certificate login</string>
+    <string name="potential_security_risk_ahead">Potential security risk ahead</string>
+    <string name="trust_certificate_instructions">To continue compare this SHA-256 fingerprint with that of the server certificate</string>
+    <string name="trust_certificate_warning">The server certificate is not trustworthy. If you don’t know what this means it’s best to go back!</string>
+    <string name="trust_cerficate">Trust certificate</string>
 
 </resources>

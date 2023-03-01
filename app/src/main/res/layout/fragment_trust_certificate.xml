@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright 2019-2023 Daniel Gultsch
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/app_bar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:liftOnScroll="false"
+            app:elevation="0dp">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/material_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:title="@string/app_name"
+                app:menu="@menu/activity_setup"
+                app:titleTextColor="?colorPrimary"
+                app:titleCentered="true" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                android:visibility="@{setupViewModel.isLoading() ? View.VISIBLE : View.INVISIBLE}" />
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:minHeight="@dimen/setup_main_min_height"
+                android:orientation="vertical"
+                android:padding="@dimen/setup_screen_padding">
+
+                <TextView
+                    android:id="@+id/header"
+                    android:textColor="?colorError"
+                    android:textAppearance="?textAppearanceTitleMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="@dimen/setup_screen_top_margin"
+                    android:text="@string/potential_security_risk_ahead" />
+
+                <TextView
+                    android:id="@+id/warning"
+                    android:textAppearance="?textAppearanceBodyMedium"
+                    android:textColor="?colorError"
+                    android:layout_below="@+id/header"
+                    android:layout_width="wrap_content"
+                    android:layout_marginTop="12sp"
+                    android:layout_centerHorizontal="true"
+                    android:text="@string/trust_certificate_warning"
+                    android:layout_height="wrap_content"/>
+
+                <TextView
+                    android:textAppearance="?textAppearanceBodyMedium"
+                    android:layout_below="@+id/warning"
+                    android:id="@+id/instructions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12sp"
+                    android:layout_centerHorizontal="true"
+                    android:text="@string/trust_certificate_instructions" />
+
+
+                <LinearLayout
+                    android:layout_marginVertical="24dp"
+                    android:id="@+id/password_input_layout"
+                    android:layout_width="488dp"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_below="@+id/instructions"
+                    android:gravity="center_horizontal"
+                    android:layout_gravity="center_horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?textAppearanceBodyLarge"
+                        android:textColor="?colorTertiary"
+                        android:typeface="monospace"
+                        android:text="@{setupViewModel.fingerprint}"
+                        tools:text="2B:F0:58:07:E1:A9:7F:4E\nD5:90:90:98:D5:61:39:12\n90:21:8D:83:C8:52:CB:82\n24:28:B5:43:2F:AE:81:44" />
+
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
+                    android:enabled="@{!setupViewModel.isLoading()}"
+                    android:onClick="@{(v) -> setupViewModel.trustCertificate()}"
+                    android:text="@string/trust_cerficate" />
+
+            </RelativeLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="setupViewModel"
+            type="im.conversations.android.ui.model.SetupViewModel" />
+    </data>
+</layout>

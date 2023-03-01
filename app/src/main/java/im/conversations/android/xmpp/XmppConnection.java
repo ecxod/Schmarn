@@ -1882,7 +1882,14 @@ public class XmppConnection implements Runnable {
             } else if (Arrays.asList(ConnectionState.OFFLINE, ConnectionState.CONNECTING)
                             .contains(state)
                     || waitOnError) {
-                return this.connectedFuture.peekOrCreate(SettableFuture::create);
+                return this.connectedFuture.peekOrSwap(
+                        f -> {
+                            if (f == null || f.isDone()) {
+                                return SettableFuture.create();
+                            } else {
+                                return f;
+                            }
+                        });
             } else {
                 return Futures.immediateFailedFuture(new ConnectionException(state));
             }

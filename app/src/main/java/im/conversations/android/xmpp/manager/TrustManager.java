@@ -68,6 +68,7 @@ public class TrustManager extends AbstractManager implements X509TrustManager {
         try {
             decision = Boolean.TRUE.equals(futureDecision.get(10, TimeUnit.SECONDS));
         } catch (final ExecutionException | InterruptedException | TimeoutException e) {
+            futureDecision.cancel(true);
             throw new CertificateException(
                     "Timeout waiting for user response", Throwables.getRootCause(e));
         }
@@ -97,8 +98,17 @@ public class TrustManager extends AbstractManager implements X509TrustManager {
     }
 
     public static String fingerprint(final byte[] bytes) {
-        return Joiner.on(':')
-                .join(Lists.transform(Bytes.asList(bytes), b -> String.format("%02X", b)));
+        return fingerprint(bytes, bytes.length);
+    }
+
+    public static String fingerprint(final byte[] bytes, final int segments) {
+        return Joiner.on('\n')
+                .join(
+                        Lists.transform(
+                                Lists.transform(
+                                        Lists.partition(Bytes.asList(bytes), segments),
+                                        s -> Lists.transform(s, b -> String.format("%02X", b))),
+                                hex -> Joiner.on(':').join(hex)));
     }
 
     public void setUserInterfaceCallback(

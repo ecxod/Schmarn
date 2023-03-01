@@ -55,6 +55,13 @@ public class SetupActivity extends BaseActivity {
                 case ENTER_HOSTNAME:
                     navController.navigate(SetupNavigationDirections.enterHostname());
                     break;
+                case TRUST_CERTIFICATE:
+                    final var currentDestination = navController.getCurrentDestination();
+                    if (currentDestination == null
+                            || currentDestination.getId() != R.id.certificate) {
+                        navController.navigate(SetupNavigationDirections.trustCertificate());
+                    }
+                    break;
                 case DONE:
                     startActivity(new Intent(this, MainActivity.class));
                     finish();
