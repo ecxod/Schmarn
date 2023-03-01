@@ -7,12 +7,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import im.conversations.android.R;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
@@ -20,10 +22,13 @@ import im.conversations.android.repository.AccountRepository;
 import im.conversations.android.ui.Event;
 import im.conversations.android.util.ConnectionStates;
 import im.conversations.android.xmpp.ConnectionException;
+import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.ConnectionState;
 import im.conversations.android.xmpp.XmppConnection;
+import im.conversations.android.xmpp.manager.TrustManager;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -49,6 +54,17 @@ public class SetupViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
 
     private final MutableLiveData<Event<Target>> redirection = new MutableLiveData<>();
+
+    private final MutableLiveData<TrustDecision> trustDecision = new MutableLiveData<>();
+
+    private final Function<byte[], ListenableFuture<Boolean>> trustDecisionCallback =
+            fingerprint -> {
+                final SettableFuture<Boolean> settableFuture = SettableFuture.create();
+                final var trustDecision = new TrustDecision(fingerprint, settableFuture);
+                LOGGER.debug("posting trust decision");
+                this.trustDecision.postValue(trustDecision);
+                return settableFuture;
+            };
 
     private final AccountRepository accountRepository;
 
@@ -134,6 +150,7 @@ public class SetupViewModel extends AndroidViewModel {
                 decideNextStep(Target.ENTER_ADDRESS, account);
                 return true;
             } else {
+                this.unregisterTrustDecisionCallback();
                 this.account = null;
 
                 // when the XMPP address changes we want to reset connection info too
@@ -187,7 +204,32 @@ public class SetupViewModel extends AndroidViewModel {
 
     private void setAccount(@NonNull final Account account) {
         this.account = account;
+        this.registerTrustDecisionCallback();
         this.decideNextStep(Target.ENTER_ADDRESS, account);
+    }
+
+    private Optional<TrustManager> getTrustManager() {
+        final var account = this.account;
+        if (account == null) {
+            return Optional.absent();
+        }
+        return ConnectionPool.getInstance(getApplication())
+                .get(account)
+                .transform(xc -> xc.getManager(TrustManager.class));
+    }
+
+    private void registerTrustDecisionCallback() {
+        final var optionalTrustManager = getTrustManager();
+        if (optionalTrustManager.isPresent()) {
+            optionalTrustManager.get().setUserInterfaceCallback(this.trustDecisionCallback);
+        }
+    }
+
+    private void unregisterTrustDecisionCallback() {
+        final var optionalTrustManager = getTrustManager();
+        if (optionalTrustManager.isPresent()) {
+            optionalTrustManager.get().removeUserInterfaceCallback(this.trustDecisionCallback);
+        }
     }
 
     private void decideNextStep(final Target current, @NonNull final Account account) {
@@ -336,6 +378,7 @@ public class SetupViewModel extends AndroidViewModel {
     public void cancelSetup() {
         final var account = this.account;
         if (account != null) {
+            this.unregisterTrustDecisionCallback();
             this.account = null;
             this.accountRepository.deleteAccountAsync(account);
         }
@@ -345,10 +388,25 @@ public class SetupViewModel extends AndroidViewModel {
         return this.redirection;
     }
 
+    public void onCleared() {
+        super.onCleared();
+        this.unregisterTrustDecisionCallback();
+    }
+
     public enum Target {
         ENTER_ADDRESS,
         ENTER_PASSWORD,
         ENTER_HOSTNAME,
         DONE
+    }
+
+    public static class TrustDecision {
+        public final byte[] fingerprint;
+        public final SettableFuture<Boolean> decision;
+
+        public TrustDecision(byte[] fingerprint, SettableFuture<Boolean> decision) {
+            this.fingerprint = fingerprint;
+            this.decision = decision;
+        }
     }
 }

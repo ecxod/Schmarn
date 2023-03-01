@@ -5,6 +5,7 @@
     <bool name="enter_is_send">false</bool>
     <bool name="allow_screenshots">true</bool>
     <bool name="btbv">true</bool>
+    <bool name="trust_system_ca_store">true</bool>
     <string name="omemo_setting_default" translatable="false">default_on</string>
     <string name="incoming_call_ringtone" translatable="false">content://settings/system/ringtone</string>
     <integer name="grace_period">144</integer>

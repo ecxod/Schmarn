@@ -11,6 +11,8 @@ public class AppSettings {
     public static final String PREFERENCE_KEY_RINGTONE = "call_ringtone";
     public static final String PREFERENCE_KEY_BTBV = "btbv";
 
+    public static final String PREFERENCE_KEY_TRUST_SYSTEM_CA_STORE = "trust_system_ca_store";
+
     private final Context context;
 
     public AppSettings(final Context context) {
@@ -41,5 +43,13 @@ public class AppSettings {
                 PreferenceManager.getDefaultSharedPreferences(context);
         return sharedPreferences.getBoolean(
                 PREFERENCE_KEY_BTBV, context.getResources().getBoolean(R.bool.btbv));
+    }
+
+    public boolean isTrustSystemCAStore() {
+        final SharedPreferences sharedPreferences =
+                PreferenceManager.getDefaultSharedPreferences(context);
+        return sharedPreferences.getBoolean(
+                PREFERENCE_KEY_TRUST_SYSTEM_CA_STORE,
+                context.getResources().getBoolean(R.bool.btbv));
     }
 }

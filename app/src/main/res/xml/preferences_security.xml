@@ -20,6 +20,7 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_category_server_connection">
         <SwitchPreferenceCompat
+            android:defaultValue="@bool/trust_system_ca_store"
             android:icon="@drawable/ic_assured_workload_24dp"
             android:key="trust_system_ca_store"
             android:summary="@string/pref_title_trust_system_ca_store_summary"

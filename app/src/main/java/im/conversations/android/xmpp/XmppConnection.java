@@ -28,7 +28,6 @@ import im.conversations.android.database.model.Credential;
 import im.conversations.android.dns.Resolver;
 import im.conversations.android.socks.SocksSocketFactory;
 import im.conversations.android.tls.SSLSockets;
-import im.conversations.android.tls.TrustManagers;
 import im.conversations.android.tls.XmppDomainVerifier;
 import im.conversations.android.util.PendingItem;
 import im.conversations.android.xml.Element;
@@ -39,6 +38,7 @@ import im.conversations.android.xml.XmlReader;
 import im.conversations.android.xmpp.manager.AbstractManager;
 import im.conversations.android.xmpp.manager.CarbonsManager;
 import im.conversations.android.xmpp.manager.DiscoManager;
+import im.conversations.android.xmpp.manager.TrustManager;
 import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.StreamElement;
 import im.conversations.android.xmpp.model.bind2.BindInlineFeatures;
@@ -510,13 +510,9 @@ public class XmppConnection implements Runnable {
         } else {
             keyManager = new KeyManager[] {new MyKeyManager(context, credential)};
         }
-        final String domain = account.address.getDomain().toString();
-        // TODO we used to use two different trust managers; interactive and non interactive (to
-        // trigger SSL cert prompts)
-        // we need a better solution for this using live data or similar
         sc.init(
                 keyManager,
-                new X509TrustManager[] {TrustManagers.getTrustManager()},
+                new X509TrustManager[] {getManager(TrustManager.class)},
                 Conversations.SECURE_RANDOM);
         return sc.getSocketFactory();
     }
