@@ -96,7 +96,8 @@ public class Transformer {
         final MessageContentWrapper contents;
         if (encrypted != null) {
             try {
-                final var payload = axolotlService.decrypt(transformation.from, encrypted);
+                final var payload =
+                        axolotlService.decrypt(transformation.senderIdentity(), encrypted);
                 if (payload.hasPayload()) {
                     contents = MessageContentWrapper.ofAxolotl(payload);
                 } else {

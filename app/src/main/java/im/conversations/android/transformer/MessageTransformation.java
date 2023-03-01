@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 
 public class MessageTransformation extends Transformation {
@@ -42,6 +43,8 @@ public class MessageTransformation extends Transformation {
                     Reply.class,
                     Retract.class);
 
+    private final BareJid senderIdentity;
+
     private final List<Extension> extensions;
 
     public final Collection<DeliveryReceiptRequest> deliveryReceiptRequests;
@@ -54,10 +57,12 @@ public class MessageTransformation extends Transformation {
             final Message.Type type,
             final String messageId,
             final String stanzaId,
+            final BareJid senderIdentity,
             final String occupantId,
             final List<Extension> extensions,
             final Collection<DeliveryReceiptRequest> deliveryReceiptRequests) {
         super(receivedAt, to, from, remote, type, messageId, stanzaId, occupantId);
+        this.senderIdentity = senderIdentity;
         this.extensions = extensions;
         this.deliveryReceiptRequests = deliveryReceiptRequests;
     }
@@ -70,6 +75,10 @@ public class MessageTransformation extends Transformation {
     public Instant sentAt() {
         // TODO get Delay that matches sender; return receivedAt if not found
         return receivedAt;
+    }
+
+    public BareJid senderIdentity() {
+        return senderIdentity;
     }
 
     public <E extends Extension> E getExtension(final Class<E> clazz) {
@@ -97,6 +106,7 @@ public class MessageTransformation extends Transformation {
             @NonNull final Instant receivedAt,
             @NonNull final Jid remote,
             final String stanzaId,
+            final BareJid senderId,
             final String occupantId) {
         final var to = message.getTo();
         final var from = message.getFrom();
@@ -121,6 +131,7 @@ public class MessageTransformation extends Transformation {
                 type,
                 messageId,
                 stanzaId,
+                senderId,
                 occupantId,
                 extensionListBuilder.build(),
                 requests);

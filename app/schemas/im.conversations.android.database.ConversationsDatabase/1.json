@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "9d2672ebdefc9df52add6eebf635031f",
+    "identityHash": "5152f8eab684376f6f4076cf392e22d7",
     "entities": [
       {
         "tableName": "account",
@@ -482,16 +482,6 @@
             ],
             "orders": [],
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_axolotl_identity_accountId_address_identityKey` ON `${TABLE_NAME}` (`accountId`, `address`, `identityKey`)"
-          },
-          {
-            "name": "index_axolotl_identity_accountId_identityKey",
-            "unique": false,
-            "columnNames": [
-              "accountId",
-              "identityKey"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_axolotl_identity_accountId_identityKey` ON `${TABLE_NAME}` (`accountId`, `identityKey`)"
           }
         ],
         "foreignKeys": [
@@ -1516,7 +1506,7 @@
       },
       {
         "tableName": "message",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `chatId` INTEGER NOT NULL, `receivedAt` INTEGER, `sentAt` INTEGER, `outgoing` INTEGER NOT NULL, `toBare` TEXT, `toResource` TEXT, `fromBare` TEXT, `fromResource` TEXT, `occupantId` TEXT, `messageId` TEXT, `stanzaId` TEXT, `stanzaIdVerified` INTEGER NOT NULL, `latestVersion` INTEGER, `acknowledged` INTEGER NOT NULL, `inReplyToMessageId` TEXT, `inReplyToStanzaId` TEXT, `inReplyToMessageEntityId` INTEGER, FOREIGN KEY(`chatId`) REFERENCES `chat`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`latestVersion`) REFERENCES `message_version`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`inReplyToMessageEntityId`) REFERENCES `message`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `chatId` INTEGER NOT NULL, `receivedAt` INTEGER, `sentAt` INTEGER, `outgoing` INTEGER NOT NULL, `toBare` TEXT, `toResource` TEXT, `fromBare` TEXT, `fromResource` TEXT, `occupantId` TEXT, `senderIdentity` TEXT, `messageId` TEXT, `stanzaId` TEXT, `stanzaIdVerified` INTEGER NOT NULL, `latestVersion` INTEGER, `acknowledged` INTEGER NOT NULL, `inReplyToMessageId` TEXT, `inReplyToStanzaId` TEXT, `inReplyToMessageEntityId` INTEGER, FOREIGN KEY(`chatId`) REFERENCES `chat`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`latestVersion`) REFERENCES `message_version`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`inReplyToMessageEntityId`) REFERENCES `message`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1575,6 +1565,12 @@
           {
             "fieldPath": "occupantId",
             "columnName": "occupantId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "senderIdentity",
+            "columnName": "senderIdentity",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -2380,7 +2376,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9d2672ebdefc9df52add6eebf635031f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5152f8eab684376f6f4076cf392e22d7')"
     ]
   }
 }

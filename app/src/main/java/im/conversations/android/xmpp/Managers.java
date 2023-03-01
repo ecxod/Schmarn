@@ -23,6 +23,7 @@ import im.conversations.android.xmpp.manager.ReceiptManager;
 import im.conversations.android.xmpp.manager.RegistrationManager;
 import im.conversations.android.xmpp.manager.RosterManager;
 import im.conversations.android.xmpp.manager.StanzaIdManager;
+import im.conversations.android.xmpp.manager.TrustManager;
 
 public final class Managers {
 
@@ -52,6 +53,7 @@ public final class Managers {
                 .put(RegistrationManager.class, new RegistrationManager(context, connection))
                 .put(RosterManager.class, new RosterManager(context, connection))
                 .put(StanzaIdManager.class, new StanzaIdManager(context, connection))
+                .put(TrustManager.class, new TrustManager(context, connection))
                 .build();
     }
 }

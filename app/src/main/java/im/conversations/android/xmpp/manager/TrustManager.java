@@ -1,19 +1,19 @@
-package im.conversations.android.tls;
+package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
-import im.conversations.android.database.model.Account;
+import im.conversations.android.AppSettings;
+import im.conversations.android.xmpp.XmppConnection;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.X509TrustManager;
 
-public class TrustManager implements X509TrustManager {
+public class TrustManager extends AbstractManager implements X509TrustManager {
 
-    private final Context context;
-    private final Account account;
+    private final AppSettings appSettings;
 
-    public TrustManager(final Context context, final Account account) {
-        this.context = context;
-        this.account = account;
+    public TrustManager(final Context context, final XmppConnection connection) {
+        super(context, connection);
+        this.appSettings = new AppSettings(context);
     }
 
     @Override

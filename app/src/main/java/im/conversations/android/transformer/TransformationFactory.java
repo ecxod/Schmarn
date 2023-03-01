@@ -8,6 +8,7 @@ import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.model.occupant.OccupantId;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
+import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 
 public class TransformationFactory extends XmppConnection.Delegate {
@@ -44,6 +45,13 @@ public class TransformationFactory extends XmppConnection.Delegate {
         } else {
             occupantId = null;
         }
-        return MessageTransformation.of(message, receivedAt, remote, stanzaId, occupantId);
+        final BareJid senderIdentity;
+        if (message.getType() == Message.Type.GROUPCHAT) {
+            senderIdentity = null; // TODO discover real jid
+        } else {
+            senderIdentity = from == null ? null : from.asBareJid();
+        }
+        return MessageTransformation.of(
+                message, receivedAt, remote, stanzaId, senderIdentity, occupantId);
     }
 }

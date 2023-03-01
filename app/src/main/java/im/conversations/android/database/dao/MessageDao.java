@@ -190,6 +190,7 @@ public abstract class MessageDao {
     // when found by stanzaId the stanzaId must either by verified or belonging to a stub
     // when found by messageId the from must either match (for corrections) or not be set (null) and
     // we only look up stubs
+    // TODO `senderIdentity` should probably match too
     @Query(
             "SELECT id,stanzaId,messageId,fromBare,latestVersion as version FROM message WHERE"
                 + " chatId=:chatId AND (fromBare=:fromBare OR fromBare IS NULL) AND"
@@ -207,8 +208,8 @@ public abstract class MessageDao {
         Preconditions.checkArgument(
                 messageId != null, "A modification must reference a message id");
         final MessageIdentifier messageIdentifier;
-        // TODO use type for condition and then null check occupantID
         if (transformation.type == Message.Type.GROUPCHAT) {
+            // TODO if modification == moderation do not take occupant Id into account
             Preconditions.checkNotNull(
                     transformation.occupantId,
                     "To create a version of a group chat message occupant id must be set");
@@ -227,6 +228,8 @@ public abstract class MessageDao {
                     modification,
                     messageId,
                     transformation.fromBare());
+            // TODO when creating a stub for 'moderation' we should not include occupant id and
+            // senderId in there since we don’t know who those are
             final var messageEntity = MessageEntity.stub(chat.id, messageId, transformation);
             final long messageEntityId = insert(messageEntity);
             final long messageVersionId =
@@ -426,6 +429,7 @@ public abstract class MessageDao {
                 + " FROM chat JOIN message on message.chatId=chat.id JOIN message_version ON"
                 + " message.latestVersion=message_version.id LEFT JOIN axolotl_identity ON"
                 + " chat.accountId=axolotl_identity.accountId AND"
+                + " message.senderIdentity=axolotl_identity.address AND"
                 + " message_version.identityKey=axolotl_identity.identityKey WHERE chat.id=:chatId"
                 + " AND latestVersion IS NOT NULL ORDER BY message.receivedAt")
     public abstract List<MessageWithContentReactions> getMessages(long chatId);

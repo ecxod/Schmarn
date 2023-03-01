@@ -55,6 +55,8 @@ public class MessageEntity {
 
     public String occupantId;
 
+    public BareJid senderIdentity;
+
     public String messageId;
     public String stanzaId;
     // the stanza id might not be verified if this MessageEntity was created as a stub parent to
@@ -80,6 +82,7 @@ public class MessageEntity {
         entity.fromBare = transformation.fromBare();
         entity.fromResource = transformation.fromResource();
         entity.occupantId = transformation.occupantId;
+        entity.senderIdentity = transformation.senderIdentity();
         entity.messageId = transformation.messageId;
         entity.stanzaId = transformation.stanzaId;
         entity.stanzaIdVerified = Objects.nonNull(transformation.stanzaId);
@@ -94,6 +97,7 @@ public class MessageEntity {
         entity.messageId = messageId;
         entity.stanzaIdVerified = false;
         entity.occupantId = transformation.occupantId;
+        entity.senderIdentity = transformation.senderIdentity();
         return entity;
     }
 

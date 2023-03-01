@@ -21,10 +21,7 @@ import org.whispersystems.libsignal.IdentityKey;
         indices = {
             @Index(
                     value = {"accountId", "address", "identityKey"},
-                    unique = true),
-            @Index(
-                    value = {"accountId", "identityKey"},
-                    unique = false)
+                    unique = true)
         })
 public class AxolotlIdentityEntity {
 
