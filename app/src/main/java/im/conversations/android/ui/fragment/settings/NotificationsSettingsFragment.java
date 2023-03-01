@@ -1,22 +1,18 @@
 package im.conversations.android.ui.fragment.settings;
 
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceManager;
-import com.google.common.base.Strings;
+import im.conversations.android.AppSettings;
 import im.conversations.android.R;
 import im.conversations.android.ui.activity.result.PickRingtone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class NotificationsSettingsFragment extends PreferenceFragmentCompat {
-
-    private static final String RINGTONE_PREFERENCE_KEY = "call_ringtone";
 
     private static final Logger LOGGER =
             LoggerFactory.getLogger(NotificationsSettingsFragment.class);
@@ -47,7 +43,7 @@ public class NotificationsSettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public boolean onPreferenceTreeClick(final Preference preference) {
-        if (RINGTONE_PREFERENCE_KEY.equals(preference.getKey())) {
+        if (AppSettings.PREFERENCE_KEY_RINGTONE.equals(preference.getKey())) {
             pickRingtone();
             return true;
         }
@@ -55,26 +51,16 @@ public class NotificationsSettingsFragment extends PreferenceFragmentCompat {
     }
 
     private void pickRingtone() {
-        final SharedPreferences sharedPreferences =
-                PreferenceManager.getDefaultSharedPreferences(requireContext());
-        final String incomingCallRingtone =
-                sharedPreferences.getString(
-                        RINGTONE_PREFERENCE_KEY,
-                        requireContext().getString(R.string.incoming_call_ringtone));
-        final Uri uri =
-                Strings.isNullOrEmpty(incomingCallRingtone)
-                        ? null
-                        : Uri.parse(incomingCallRingtone);
+        final Uri uri = appSettings().getRingtone();
         LOGGER.info("current ringtone {}", uri);
         this.pickRingtoneLauncher.launch(uri);
     }
 
     private void setRingtone(final Uri uri) {
-        final SharedPreferences sharedPreferences =
-                PreferenceManager.getDefaultSharedPreferences(requireContext());
-        sharedPreferences
-                .edit()
-                .putString(RINGTONE_PREFERENCE_KEY, uri == null ? null : uri.toString())
-                .apply();
+        appSettings().setRingtone(uri);
+    }
+
+    private AppSettings appSettings() {
+        return new AppSettings(requireContext());
     }
 }

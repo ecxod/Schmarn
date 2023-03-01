@@ -6,22 +6,18 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
-import com.google.common.base.Strings;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.xmpp.jingle.AbstractJingleConnection;
 import eu.siacs.conversations.xmpp.jingle.Media;
@@ -120,17 +116,11 @@ public class RtpSessionNotification extends AbstractNotification {
         if (currentVibrationFuture != null) {
             currentVibrationFuture.cancel(true);
         }
-        final SharedPreferences preferences =
-                PreferenceManager.getDefaultSharedPreferences(context);
-        final Resources resources = context.getResources();
-        final String ringtonePreference =
-                preferences.getString(
-                        "call_ringtone", resources.getString(R.string.incoming_call_ringtone));
-        if (Strings.isNullOrEmpty(ringtonePreference)) {
+        final Uri uri = appSettings.getRingtone();
+        if (uri == null) {
             Log.d(Config.LOGTAG, "ringtone has been set to none");
             return;
         }
-        final Uri uri = Uri.parse(ringtonePreference);
         this.currentlyPlayingRingtone = RingtoneManager.getRingtone(context, uri);
         if (this.currentlyPlayingRingtone == null) {
             Log.d(Config.LOGTAG, "unable to find ringtone for uri " + uri);

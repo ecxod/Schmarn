@@ -3,6 +3,7 @@ package im.conversations.android.notification;
 import android.content.Context;
 import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
+import im.conversations.android.AppSettings;
 import im.conversations.android.R;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,9 +14,11 @@ public abstract class AbstractNotification {
             Executors.newSingleThreadScheduledExecutor();
 
     protected final Context context;
+    protected final AppSettings appSettings;
 
     protected AbstractNotification(final Context context) {
         this.context = context;
+        this.appSettings = new AppSettings(context);
     }
 
     public boolean notificationsFromStrangers() {
