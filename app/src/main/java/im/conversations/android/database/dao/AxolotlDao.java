@@ -127,12 +127,11 @@ public abstract class AxolotlDao {
     public boolean setIdentity(
             final Account account,
             final BareJid address,
-            final int deviceId,
             final IdentityKey identityKey,
             final Trust trust) {
-        final var existing = getIdentityKey(account.id, address, deviceId);
+        final var existing = getIdentityKey(account.id, address, identityKey);
         if (existing == null || !existing.equals(identityKey)) {
-            insert(AxolotlIdentityEntity.of(account, address, deviceId, identityKey, trust));
+            insert(AxolotlIdentityEntity.of(account, address, identityKey, trust));
             return true;
         } else {
             return false;
@@ -155,8 +154,9 @@ public abstract class AxolotlDao {
 
     @Query(
             "SELECT identityKey FROM AXOLOTL_IDENTITY WHERE accountId=:account AND"
-                    + " address=:address AND deviceId=:deviceId")
-    protected abstract IdentityKey getIdentityKey(long account, BareJid address, int deviceId);
+                    + " address=:address AND identityKey=:identityKey")
+    protected abstract IdentityKey getIdentityKey(
+            long account, BareJid address, IdentityKey identityKey);
 
     @Query(
             "SELECT preKeyRecord FROM axolotl_pre_key WHERE accountId=:account AND"

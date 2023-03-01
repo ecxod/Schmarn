@@ -34,6 +34,7 @@ public class MessageWithContentReactions {
     public Long inReplyToMessageEntityId;
     public Encryption encryption;
     public IdentityKey identityKey;
+    public Trust trust;
 
     @Relation(
             entity = MessageEntity.class,

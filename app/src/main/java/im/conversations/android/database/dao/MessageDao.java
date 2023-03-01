@@ -422,10 +422,12 @@ public abstract class MessageDao {
     @Query(
             "SELECT message.id as"
                 + " id,sentAt,outgoing,toBare,toResource,fromBare,fromResource,modification,latestVersion"
-                + " as version,inReplyToMessageEntityId,encryption,identityKey FROM message JOIN"
-                + " message_version ON message.latestVersion=message_version.id WHERE"
-                + " message.chatId=:chatId AND latestVersion IS NOT NULL ORDER BY"
-                + " message.receivedAt")
+                + " as version,inReplyToMessageEntityId,encryption,message_version.identityKey,trust"
+                + " FROM chat JOIN message on message.chatId=chat.id JOIN message_version ON"
+                + " message.latestVersion=message_version.id LEFT JOIN axolotl_identity ON"
+                + " chat.accountId=axolotl_identity.accountId AND"
+                + " message_version.identityKey=axolotl_identity.identityKey WHERE chat.id=:chatId"
+                + " AND latestVersion IS NOT NULL ORDER BY message.receivedAt")
     public abstract List<MessageWithContentReactions> getMessages(long chatId);
 
     public void setInReplyTo(

@@ -20,8 +20,11 @@ import org.whispersystems.libsignal.IdentityKey;
                         onDelete = ForeignKey.CASCADE),
         indices = {
             @Index(
-                    value = {"accountId", "address", "deviceId"},
-                    unique = true)
+                    value = {"accountId", "address", "identityKey"},
+                    unique = true),
+            @Index(
+                    value = {"accountId", "identityKey"},
+                    unique = false)
         })
 public class AxolotlIdentityEntity {
 
@@ -32,18 +35,18 @@ public class AxolotlIdentityEntity {
 
     @NonNull public BareJid address;
 
-    @NonNull public Integer deviceId;
-
     @NonNull public IdentityKey identityKey;
 
     @NonNull public Trust trust;
 
     public static AxolotlIdentityEntity of(
-            Account account, BareJid address, int deviceId, IdentityKey identityKey, Trust trust) {
+            final Account account,
+            final BareJid address,
+            final IdentityKey identityKey,
+            final Trust trust) {
         final var entity = new AxolotlIdentityEntity();
         entity.accountId = account.id;
         entity.address = address;
-        entity.deviceId = deviceId;
         entity.identityKey = identityKey;
         entity.trust = trust;
         return entity;

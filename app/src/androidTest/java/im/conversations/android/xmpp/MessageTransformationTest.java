@@ -427,6 +427,8 @@ public class MessageTransformationTest {
         Assert.assertEquals(1L, embeddedMessage.contents.size());
         Assert.assertEquals(
                 "Hi. How are you?", Iterables.getOnlyElement(embeddedMessage.contents).body);
+        Assert.assertNull(response.identityKey);
+        Assert.assertNull(response.trust);
     }
 
     @Test

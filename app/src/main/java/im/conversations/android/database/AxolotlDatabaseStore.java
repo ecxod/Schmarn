@@ -50,13 +50,7 @@ public class AxolotlDatabaseStore extends AbstractAccountService implements Sign
                     } else {
                         trust = Trust.TRUSTED;
                     }
-                    return axolotlDao()
-                            .setIdentity(
-                                    account,
-                                    address.getJid(),
-                                    address.getDeviceId(),
-                                    identityKey,
-                                    trust);
+                    return axolotlDao().setIdentity(account, address.getJid(), identityKey, trust);
                 });
     }
 
