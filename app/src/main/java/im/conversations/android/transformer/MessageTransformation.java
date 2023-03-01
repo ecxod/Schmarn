@@ -1,6 +1,7 @@
 package im.conversations.android.transformer;
 
 import androidx.annotation.NonNull;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -114,6 +115,10 @@ public class MessageTransformation extends Transformation {
         final var messageId = message.getId();
         final ImmutableList.Builder<Extension> extensionListBuilder = new ImmutableList.Builder<>();
         final Collection<DeliveryReceiptRequest> requests;
+        if (type != Message.Type.GROUPCHAT) {
+            Preconditions.checkNotNull(
+                    senderId, "senderId must not be null for anything but group chat messages");
+        }
         if (type == Message.Type.ERROR) {
             extensionListBuilder.add(message.getError());
             requests = Collections.emptyList();

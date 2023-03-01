@@ -71,7 +71,12 @@ public class MessageTransformationTest {
         reaction.setContent("Y");
         this.transformer.transform(
                 MessageTransformation.of(
-                        reactionMessage, Instant.now(), REMOTE, "stanza-b", null, null));
+                        reactionMessage,
+                        Instant.now(),
+                        REMOTE,
+                        "stanza-b",
+                        reactionMessage.getFrom().asBareJid(),
+                        null));
         final var originalMessage = new Message();
         originalMessage.setId("1");
         originalMessage.setTo(REMOTE);
@@ -80,7 +85,12 @@ public class MessageTransformationTest {
         body.setContent(GREETING);
         this.transformer.transform(
                 MessageTransformation.of(
-                        originalMessage, Instant.now(), REMOTE, "stanza-a", null, null));
+                        originalMessage,
+                        Instant.now(),
+                        REMOTE,
+                        "stanza-a",
+                        originalMessage.getFrom().asBareJid(),
+                        null));
 
         final var messages = database.messageDao().getMessages(1L);
         Assert.assertEquals(1, messages.size());
@@ -151,7 +161,12 @@ public class MessageTransformationTest {
 
         this.transformer.transform(
                 MessageTransformation.of(
-                        messageCorrection, Instant.now(), REMOTE, "stanza-a", null, null));
+                        messageCorrection,
+                        Instant.now(),
+                        REMOTE,
+                        "stanza-a",
+                        messageCorrection.getFrom().asBareJid(),
+                        null));
 
         // the correction should not show up as a message
         Assert.assertEquals(0, database.messageDao().getMessages(1L).size());
@@ -164,7 +179,12 @@ public class MessageTransformationTest {
 
         this.transformer.transform(
                 MessageTransformation.of(
-                        messageWithTypo, Instant.now(), REMOTE, "stanza-b", null, null));
+                        messageWithTypo,
+                        Instant.now(),
+                        REMOTE,
+                        "stanza-b",
+                        messageWithTypo.getFrom().asBareJid(),
+                        null));
 
         final var messages = database.messageDao().getMessages(1L);
 
@@ -187,7 +207,12 @@ public class MessageTransformationTest {
 
         this.transformer.transform(
                 MessageTransformation.of(
-                        messageWithTypo, Instant.now(), REMOTE, "stanza-a", null, null));
+                        messageWithTypo,
+                        Instant.now(),
+                        REMOTE,
+                        "stanza-a",
+                        messageWithTypo.getFrom().asBareJid(),
+                        null));
 
         Assert.assertEquals(1, database.messageDao().getMessages(1L).size());
 
@@ -200,7 +225,12 @@ public class MessageTransformationTest {
 
         this.transformer.transform(
                 MessageTransformation.of(
-                        messageCorrection, Instant.now(), REMOTE, "stanza-b", null, null));
+                        messageCorrection,
+                        Instant.now(),
+                        REMOTE,
+                        "stanza-b",
+                        messageCorrection.getFrom().asBareJid(),
+                        null));
 
         final var messages = database.messageDao().getMessages(1L);
 
@@ -504,7 +534,8 @@ public class MessageTransformationTest {
         m1.addExtension(new Body("It is raining outside"));
 
         this.transformer.transform(
-                MessageTransformation.of(m1, Instant.now(), REMOTE, null, null, null));
+                MessageTransformation.of(
+                        m1, Instant.now(), REMOTE, null, m1.getFrom().asBareJid(), null));
 
         final var m2 = new Message();
         m2.setTo(ACCOUNT);
@@ -512,7 +543,8 @@ public class MessageTransformationTest {
         m2.addExtension(new Retract()).setId("m1");
 
         this.transformer.transform(
-                MessageTransformation.of(m2, Instant.now(), REMOTE, null, null, null));
+                MessageTransformation.of(
+                        m2, Instant.now(), REMOTE, null, m2.getFrom().asBareJid(), null));
 
         final var messages = database.messageDao().getMessages(1L);
         final var message = Iterables.getOnlyElement(messages);
