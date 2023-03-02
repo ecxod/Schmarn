@@ -3,16 +3,15 @@ package im.conversations.android.xmpp.manager;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.ListenableFuture;
 import im.conversations.android.AppSettings;
+import im.conversations.android.tls.ScopeFingerprint;
 import im.conversations.android.tls.TrustManagers;
 import im.conversations.android.xmpp.XmppConnection;
-import java.nio.ByteBuffer;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.ExecutionException;
@@ -73,40 +72,12 @@ public class TrustManager extends AbstractManager {
     public void removeUserInterfaceCallback(
             final Function<ScopeFingerprint, ListenableFuture<Boolean>> callback) {
         if (this.userInterfaceCallback == callback) {
-            LOGGER.info("Remove user interface callback");
             this.userInterfaceCallback = null;
         }
     }
 
     public X509TrustManager scopedTrustManager(final String scope) {
         return new ScopedTrustManager(scope);
-    }
-
-    public static class ScopeFingerprint {
-        public final String scope;
-        public final ByteBuffer fingerprint;
-
-        public ScopeFingerprint(final String scope, final byte[] fingerprint) {
-            this(scope, ByteBuffer.wrap(fingerprint));
-        }
-
-        public ScopeFingerprint(final String scope, final ByteBuffer fingerprint) {
-            this.scope = scope;
-            this.fingerprint = fingerprint;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ScopeFingerprint that = (ScopeFingerprint) o;
-            return Objects.equal(scope, that.scope) && Objects.equal(fingerprint, that.fingerprint);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(scope, fingerprint);
-        }
     }
 
     private class ScopedTrustManager implements X509TrustManager {
@@ -141,7 +112,10 @@ public class TrustManager extends AbstractManager {
             final byte[] fingerprint =
                     Hashing.sha256().hashBytes(certificate.getEncoded()).asBytes();
             final var scopeFingerprint = new ScopeFingerprint(scope, fingerprint);
-            LOGGER.info("Looking up {} in database", fingerprint(fingerprint));
+            if (getDatabase().certificateTrustDao().isTrusted(getAccount(), scopeFingerprint)) {
+                LOGGER.info("Found {} in database", scopeFingerprint);
+                return;
+            }
             final var callback = TrustManager.this.userInterfaceCallback;
             if (callback == null) {
                 throw new CertificateException(

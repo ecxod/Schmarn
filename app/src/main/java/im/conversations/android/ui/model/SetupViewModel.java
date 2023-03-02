@@ -19,6 +19,7 @@ import im.conversations.android.R;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.repository.AccountRepository;
+import im.conversations.android.tls.ScopeFingerprint;
 import im.conversations.android.ui.Event;
 import im.conversations.android.util.ConnectionStates;
 import im.conversations.android.xmpp.ConnectionException;
@@ -58,28 +59,26 @@ public class SetupViewModel extends AndroidViewModel {
     private final MutableLiveData<Event<Target>> redirection = new MutableLiveData<>();
 
     private final MutableLiveData<TrustDecision> trustDecision = new MutableLiveData<>();
-    private final HashMap<TrustManager.ScopeFingerprint, Boolean> trustDecisions = new HashMap<>();
+    private final HashMap<ScopeFingerprint, Boolean> trustDecisions = new HashMap<>();
 
-    private final Function<TrustManager.ScopeFingerprint, ListenableFuture<Boolean>>
-            trustDecisionCallback =
-                    scopeFingerprint -> {
-                        final var decision = this.trustDecisions.get(scopeFingerprint);
-                        if (decision != null) {
-                            LOGGER.info("Using previous trust decision ({})", decision);
-                            return Futures.immediateFuture(decision);
-                        }
-                        LOGGER.info("Trust decision arrived in UI");
-                        final SettableFuture<Boolean> settableFuture = SettableFuture.create();
-                        final var trustDecision =
-                                new TrustDecision(scopeFingerprint, settableFuture);
-                        final var currentOperation = this.currentOperation;
-                        if (currentOperation != null) {
-                            currentOperation.cancel(false);
-                        }
-                        this.trustDecision.postValue(trustDecision);
-                        this.redirection.postValue(new Event<>(Target.TRUST_CERTIFICATE));
-                        return settableFuture;
-                    };
+    private final Function<ScopeFingerprint, ListenableFuture<Boolean>> trustDecisionCallback =
+            scopeFingerprint -> {
+                final var decision = this.trustDecisions.get(scopeFingerprint);
+                if (decision != null) {
+                    LOGGER.info("Using previous trust decision ({})", decision);
+                    return Futures.immediateFuture(decision);
+                }
+                LOGGER.info("Trust decision arrived in UI");
+                final SettableFuture<Boolean> settableFuture = SettableFuture.create();
+                final var trustDecision = new TrustDecision(scopeFingerprint, settableFuture);
+                final var currentOperation = this.currentOperation;
+                if (currentOperation != null) {
+                    currentOperation.cancel(false);
+                }
+                this.trustDecision.postValue(trustDecision);
+                this.redirection.postValue(new Event<>(Target.TRUST_CERTIFICATE));
+                return settableFuture;
+            };
 
     private final AccountRepository accountRepository;
 
@@ -189,13 +188,12 @@ public class SetupViewModel extends AndroidViewModel {
             // TODO navigate back to sign in or show error?
             return true;
         }
-        LOGGER.info(
-                "trying to commit trust for fingerprint {}",
-                TrustManager.fingerprint(trustDecision.scopeFingerprint.fingerprint.array()));
+        LOGGER.info("committing trust for {}", trustDecision.scopeFingerprint);
+        this.accountRepository.setCertificateTrustedAsync(account, trustDecision.scopeFingerprint);
         // in case the UI interface hook gets called again before this gets written to DB
         this.trustDecisions.put(trustDecision.scopeFingerprint, true);
         if (trustDecision.decision.isDone()) {
-            ConnectionPool.getInstance(getApplication()).reconnect(account);
+            this.accountRepository.reconnect(account);
             LOGGER.info("it was already done. we should reconnect");
         }
         trustDecision.decision.set(true);
@@ -265,6 +263,7 @@ public class SetupViewModel extends AndroidViewModel {
     private void setAccount(@NonNull final Account account) {
         this.account = account;
         this.registerTrustDecisionCallback();
+        // TODO if the connection is already TLS_ERROR then do a quick reconnect
         this.decideNextStep(Target.ENTER_ADDRESS, account);
     }
 
@@ -282,6 +281,7 @@ public class SetupViewModel extends AndroidViewModel {
         final var optionalTrustManager = getTrustManager();
         if (optionalTrustManager.isPresent()) {
             optionalTrustManager.get().setUserInterfaceCallback(this.trustDecisionCallback);
+            LOGGER.info("Registered user interface callback");
         }
     }
 
@@ -473,11 +473,10 @@ public class SetupViewModel extends AndroidViewModel {
     }
 
     public static class TrustDecision {
-        public final TrustManager.ScopeFingerprint scopeFingerprint;
+        public final ScopeFingerprint scopeFingerprint;
         public final SettableFuture<Boolean> decision;
 
-        public TrustDecision(
-                TrustManager.ScopeFingerprint scopeFingerprint, SettableFuture<Boolean> decision) {
+        public TrustDecision(ScopeFingerprint scopeFingerprint, SettableFuture<Boolean> decision) {
             this.scopeFingerprint = scopeFingerprint;
             this.decision = decision;
         }

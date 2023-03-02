@@ -9,9 +9,11 @@ import com.google.common.util.concurrent.MoreExecutors;
 import im.conversations.android.IDs;
 import im.conversations.android.database.CredentialStore;
 import im.conversations.android.database.entity.AccountEntity;
+import im.conversations.android.database.entity.CertificateTrustEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.AccountIdentifier;
 import im.conversations.android.database.model.Connection;
+import im.conversations.android.tls.ScopeFingerprint;
 import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.RegistrationManager;
@@ -129,6 +131,20 @@ public class AccountRepository extends AbstractRepository {
 
     public LiveData<Boolean> hasNoAccounts() {
         return database.accountDao().hasNoAccounts();
+    }
+
+    public ListenableFuture<Void> setCertificateTrustedAsync(
+            final Account account, final ScopeFingerprint scopeFingerprint) {
+        return Futures.submit(
+                () -> setCertificateTrusted(account, scopeFingerprint),
+                database.getQueryExecutor());
+    }
+
+    private void setCertificateTrusted(
+            final Account account, final ScopeFingerprint scopeFingerprint) {
+        this.database
+                .certificateTrustDao()
+                .insert(CertificateTrustEntity.of(account.id, scopeFingerprint));
     }
 
     public static class AccountAlreadyExistsException extends IllegalStateException {

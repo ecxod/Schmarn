@@ -10,6 +10,7 @@ import im.conversations.android.database.dao.AvatarDao;
 import im.conversations.android.database.dao.AxolotlDao;
 import im.conversations.android.database.dao.BlockingDao;
 import im.conversations.android.database.dao.BookmarkDao;
+import im.conversations.android.database.dao.CertificateTrustDao;
 import im.conversations.android.database.dao.ChatDao;
 import im.conversations.android.database.dao.DiscoDao;
 import im.conversations.android.database.dao.MessageDao;
@@ -29,6 +30,7 @@ import im.conversations.android.database.entity.AxolotlSignedPreKeyEntity;
 import im.conversations.android.database.entity.BlockedItemEntity;
 import im.conversations.android.database.entity.BookmarkEntity;
 import im.conversations.android.database.entity.BookmarkGroupEntity;
+import im.conversations.android.database.entity.CertificateTrustEntity;
 import im.conversations.android.database.entity.ChatEntity;
 import im.conversations.android.database.entity.DiscoEntity;
 import im.conversations.android.database.entity.DiscoExtensionEntity;
@@ -63,6 +65,7 @@ import im.conversations.android.database.entity.RosterItemGroupEntity;
             BlockedItemEntity.class,
             BookmarkEntity.class,
             BookmarkGroupEntity.class,
+            CertificateTrustEntity.class,
             ChatEntity.class,
             DiscoEntity.class,
             DiscoExtensionEntity.class,
@@ -113,6 +116,8 @@ public abstract class ConversationsDatabase extends RoomDatabase {
     public abstract BlockingDao blockingDao();
 
     public abstract BookmarkDao bookmarkDao();
+
+    public abstract CertificateTrustDao certificateTrustDao();
 
     public abstract ChatDao chatDao();
 
