@@ -26,6 +26,7 @@ import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.database.model.Credential;
 import im.conversations.android.dns.Resolver;
+import im.conversations.android.dns.ServiceRecord;
 import im.conversations.android.socks.SocksSocketFactory;
 import im.conversations.android.tls.SSLSockets;
 import im.conversations.android.tls.XmppDomainVerifier;
@@ -322,12 +323,13 @@ public class XmppConnection implements Runnable {
                 }
             } else {
                 final String domain = account.address.getDomain().toString();
-                final List<Resolver.Result> results;
+                final List<ServiceRecord> results;
                 if (connection != null) {
-                    results = Resolver.fromHardCoded(connection.hostname, connection.port);
+                    results = Resolver.fromHardCoded(connection);
                 } else {
                     results = Resolver.resolve(domain);
                 }
+                LOGGER.info("{}", results);
                 if (Thread.currentThread().isInterrupted()) {
                     LOGGER.debug(account.address + ": Thread was interrupted");
                     return;
@@ -336,7 +338,7 @@ public class XmppConnection implements Runnable {
                     LOGGER.warn("Resolver results were empty");
                     return;
                 }
-                final Resolver.Result storedBackupResult;
+                final ServiceRecord storedBackupResult;
                 if (connection != null) {
                     storedBackupResult = null;
                 } else {
@@ -351,9 +353,9 @@ public class XmppConnection implements Runnable {
                                         + storedBackupResult);
                     }
                 }
-                for (Iterator<Resolver.Result> iterator = results.iterator();
-                        iterator.hasNext(); ) {
-                    final Resolver.Result result = iterator.next();
+                for (Iterator<ServiceRecord> iterator = results.iterator();
+                     iterator.hasNext(); ) {
+                    final ServiceRecord result = iterator.next();
                     if (Thread.currentThread().isInterrupted()) {
                         LOGGER.debug(account.address + ": Thread was interrupted");
                         return;
