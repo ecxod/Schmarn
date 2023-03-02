@@ -510,9 +510,10 @@ public class XmppConnection implements Runnable {
         } else {
             keyManager = new KeyManager[] {new MyKeyManager(context, credential)};
         }
+        final String scope = String.format("xmpp:%s", account.address.getDomain().toString());
         sc.init(
                 keyManager,
-                new X509TrustManager[] {getManager(TrustManager.class)},
+                new X509TrustManager[] {getManager(TrustManager.class).scopedTrustManager(scope)},
                 Conversations.SECURE_RANDOM);
         return sc.getSocketFactory();
     }

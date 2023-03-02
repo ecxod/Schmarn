@@ -26,7 +26,6 @@ import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.ConnectionState;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.TrustManager;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
@@ -59,26 +58,28 @@ public class SetupViewModel extends AndroidViewModel {
     private final MutableLiveData<Event<Target>> redirection = new MutableLiveData<>();
 
     private final MutableLiveData<TrustDecision> trustDecision = new MutableLiveData<>();
-    private final HashMap<ByteBuffer, Boolean> trustDecisions = new HashMap<>();
+    private final HashMap<TrustManager.ScopeFingerprint, Boolean> trustDecisions = new HashMap<>();
 
-    private final Function<byte[], ListenableFuture<Boolean>> trustDecisionCallback =
-            fingerprint -> {
-                final var decision = this.trustDecisions.get(ByteBuffer.wrap(fingerprint));
-                if (decision != null) {
-                    LOGGER.info("Using previous trust decision ({})", decision);
-                    return Futures.immediateFuture(decision);
-                }
-                LOGGER.info("Trust decision arrived in UI");
-                final SettableFuture<Boolean> settableFuture = SettableFuture.create();
-                final var trustDecision = new TrustDecision(fingerprint, settableFuture);
-                final var currentOperation = this.currentOperation;
-                if (currentOperation != null) {
-                    currentOperation.cancel(false);
-                }
-                this.trustDecision.postValue(trustDecision);
-                this.redirection.postValue(new Event<>(Target.TRUST_CERTIFICATE));
-                return settableFuture;
-            };
+    private final Function<TrustManager.ScopeFingerprint, ListenableFuture<Boolean>>
+            trustDecisionCallback =
+                    scopeFingerprint -> {
+                        final var decision = this.trustDecisions.get(scopeFingerprint);
+                        if (decision != null) {
+                            LOGGER.info("Using previous trust decision ({})", decision);
+                            return Futures.immediateFuture(decision);
+                        }
+                        LOGGER.info("Trust decision arrived in UI");
+                        final SettableFuture<Boolean> settableFuture = SettableFuture.create();
+                        final var trustDecision =
+                                new TrustDecision(scopeFingerprint, settableFuture);
+                        final var currentOperation = this.currentOperation;
+                        if (currentOperation != null) {
+                            currentOperation.cancel(false);
+                        }
+                        this.trustDecision.postValue(trustDecision);
+                        this.redirection.postValue(new Event<>(Target.TRUST_CERTIFICATE));
+                        return settableFuture;
+                    };
 
     private final AccountRepository accountRepository;
 
@@ -190,9 +191,9 @@ public class SetupViewModel extends AndroidViewModel {
         }
         LOGGER.info(
                 "trying to commit trust for fingerprint {}",
-                TrustManager.fingerprint(trustDecision.fingerprint));
+                TrustManager.fingerprint(trustDecision.scopeFingerprint.fingerprint.array()));
         // in case the UI interface hook gets called again before this gets written to DB
-        this.trustDecisions.put(ByteBuffer.wrap(trustDecision.fingerprint), true);
+        this.trustDecisions.put(trustDecision.scopeFingerprint, true);
         if (trustDecision.decision.isDone()) {
             ConnectionPool.getInstance(getApplication()).reconnect(account);
             LOGGER.info("it was already done. we should reconnect");
@@ -209,9 +210,9 @@ public class SetupViewModel extends AndroidViewModel {
         }
         LOGGER.info(
                 "Rejecting trust decision for {}",
-                TrustManager.fingerprint(trustDecision.fingerprint));
+                TrustManager.fingerprint(trustDecision.scopeFingerprint.fingerprint.array()));
         trustDecision.decision.set(false);
-        this.trustDecisions.put(ByteBuffer.wrap(trustDecision.fingerprint), false);
+        this.trustDecisions.put(trustDecision.scopeFingerprint, false);
     }
 
     public LiveData<String> getFingerprint() {
@@ -221,7 +222,7 @@ public class SetupViewModel extends AndroidViewModel {
                     if (td == null) {
                         return null;
                     } else {
-                        return TrustManager.fingerprint(td.fingerprint, 8);
+                        return TrustManager.fingerprint(td.scopeFingerprint.fingerprint.array(), 8);
                     }
                 });
     }
@@ -472,11 +473,12 @@ public class SetupViewModel extends AndroidViewModel {
     }
 
     public static class TrustDecision {
-        public final byte[] fingerprint;
+        public final TrustManager.ScopeFingerprint scopeFingerprint;
         public final SettableFuture<Boolean> decision;
 
-        public TrustDecision(byte[] fingerprint, SettableFuture<Boolean> decision) {
-            this.fingerprint = fingerprint;
+        public TrustDecision(
+                TrustManager.ScopeFingerprint scopeFingerprint, SettableFuture<Boolean> decision) {
+            this.scopeFingerprint = scopeFingerprint;
             this.decision = decision;
         }
     }
