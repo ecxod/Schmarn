@@ -34,7 +34,8 @@ public class Account extends AccountIdentifier {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), randomSeed);
+        // careful with hashCode and equals for byte arrays
+        return Objects.hashCode(super.hashCode(), Arrays.hashCode(randomSeed));
     }
 
     public boolean isOnion() {

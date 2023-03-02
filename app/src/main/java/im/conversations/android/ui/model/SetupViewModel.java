@@ -263,7 +263,13 @@ public class SetupViewModel extends AndroidViewModel {
     private void setAccount(@NonNull final Account account) {
         this.account = account;
         this.registerTrustDecisionCallback();
-        // TODO if the connection is already TLS_ERROR then do a quick reconnect
+        final var state = this.accountRepository.getConnectionState(account);
+        if (Arrays.asList(ConnectionState.TLS_ERROR).contains(state)) {
+            LOGGER.info(
+                    "Connection had already failed when trust decision callback was registered."
+                            + " reconnecting");
+            this.accountRepository.reconnect(account);
+        }
         this.decideNextStep(Target.ENTER_ADDRESS, account);
     }
 

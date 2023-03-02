@@ -15,6 +15,7 @@ import im.conversations.android.database.model.AccountIdentifier;
 import im.conversations.android.database.model.Connection;
 import im.conversations.android.tls.ScopeFingerprint;
 import im.conversations.android.xmpp.ConnectionPool;
+import im.conversations.android.xmpp.ConnectionState;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.RegistrationManager;
 import java.io.IOException;
@@ -127,6 +128,13 @@ public class AccountRepository extends AbstractRepository {
 
     public LiveData<List<AccountIdentifier>> getAccounts() {
         return database.accountDao().getAccounts();
+    }
+
+    public ConnectionState getConnectionState(final Account account) {
+        return ConnectionPool.getInstance(context)
+                .get(account)
+                .transform(XmppConnection::getStatus)
+                .orNull();
     }
 
     public LiveData<Boolean> hasNoAccounts() {

@@ -138,6 +138,11 @@ public class ConnectionPool {
         final Set<Account> current = getAccounts();
         final Set<Account> removed = Sets.difference(current, accounts);
         final Set<Account> added = Sets.difference(accounts, current);
+        LOGGER.info(
+                "reconfiguring. current {} added {} removed {}",
+                current.size(),
+                added.size(),
+                removed.size());
         for (final Account account : added) {
             this.setupXmppConnection(context, account);
         }
@@ -145,10 +150,14 @@ public class ConnectionPool {
             final Optional<XmppConnection> connectionOptional =
                     Iterables.tryFind(connections, c -> c.getAccount().equals(account));
             if (connectionOptional.isPresent()) {
-                final XmppConnection connection = connectionOptional.get();
+                final var connection = connectionOptional.get();
+                if (connections.remove(connection)) {
+                    LOGGER.info("Removed connection for {}", account.address);
+                }
                 disconnect(connection, false);
             }
         }
+        LOGGER.info("now managing {} connections", connections.size());
         return null;
     }
 
