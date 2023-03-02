@@ -18,6 +18,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import im.conversations.android.R;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.Connection;
+import im.conversations.android.dns.Resolver;
 import im.conversations.android.repository.AccountRepository;
 import im.conversations.android.tls.ScopeFingerprint;
 import im.conversations.android.ui.Event;
@@ -153,7 +154,8 @@ public class SetupViewModel extends AndroidViewModel {
         final BareJid address;
         try {
             address = JidCreate.bareFrom(userInput);
-        } catch (final XmppStringprepException e) {
+            Resolver.checkDomain(address.asDomainBareJid());
+        } catch (final XmppStringprepException | IllegalArgumentException e) {
             this.xmppAddressError.postValue(getApplication().getString(R.string.invalid_jid));
             return true;
         }
@@ -381,7 +383,9 @@ public class SetupViewModel extends AndroidViewModel {
         }
         final String hostname =
                 Strings.nullToEmpty(this.hostname.getValue()).trim().toLowerCase(Locale.ROOT);
-        if (hostname.isEmpty() || CharMatcher.whitespace().matchesAnyOf(hostname)) {
+        if (hostname.isEmpty()
+                || CharMatcher.whitespace().matchesAnyOf(hostname)
+                || Resolver.invalidHostname(hostname)) {
             this.hostnameError.postValue(getApplication().getString(R.string.not_valid_hostname));
             return true;
         }

@@ -1,10 +1,10 @@
 package im.conversations.android.dns;
 
 import android.app.Application;
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import androidx.annotation.NonNull;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import de.measite.minidns.AbstractDNSClient;
 import de.measite.minidns.DNSCache;
 import de.measite.minidns.DNSClient;
@@ -328,13 +328,6 @@ public class Resolver {
     }
 
     public static class Result implements Comparable<Result> {
-        public static final String DOMAIN = "domain";
-        public static final String IP = "ip";
-        public static final String HOSTNAME = "hostname";
-        public static final String PORT = "port";
-        public static final String PRIORITY = "priority";
-        public static final String DIRECT_TLS = "directTls";
-        public static final String AUTHENTICATED = "authenticated";
         private InetAddress ip;
         private DNSName hostname;
         private int port = DEFAULT_PORT_XMPP;
@@ -363,48 +356,6 @@ public class Resolver {
             return createDefault(hostname, null);
         }
 
-        public static Result fromCursor(Cursor cursor) {
-            final Result result = new Result();
-            try {
-                result.ip = InetAddress.getByAddress(cursor.getBlob(cursor.getColumnIndex(IP)));
-            } catch (UnknownHostException e) {
-                result.ip = null;
-            }
-            final String hostname = cursor.getString(cursor.getColumnIndex(HOSTNAME));
-            result.hostname = hostname == null ? null : DNSName.from(hostname);
-            result.port = cursor.getInt(cursor.getColumnIndex(PORT));
-            result.priority = cursor.getInt(cursor.getColumnIndex(PRIORITY));
-            result.authenticated = cursor.getInt(cursor.getColumnIndex(AUTHENTICATED)) > 0;
-            result.directTls = cursor.getInt(cursor.getColumnIndex(DIRECT_TLS)) > 0;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Result result = (Result) o;
-
-            if (port != result.port) return false;
-            if (directTls != result.directTls) return false;
-            if (authenticated != result.authenticated) return false;
-            if (priority != result.priority) return false;
-            if (ip != null ? !ip.equals(result.ip) : result.ip != null) return false;
-            return hostname != null ? hostname.equals(result.hostname) : result.hostname == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = ip != null ? ip.hashCode() : 0;
-            result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
-            result = 31 * result + port;
-            result = 31 * result + (directTls ? 1 : 0);
-            result = 31 * result + (authenticated ? 1 : 0);
-            result = 31 * result + priority;
-            return result;
-        }
-
         public InetAddress getIp() {
             return ip;
         }
@@ -426,27 +377,8 @@ public class Resolver {
         }
 
         @Override
-        public String toString() {
-            return "Result{"
-                    + "ip='"
-                    + (ip == null ? null : ip.getHostAddress())
-                    + '\''
-                    + ", hostame='"
-                    + (hostname == null ? null : hostname.toString())
-                    + '\''
-                    + ", port="
-                    + port
-                    + ", directTls="
-                    + directTls
-                    + ", authenticated="
-                    + authenticated
-                    + ", priority="
-                    + priority
-                    + '}';
-        }
-
-        @Override
         public int compareTo(@NonNull Result result) {
+            // TODO use comparison chain. get rid of IPv4 preference
             if (result.priority == priority) {
                 if (directTls == result.directTls) {
                     if (ip == null && result.ip == null) {
@@ -468,15 +400,35 @@ public class Resolver {
             }
         }
 
-        public ContentValues toContentValues() {
-            final ContentValues contentValues = new ContentValues();
-            contentValues.put(IP, ip == null ? null : ip.getAddress());
-            contentValues.put(HOSTNAME, hostname == null ? null : hostname.toString());
-            contentValues.put(PORT, port);
-            contentValues.put(PRIORITY, priority);
-            contentValues.put(DIRECT_TLS, directTls ? 1 : 0);
-            contentValues.put(AUTHENTICATED, authenticated ? 1 : 0);
-            return contentValues;
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Result result = (Result) o;
+            return port == result.port
+                    && directTls == result.directTls
+                    && authenticated == result.authenticated
+                    && priority == result.priority
+                    && Objects.equal(ip, result.ip)
+                    && Objects.equal(hostname, result.hostname);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(ip, hostname, port, directTls, authenticated, priority);
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("ip", ip)
+                    .add("hostname", hostname)
+                    .add("port", port)
+                    .add("directTls", directTls)
+                    .add("authenticated", authenticated)
+                    .add("priority", priority)
+                    .toString();
         }
     }
 }
