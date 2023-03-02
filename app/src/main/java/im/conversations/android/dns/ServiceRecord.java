@@ -1,14 +1,11 @@
 package im.conversations.android.dns;
 
 import androidx.annotation.NonNull;
-
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-
-import java.net.InetAddress;
-
 import de.measite.minidns.DNSName;
 import de.measite.minidns.record.SRV;
+import java.net.InetAddress;
 
 public class ServiceRecord implements Comparable<ServiceRecord> {
     private final InetAddress ip;

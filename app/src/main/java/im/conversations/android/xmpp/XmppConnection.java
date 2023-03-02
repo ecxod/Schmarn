@@ -327,7 +327,7 @@ public class XmppConnection implements Runnable {
                 if (connection != null) {
                     results = Resolver.fromHardCoded(connection);
                 } else {
-                    results = Resolver.resolve(domain);
+                    results = Resolver.resolve(domain, false);
                 }
                 LOGGER.info("{}", results);
                 if (Thread.currentThread().isInterrupted()) {
@@ -353,8 +353,7 @@ public class XmppConnection implements Runnable {
                                         + storedBackupResult);
                     }
                 }
-                for (Iterator<ServiceRecord> iterator = results.iterator();
-                     iterator.hasNext(); ) {
+                for (Iterator<ServiceRecord> iterator = results.iterator(); iterator.hasNext(); ) {
                     final ServiceRecord result = iterator.next();
                     if (Thread.currentThread().isInterrupted()) {
                         LOGGER.debug(account.address + ": Thread was interrupted");

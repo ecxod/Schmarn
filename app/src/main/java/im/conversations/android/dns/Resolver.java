@@ -1,8 +1,7 @@
 package im.conversations.android.dns;
 
 import android.app.Application;
-import android.content.Context;
-
+import androidx.annotation.NonNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.google.common.util.concurrent.Futures;
@@ -53,10 +52,7 @@ public class Resolver {
 
     private static final Executor EXECUTOR = Executors.newFixedThreadPool(4);
 
-    private static Context SERVICE;
-
     public static void init(final Application application) {
-        SERVICE = application.getApplicationContext();
         DNSClient.removeDNSServerLookupMechanism(AndroidUsingExec.INSTANCE);
         DNSClient.addDnsServerLookupMechanism(AndroidUsingExecLowPriority.INSTANCE);
         DNSClient.addDnsServerLookupMechanism(new AndroidUsingLinkProperties(application));
@@ -116,15 +112,15 @@ public class Resolver {
         }
     }
 
-    public static List<ServiceRecord> resolve(final String domain) {
+    public static List<ServiceRecord> resolve(final String domain, final boolean validateHostname) {
         final List<ServiceRecord> ipResults = fromIpAddress(domain);
         if (ipResults.size() > 0) {
             return ipResults;
         }
         final ListenableFuture<List<ServiceRecord>> directTlsSrvRecords =
-                Futures.submitAsync(() -> resolveSrv(domain, true), EXECUTOR);
+                Futures.submitAsync(() -> resolveSrv(domain, true, validateHostname), EXECUTOR);
         final ListenableFuture<List<ServiceRecord>> startTlsSrvRecords =
-                Futures.submitAsync(() -> resolveSrv(domain, false), EXECUTOR);
+                Futures.submitAsync(() -> resolveSrv(domain, false, validateHostname), EXECUTOR);
         final ListenableFuture<List<ServiceRecord>> srvRecords =
                 Futures.transform(
                         Futures.allAsList(directTlsSrvRecords, startTlsSrvRecords),
@@ -164,39 +160,24 @@ public class Resolver {
         } catch (final UnknownHostException e) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(new ServiceRecord(ip, null, DEFAULT_PORT_XMPP, false, 0, false));
+        return Collections.singletonList(
+                new ServiceRecord(ip, null, DEFAULT_PORT_XMPP, false, 0, false));
     }
 
     private static ListenableFuture<List<ServiceRecord>> resolveSrv(
-            final String domain, final boolean directTls) throws IOException {
-        DNSName dnsName =
+            final String domain, final boolean directTls, final boolean validateHostname)
+            throws IOException {
+        final var dnsName =
                 DNSName.from(
                         (directTls ? DIRECT_TLS_SERVICE : STARTTLS_SERVICE) + "._tcp." + domain);
-        final ResolverResult<SRV> result = resolveWithFallback(dnsName, SRV.class);
+        final ResolverResult<SRV> result = resolveWithFallback(dnsName, validateHostname);
         final List<ListenableFuture<List<ServiceRecord>>> results = new ArrayList<>();
         for (final SRV record : result.getAnswersOrEmptySet()) {
             if (record.name.length() == 0 && record.priority == 0) {
                 continue;
             }
-            results.add(
-                    Futures.submit(
-                            () -> {
-                                final List<ServiceRecord> ipv4s =
-                                        resolveIp(
-                                                record,
-                                                A.class,
-                                                result.isAuthenticData(),
-                                                directTls);
-                                if (ipv4s.isEmpty()) {
-                                    return Collections.singletonList(
-                                            ServiceRecord.fromRecord(
-                                                    record, directTls, result.isAuthenticData()));
-                                } else {
-                                    return ipv4s;
-                                }
-                            },
-                            EXECUTOR));
-            results.add(
+            final var ipv4 = Futures.submit(() -> resolveIPv4(directTls, result, record), EXECUTOR);
+            final var ipv6 =
                     Futures.submit(
                             () ->
                                     resolveIp(
@@ -204,12 +185,27 @@ public class Resolver {
                                             AAAA.class,
                                             result.isAuthenticData(),
                                             directTls),
-                            EXECUTOR));
+                            EXECUTOR);
+            results.add(ipv4);
+            results.add(ipv6);
         }
         return Futures.transform(
                 Futures.allAsList(results),
                 input -> input.stream().flatMap(List::stream).collect(Collectors.toList()),
                 MoreExecutors.directExecutor());
+    }
+
+    @NonNull
+    private static List<ServiceRecord> resolveIPv4(
+            boolean directTls, ResolverResult<SRV> result, SRV record) {
+        final List<ServiceRecord> ipv4s =
+                resolveIp(record, A.class, result.isAuthenticData(), directTls);
+        if (ipv4s.isEmpty()) {
+            return Collections.singletonList(
+                    ServiceRecord.fromRecord(record, directTls, result.isAuthenticData()));
+        } else {
+            return ipv4s;
+        }
     }
 
     private static <D extends InternetAddressRR> List<ServiceRecord> resolveIp(
@@ -254,9 +250,9 @@ public class Resolver {
         return results;
     }
 
-    private static <D extends Data> ResolverResult<D> resolveWithFallback(
-            DNSName dnsName, Class<D> type) throws IOException {
-        return resolveWithFallback(dnsName, type, validateHostname());
+    private static ResolverResult<SRV> resolveWithFallback(
+            final DNSName dnsName, boolean validateHostname) throws IOException {
+        return resolveWithFallback(dnsName, SRV.class, validateHostname);
     }
 
     private static <D extends Data> ResolverResult<D> resolveWithFallback(
@@ -285,5 +281,4 @@ public class Resolver {
         // TODO bring back in one form or another
         return false;
     }
-
 }
