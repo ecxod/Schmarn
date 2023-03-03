@@ -229,7 +229,7 @@ public class Resolver {
     }
 
     private static List<ServiceRecord> resolveNoSrvRecords(DNSName dnsName, boolean includeCName) {
-        List<ServiceRecord> results = new ArrayList<>();
+        var results = new ImmutableList.Builder<ServiceRecord>();
         try {
             for (A a : resolveWithFallback(dnsName, A.class, false).getAnswersOrEmptySet()) {
                 results.add(ServiceRecord.createDefault(dnsName, a.getInetAddress()));
@@ -238,17 +238,17 @@ public class Resolver {
                     resolveWithFallback(dnsName, AAAA.class, false).getAnswersOrEmptySet()) {
                 results.add(ServiceRecord.createDefault(dnsName, aaaa.getInetAddress()));
             }
-            if (results.size() == 0 && includeCName) {
+            if (results.build().isEmpty() && includeCName) {
                 for (CNAME cname :
                         resolveWithFallback(dnsName, CNAME.class, false).getAnswersOrEmptySet()) {
                     results.addAll(resolveNoSrvRecords(cname.name, false));
                 }
             }
-        } catch (Throwable throwable) {
+        } catch (final Throwable throwable) {
             LOGGER.info("Error resolving fallback records", throwable);
         }
         results.add(ServiceRecord.createDefault(dnsName));
-        return results;
+        return results.build();
     }
 
     private static ResolverResult<SRV> resolveWithFallback(

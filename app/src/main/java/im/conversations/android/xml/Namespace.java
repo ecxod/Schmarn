@@ -99,5 +99,7 @@ public final class Namespace {
     public static final String SYNCHRONIZATION = "im.quicksy.synchronization:0";
     public static final String TLS = "urn:ietf:params:xml:ns:xmpp-tls";
     public static final String UNIFIED_PUSH = "http://gultsch.de/xmpp/drafts/unified-push";
+    public static final String VCARD_TEMP = "vcard-temp";
+    public static final String VCARD_TEMP_UPDATE = "vcard-temp:x:update";
     public static final String VERSION = "jabber:iq:version";
 }

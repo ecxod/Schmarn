@@ -15,6 +15,7 @@ import im.conversations.android.xmpp.manager.DiscoManager;
 import im.conversations.android.xmpp.manager.ExternalDiscoManager;
 import im.conversations.android.xmpp.manager.HttpUploadManager;
 import im.conversations.android.xmpp.manager.JingleConnectionManager;
+import im.conversations.android.xmpp.manager.MultiUserChatManager;
 import im.conversations.android.xmpp.manager.NickManager;
 import im.conversations.android.xmpp.manager.PepManager;
 import im.conversations.android.xmpp.manager.PresenceManager;
@@ -45,6 +46,7 @@ public final class Managers {
                 .put(
                         JingleConnectionManager.class,
                         new JingleConnectionManager(context, connection))
+                .put(MultiUserChatManager.class, new MultiUserChatManager(context, connection))
                 .put(NickManager.class, new NickManager(context, connection))
                 .put(PepManager.class, new PepManager(context, connection))
                 .put(PresenceManager.class, new PresenceManager(context, connection))
