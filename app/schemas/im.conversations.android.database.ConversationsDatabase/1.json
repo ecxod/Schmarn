@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "bc04f3d0c58f7e50f5c7973a7a06c9eb",
+    "identityHash": "b5e8a59bbd86e133c0bc2edd303ad2a0",
     "entities": [
       {
         "tableName": "account",
@@ -2432,12 +2432,103 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "service_record_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `domain` TEXT NOT NULL, `ip` BLOB, `hostname` TEXT, `port` INTEGER NOT NULL, `directTls` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `authenticated` INTEGER NOT NULL, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "accountId",
+            "columnName": "accountId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "domain",
+            "columnName": "domain",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceRecord.ip",
+            "columnName": "ip",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serviceRecord.hostname",
+            "columnName": "hostname",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serviceRecord.port",
+            "columnName": "port",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceRecord.directTls",
+            "columnName": "directTls",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceRecord.priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceRecord.authenticated",
+            "columnName": "authenticated",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_service_record_cache_accountId_domain",
+            "unique": true,
+            "columnNames": [
+              "accountId",
+              "domain"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_service_record_cache_accountId_domain` ON `${TABLE_NAME}` (`accountId`, `domain`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "account",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "accountId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bc04f3d0c58f7e50f5c7973a7a06c9eb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b5e8a59bbd86e133c0bc2edd303ad2a0')"
     ]
   }
 }

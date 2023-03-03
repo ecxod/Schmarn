@@ -2,7 +2,10 @@ package im.conversations.android.database;
 
 import androidx.room.TypeConverter;
 import com.google.common.base.Strings;
+import de.measite.minidns.DNSName;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Instant;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
@@ -143,6 +146,33 @@ public final class Converters {
             return new IdentityKeyPair(serialized);
         } catch (final InvalidKeyException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @TypeConverter
+    public static String fromDNSName(final DNSName dnsName) {
+        return dnsName == null ? null : dnsName.toString();
+    }
+
+    @TypeConverter
+    public static DNSName toDNSName(final String dnsName) {
+        return dnsName == null ? null : DNSName.from(dnsName);
+    }
+
+    @TypeConverter
+    public static byte[] fromInetAddress(final InetAddress inetAddress) {
+        return inetAddress == null ? null : inetAddress.getAddress();
+    }
+
+    @TypeConverter
+    public static InetAddress toInetAddress(final byte[] address) {
+        if (address == null || address.length == 0) {
+            return null;
+        }
+        try {
+            return InetAddress.getByAddress(address);
+        } catch (final UnknownHostException e) {
+            return null;
         }
     }
 }

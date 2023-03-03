@@ -41,6 +41,7 @@ import org.jxmpp.jid.DomainJid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("UnstableApiUsage")
 public class Resolver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Resolver.class);

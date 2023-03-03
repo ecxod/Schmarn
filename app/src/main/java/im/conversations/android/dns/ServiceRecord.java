@@ -59,6 +59,10 @@ public class ServiceRecord implements Comparable<ServiceRecord> {
         return port;
     }
 
+    public int getPriority() {
+        return this.priority;
+    }
+
     public DNSName getHostname() {
         return hostname;
     }

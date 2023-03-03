@@ -17,6 +17,7 @@ import im.conversations.android.database.dao.MessageDao;
 import im.conversations.android.database.dao.NickDao;
 import im.conversations.android.database.dao.PresenceDao;
 import im.conversations.android.database.dao.RosterDao;
+import im.conversations.android.database.dao.ServiceRecordDao;
 import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.entity.AvatarAdditionalEntity;
 import im.conversations.android.database.entity.AvatarEntity;
@@ -49,6 +50,7 @@ import im.conversations.android.database.entity.NickEntity;
 import im.conversations.android.database.entity.PresenceEntity;
 import im.conversations.android.database.entity.RosterItemEntity;
 import im.conversations.android.database.entity.RosterItemGroupEntity;
+import im.conversations.android.database.entity.ServiceRecordCacheEntity;
 
 @Database(
         entities = {
@@ -83,7 +85,8 @@ import im.conversations.android.database.entity.RosterItemGroupEntity;
             PresenceEntity.class,
             MessageReactionEntity.class,
             RosterItemEntity.class,
-            RosterItemGroupEntity.class
+            RosterItemGroupEntity.class,
+            ServiceRecordCacheEntity.class
         },
         version = 1)
 @TypeConverters(Converters.class)
@@ -130,4 +133,6 @@ public abstract class ConversationsDatabase extends RoomDatabase {
     public abstract PresenceDao presenceDao();
 
     public abstract RosterDao rosterDao();
+
+    public abstract ServiceRecordDao serviceRecordDao();
 }

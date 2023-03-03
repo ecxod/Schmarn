@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.ClassToInstanceMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -338,22 +339,30 @@ public class XmppConnection implements Runnable {
                     LOGGER.warn("Resolver results were empty");
                     return;
                 }
+                final List<ServiceRecord> resultsWithBackup;
                 final ServiceRecord storedBackupResult;
                 if (connection != null) {
                     storedBackupResult = null;
+                    resultsWithBackup = results;
                 } else {
-                    // TODO fix resolver result caching
                     storedBackupResult =
-                            null; // context.databaseBackend.findResolverResult(domain);
+                            ConversationsDatabase.getInstance(context)
+                                    .serviceRecordDao()
+                                    .getCachedServiceRecord(account);
                     if (storedBackupResult != null && !results.contains(storedBackupResult)) {
-                        results.add(storedBackupResult);
+                        resultsWithBackup =
+                                new ImmutableList.Builder<ServiceRecord>()
+                                        .addAll(results)
+                                        .add(storedBackupResult)
+                                        .build();
                         LOGGER.debug(
-                                account.address
-                                        + ": loaded backup resolver result from db: "
-                                        + storedBackupResult);
+                                "loaded backup resolver result from db {}", storedBackupResult);
+                    } else {
+                        resultsWithBackup = results;
                     }
                 }
-                for (Iterator<ServiceRecord> iterator = results.iterator(); iterator.hasNext(); ) {
+                for (final Iterator<ServiceRecord> iterator = resultsWithBackup.iterator();
+                        iterator.hasNext(); ) {
                     final ServiceRecord result = iterator.next();
                     if (Thread.currentThread().isInterrupted()) {
                         LOGGER.debug(account.address + ": Thread was interrupted");
@@ -362,9 +371,8 @@ public class XmppConnection implements Runnable {
                     try {
                         // if tls is true, encryption is implied and must not be started
                         this.encryptionEnabled = result.isDirectTls();
-                        verifiedHostname =
+                        this.verifiedHostname =
                                 result.isAuthenticated() ? result.getHostname().toString() : null;
-                        LOGGER.debug("verified hostname " + verifiedHostname);
                         final InetSocketAddress addr;
                         if (result.getIp() != null) {
                             addr = new InetSocketAddress(result.getIp(), result.getPort());
@@ -403,12 +411,11 @@ public class XmppConnection implements Runnable {
 
                         localSocket.setSoTimeout(ConnectionPool.SOCKET_TIMEOUT * 1000);
                         if (startXmpp(localSocket)) {
-                            localSocket.setSoTimeout(
-                                    0); // reset to 0; once the connection is established we don’t
-                            // want this
+                            localSocket.setSoTimeout(0);
                             if (connection == null && !result.equals(storedBackupResult)) {
-                                // TODO store resolver result
-                                // context.databaseBackend.saveResolverResult(domain, result);
+                                ConversationsDatabase.getInstance(context)
+                                        .serviceRecordDao()
+                                        .insert(account, result);
                             }
                             break; // successfully connected to server that speaks xmpp
                         } else {
