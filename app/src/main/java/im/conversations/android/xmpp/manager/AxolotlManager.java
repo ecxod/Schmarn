@@ -109,8 +109,7 @@ public class AxolotlManager extends AbstractManager implements AxolotlService.Po
                         if (throwable instanceof TimeoutException) {
                             return;
                         }
-                        if (throwable instanceof IqErrorException) {
-                            final var iqErrorException = (IqErrorException) throwable;
+                        if (throwable instanceof final IqErrorException iqErrorException) {
                             final var error = iqErrorException.getError();
                             final var condition = error == null ? null : error.getCondition();
                             if (condition != null) {

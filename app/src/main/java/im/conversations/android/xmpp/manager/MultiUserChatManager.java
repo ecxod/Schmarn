@@ -179,8 +179,7 @@ public class MultiUserChatManager extends AbstractManager {
         @Override
         public void onFailure(@NonNull final Throwable throwable) {
             final String errorCondition;
-            if (throwable instanceof IqErrorException) {
-                final var iqErrorException = (IqErrorException) throwable;
+            if (throwable instanceof final IqErrorException iqErrorException) {
                 final Error error = iqErrorException.getError();
                 final Condition condition = error == null ? null : error.getCondition();
                 errorCondition = condition == null ? null : condition.getName();

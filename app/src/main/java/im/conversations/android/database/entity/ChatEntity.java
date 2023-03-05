@@ -31,7 +31,7 @@ public class ChatEntity {
 
     @NonNull public String address;
 
-    public ChatType type;
+    @NonNull public ChatType type;
 
     public boolean archived;
 

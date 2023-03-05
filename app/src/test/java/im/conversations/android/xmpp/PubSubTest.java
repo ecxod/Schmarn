@@ -23,32 +23,32 @@ public class PubSubTest {
     @Test
     public void parseBookmarkResult() throws IOException {
         final String xml =
-                "<iq type='result'\n"
-                        + "    to='juliet@capulet.lit/balcony'\n"
-                        + "    id='retrieve1' xmlns='jabber:client'>\n"
-                        + "  <pubsub xmlns='http://jabber.org/protocol/pubsub'>\n"
-                        + "    <items node='urn:xmpp:bookmarks:1'>\n"
-                        + "      <item id='theplay@conference.shakespeare.lit'>\n"
-                        + "        <conference xmlns='urn:xmpp:bookmarks:1'\n"
-                        + "                    name='The Play&apos;s the Thing'\n"
-                        + "                    autojoin='true'>\n"
-                        + "          <nick>JC</nick>\n"
-                        + "        </conference>\n"
-                        + "      </item>\n"
-                        + "      <item id='orchard@conference.shakespeare.lit'>\n"
-                        + "        <conference xmlns='urn:xmpp:bookmarks:1'\n"
-                        + "                    name='The Orcard'\n"
-                        + "                    autojoin='1'>\n"
-                        + "          <nick>JC</nick>\n"
-                        + "          <extensions>\n"
-                        + "            <state xmlns='http://myclient.example/bookmark/state'"
-                        + " minimized='true'/>\n"
-                        + "          </extensions>\n"
-                        + "        </conference>\n"
-                        + "      </item>\n"
-                        + "    </items>\n"
-                        + "  </pubsub>\n"
-                        + "</iq>";
+                """
+                        <iq type='result'
+                            to='juliet@capulet.lit/balcony'
+                            id='retrieve1' xmlns='jabber:client'>
+                          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+                            <items node='urn:xmpp:bookmarks:1'>
+                              <item id='theplay@conference.shakespeare.lit'>
+                                <conference xmlns='urn:xmpp:bookmarks:1'
+                                            name='The Play&apos;s the Thing'
+                                            autojoin='true'>
+                                  <nick>JC</nick>
+                                </conference>
+                              </item>
+                              <item id='orchard@conference.shakespeare.lit'>
+                                <conference xmlns='urn:xmpp:bookmarks:1'
+                                            name='The Orcard'
+                                            autojoin='1'>
+                                  <nick>JC</nick>
+                                  <extensions>
+                                    <state xmlns='http://myclient.example/bookmark/state' minimized='true'/>
+                                  </extensions>
+                                </conference>
+                              </item>
+                            </items>
+                          </pubsub>
+                        </iq>""";
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
         assertThat(element, instanceOf(Iq.class));
         final Iq iq = (Iq) element;

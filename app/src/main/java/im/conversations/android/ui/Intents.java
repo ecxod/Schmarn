@@ -19,15 +19,13 @@ public final class Intents {
     private Intents() {}
 
     public static Intent of(final ChatFilter chatFilter) {
-        if (chatFilter instanceof AccountIdentifier) {
-            final var account = (AccountIdentifier) chatFilter;
+        if (chatFilter instanceof final AccountIdentifier account) {
             final var intent = new Intent(ACTION_FILTER_CHATS_BY_ACCOUNT);
             intent.putExtra(EXTRA_ACCOUNT_ID, account.id);
             intent.putExtra(EXTRA_ACCOUNT_ADDRESS, account.address.toString());
             return intent;
         }
-        if (chatFilter instanceof GroupIdentifier) {
-            final var group = (GroupIdentifier) chatFilter;
+        if (chatFilter instanceof final GroupIdentifier group) {
             final var intent = new Intent(ACTION_FILTER_CHATS_BY_GROUP);
             intent.putExtra(EXTRA_GROUP_ID, group.id);
             intent.putExtra(EXTRA_GROUP_NAME, group.name);

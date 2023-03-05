@@ -21,9 +21,10 @@ public class TimestampTest {
     @Test
     public void testZuluNoMillis() throws IOException {
         final String xml =
-                "<delay xmlns='urn:xmpp:delay'\n"
-                        + "     from='capulet.com'\n"
-                        + "     stamp='2002-09-10T23:08:25Z'/>";
+                """
+                        <delay xmlns='urn:xmpp:delay'
+                             from='capulet.com'
+                             stamp='2002-09-10T23:08:25Z'/>""";
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
         assertThat(element, instanceOf(Delay.class));
         final Delay delay = (Delay) element;
@@ -33,9 +34,10 @@ public class TimestampTest {
     @Test
     public void testZuluWithMillis() throws IOException {
         final String xml =
-                "<delay xmlns='urn:xmpp:delay'\n"
-                        + "     from='capulet.com'\n"
-                        + "     stamp='2002-09-10T23:08:25.023Z'/>";
+                """
+                        <delay xmlns='urn:xmpp:delay'
+                             from='capulet.com'
+                             stamp='2002-09-10T23:08:25.023Z'/>""";
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
         assertThat(element, instanceOf(Delay.class));
         final Delay delay = (Delay) element;

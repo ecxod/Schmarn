@@ -37,16 +37,17 @@ public class XmlElementReaderTest {
 
     public void readMessageError() throws IOException {
         final String xml =
-                "<message\n"
-                        + "    to='juliet@capulet.com/balcony'\n"
-                        + "    from='romeo@montague.net/garden'\n"
-                        + "    xmlns='jabber:client'\n"
-                        + "    type='error'>\n"
-                        + "  <body>Wherefore art thou, Romeo?</body>\n"
-                        + "  <error code='404' type='cancel'>\n"
-                        + "    <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>\n"
-                        + "  </error>\n"
-                        + "</message>";
+                """
+                        <message
+                            to='juliet@capulet.com/balcony'
+                            from='romeo@montague.net/garden'
+                            xmlns='jabber:client'
+                            type='error'>
+                          <body>Wherefore art thou, Romeo?</body>
+                          <error code='404' type='cancel'>
+                            <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+                          </error>
+                        </message>""";
         final Element element = XmlElementReader.read(xml.getBytes(StandardCharsets.UTF_8));
         assertThat(element, instanceOf(Message.class));
         final Message message = (Message) element;

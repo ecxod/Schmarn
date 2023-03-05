@@ -21,8 +21,7 @@ public class InterfaceSettingsFragment extends PreferenceFragmentCompat {
         }
         themePreference.setOnPreferenceChangeListener(
                 (preference, newValue) -> {
-                    if (newValue instanceof String) {
-                        final String theme = (String) newValue;
+                    if (newValue instanceof final String theme) {
                         final int desiredNightMode = Conversations.getDesiredNightMode(theme);
                         requireSettingsActivity().setDesiredNightMode(desiredNightMode);
                     }
