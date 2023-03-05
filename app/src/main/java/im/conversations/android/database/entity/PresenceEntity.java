@@ -10,7 +10,7 @@ import im.conversations.android.database.model.PresenceShow;
 import im.conversations.android.database.model.PresenceType;
 import im.conversations.android.xmpp.model.muc.Affiliation;
 import im.conversations.android.xmpp.model.muc.Role;
-import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
+import im.conversations.android.xmpp.model.muc.user.MucUser;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.parts.Resourcepart;
@@ -76,8 +76,8 @@ public class PresenceEntity {
             final String status,
             final String vCardPhoto,
             final String occupantId,
-            final MultiUserChat multiUserChat) {
-        final var mucItem = multiUserChat == null ? null : multiUserChat.getItem();
+            final MucUser mucUser) {
+        final var mucUserItem = mucUser == null ? null : mucUser.getItem();
         final var entity = new PresenceEntity();
         entity.accountId = account;
         entity.address = address;
@@ -86,12 +86,12 @@ public class PresenceEntity {
         entity.show = show;
         entity.status = status;
         entity.vCardPhoto = vCardPhoto;
-        if (mucItem != null) {
+        if (mucUserItem != null) {
             entity.occupantId = occupantId;
-            entity.mucUserAffiliation = mucItem.getAffiliation();
-            entity.mucUserRole = mucItem.getRole();
-            entity.mucUserJid = mucItem.getJid();
-            entity.mucUserSelf = multiUserChat.getStatus().contains(110);
+            entity.mucUserAffiliation = mucUserItem.getAffiliation();
+            entity.mucUserRole = mucUserItem.getRole();
+            entity.mucUserJid = mucUserItem.getJid();
+            entity.mucUserSelf = mucUser.getStatus().contains(110);
         }
         return entity;
     }

@@ -37,7 +37,7 @@ public final class EntityCapabilities {
                                                                 blankNull(a.getIdentityName()),
                                                                 blankNull(b.getIdentityName()))
                                                         .result())
-                        .sortedCopy(info.getExtensions(Identity.class));
+                        .sortedCopy(info.getIdentities());
 
         for (final Identity id : orderedIdentities) {
             s.append(blankNull(id.getCategory()))
@@ -52,9 +52,7 @@ public final class EntityCapabilities {
 
         final List<String> features =
                 Ordering.natural()
-                        .sortedCopy(
-                                Collections2.transform(
-                                        info.getExtensions(Feature.class), Feature::getVar));
+                        .sortedCopy(Collections2.transform(info.getFeatures(), Feature::getVar));
         for (final String feature : features) {
             s.append(clean(feature)).append("<");
         }

@@ -7,10 +7,12 @@ import java.util.Collection;
 import java.util.Objects;
 
 @XmlElement(name = "x")
-public class MultiUserChat extends Extension {
+public class MucUser extends Extension {
 
-    public MultiUserChat() {
-        super(MultiUserChat.class);
+    public static final int STATUS_CODE_SELF_PRESENCE = 110;
+
+    public MucUser() {
+        super(MucUser.class);
     }
 
     public Item getItem() {

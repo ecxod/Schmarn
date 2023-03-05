@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteSource;
 import com.google.common.primitives.Ints;
 import im.conversations.android.IDs;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.UUID;
 import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 public class Account extends AccountIdentifier {
 
@@ -55,6 +57,25 @@ public class Account extends AccountIdentifier {
     public int getPublicDeviceIdInt() {
         try {
             return Math.abs(Ints.fromByteArray(ByteSource.wrap(randomSeed).slice(0, 4).read()));
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Resourcepart fallbackNick() {
+        final var localPart = address.getLocalpartOrNull();
+        if (localPart != null) {
+            final var resourceFromLocalPart = Resourcepart.fromOrNull(localPart.toString());
+            if (resourceFromLocalPart != null) {
+                return resourceFromLocalPart;
+            }
+        }
+        try {
+            return Resourcepart.fromOrThrowUnchecked(
+                    BaseEncoding.base32Hex()
+                            .lowerCase()
+                            .omitPadding()
+                            .encode(ByteSource.wrap(randomSeed).slice(0, 6).read()));
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }

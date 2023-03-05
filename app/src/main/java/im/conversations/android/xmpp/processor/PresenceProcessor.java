@@ -7,7 +7,8 @@ import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.manager.DiscoManager;
-import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
+import im.conversations.android.xmpp.manager.MultiUserChatManager;
+import im.conversations.android.xmpp.model.muc.user.MucUser;
 import im.conversations.android.xmpp.model.occupant.OccupantId;
 import im.conversations.android.xmpp.model.stanza.Presence;
 import im.conversations.android.xmpp.model.vcard.update.VCardUpdate;
@@ -45,7 +46,7 @@ public class PresenceProcessor extends XmppConnection.Delegate implements Consum
 
         final var vCardUpdate = presencePacket.getExtension(VCardUpdate.class);
         final var vCardPhoto = vCardUpdate == null ? null : vCardUpdate.getHash();
-        final var muc = presencePacket.getExtension(MultiUserChat.class);
+        final var muc = presencePacket.getExtension(MucUser.class);
 
         final String occupantId;
         if (muc != null && presencePacket.hasExtension(OccupantId.class)) {
@@ -71,6 +72,18 @@ public class PresenceProcessor extends XmppConnection.Delegate implements Consum
                         vCardPhoto,
                         occupantId,
                         muc);
+
+        final var mucManager = getManager(MultiUserChatManager.class);
+        if (muc != null && muc.getStatus().contains(MucUser.STATUS_CODE_SELF_PRESENCE)) {
+            if (type == null) {
+                mucManager.handleSelfPresenceAvailable(presencePacket);
+            } else if (type == PresenceType.UNAVAILABLE) {
+                mucManager.handleSelfPresenceUnavailable(presencePacket);
+            }
+        }
+        if (type == PresenceType.ERROR) {
+            mucManager.handleErrorPresence(presencePacket);
+        }
 
         // TODO do this only for contacts?
         fetchCapabilities(presencePacket);

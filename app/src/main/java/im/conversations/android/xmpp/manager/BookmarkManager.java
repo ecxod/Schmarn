@@ -11,6 +11,7 @@ import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.NodeConfiguration;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.bookmark.Conference;
+import im.conversations.android.xmpp.model.bookmark.Nick;
 import im.conversations.android.xmpp.model.pubsub.Items;
 import im.conversations.android.xmpp.model.pubsub.event.Retract;
 import java.util.Collection;
@@ -36,7 +37,7 @@ public class BookmarkManager extends AbstractManager {
                 new FutureCallback<>() {
                     @Override
                     public void onSuccess(final Map<String, Conference> bookmarks) {
-                        getDatabase().bookmarkDao().setItems(getAccount(), bookmarks);
+                        setBookmarks(bookmarks);
                     }
 
                     @Override
@@ -45,6 +46,17 @@ public class BookmarkManager extends AbstractManager {
                     }
                 },
                 MoreExecutors.directExecutor());
+    }
+
+    private void setBookmarks(final Map<String, Conference> bookmarks) {
+        final var database = getDatabase();
+        final var account = getAccount();
+        database.runInTransaction(
+                () -> {
+                    database.bookmarkDao().setItems(account, bookmarks);
+                    database.chatDao().syncWithBookmarks(account);
+                });
+        getManager(MultiUserChatManager.class).joinMultiUserChats();
     }
 
     private void updateItems(final Map<String, Conference> items) {
@@ -74,9 +86,18 @@ public class BookmarkManager extends AbstractManager {
         }
     }
 
-    public ListenableFuture<Void> publishBookmark(final Jid address) {
+    public ListenableFuture<Void> publishBookmark(final Jid address, final boolean autoJoin) {
+        return publishBookmark(address, autoJoin, null);
+    }
+
+    public ListenableFuture<Void> publishBookmark(
+            final Jid address, final boolean autoJoin, final String nick) {
         final var itemId = address.toString();
         final var conference = new Conference();
+        conference.setAutoJoin(autoJoin);
+        if (nick != null) {
+            conference.addExtension(new Nick()).setContent(nick);
+        }
         return Futures.transform(
                 getManager(PepManager.class)
                         .publish(conference, itemId, NodeConfiguration.WHITELIST_MAX_ITEMS),

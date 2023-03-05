@@ -5,7 +5,9 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
+import com.google.common.base.Strings;
 import im.conversations.android.xmpp.model.bookmark.Conference;
+import im.conversations.android.xmpp.model.bookmark.Nick;
 import java.util.Map;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -47,11 +49,13 @@ public class BookmarkEntity {
         if (address == null) {
             return null;
         }
+        final Nick nick = conference.getNick();
         final var entity = new BookmarkEntity();
         entity.accountId = accountId;
         entity.address = address;
         entity.autoJoin = conference.isAutoJoin();
         entity.name = conference.getConferenceName();
+        entity.nick = Strings.emptyToNull(nick == null ? null : nick.getContent());
         return entity;
     }
 }

@@ -34,6 +34,11 @@ public class PepManager extends AbstractManager {
         return pubSubManager().publishSingleton(pepService(), item, node, nodeConfiguration);
     }
 
+    public ListenableFuture<Void> publishSingleton(
+            final Extension item, final NodeConfiguration nodeConfiguration) {
+        return pubSubManager().publishSingleton(pepService(), item, nodeConfiguration);
+    }
+
     public ListenableFuture<Iq> retract(final String itemId, final String node) {
         return pubSubManager().retract(pepService(), itemId, node);
     }

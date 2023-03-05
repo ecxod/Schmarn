@@ -10,7 +10,7 @@ import im.conversations.android.database.entity.PresenceEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.PresenceShow;
 import im.conversations.android.database.model.PresenceType;
-import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
+import im.conversations.android.xmpp.model.muc.user.MucUser;
 import java.util.Arrays;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.parts.Resourcepart;
@@ -41,7 +41,7 @@ public abstract class PresenceDao {
             @Nullable final String status,
             @Nullable final String vCardPhoto,
             @Nullable final String occupantId,
-            @Nullable final MultiUserChat multiUserChat) {
+            @Nullable final MucUser mucUser) {
         if (resource.equals(Resourcepart.EMPTY)
                 && Arrays.asList(PresenceType.ERROR, PresenceType.UNAVAILABLE).contains(type)) {
             deletePresences(account.id, address);
@@ -63,7 +63,7 @@ public abstract class PresenceDao {
                         status,
                         vCardPhoto,
                         occupantId,
-                        multiUserChat);
+                        mucUser);
         insert(entity);
     }
 }

@@ -46,6 +46,7 @@ import im.conversations.android.database.entity.MessageEntity;
 import im.conversations.android.database.entity.MessageReactionEntity;
 import im.conversations.android.database.entity.MessageStateEntity;
 import im.conversations.android.database.entity.MessageVersionEntity;
+import im.conversations.android.database.entity.MucStatusCodeEntity;
 import im.conversations.android.database.entity.NickEntity;
 import im.conversations.android.database.entity.PresenceEntity;
 import im.conversations.android.database.entity.RosterItemEntity;
@@ -81,6 +82,7 @@ import im.conversations.android.database.entity.ServiceRecordCacheEntity;
             MessageStateEntity.class,
             MessageContentEntity.class,
             MessageVersionEntity.class,
+            MucStatusCodeEntity.class,
             NickEntity.class,
             PresenceEntity.class,
             MessageReactionEntity.class,

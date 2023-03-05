@@ -21,8 +21,6 @@ import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.EntityCapabilities2;
 import im.conversations.android.xmpp.model.data.Data;
 import im.conversations.android.xmpp.model.data.Value;
-import im.conversations.android.xmpp.model.disco.info.Feature;
-import im.conversations.android.xmpp.model.disco.info.Identity;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import java.util.Collection;
@@ -156,13 +154,11 @@ public abstract class DiscoDao {
 
         insertDiscoIdentities(
                 Collections2.transform(
-                        infoQuery.getExtensions(Identity.class),
-                        i -> DiscoIdentityEntity.of(discoId, i)));
+                        infoQuery.getIdentities(), i -> DiscoIdentityEntity.of(discoId, i)));
 
         insertDiscoFeatures(
                 Collections2.transform(
-                        infoQuery.getExtensions(Feature.class),
-                        f -> DiscoFeatureEntity.of(discoId, f.getVar())));
+                        infoQuery.getFeatures(), f -> DiscoFeatureEntity.of(discoId, f.getVar())));
         for (final Data data : infoQuery.getExtensions(Data.class)) {
             final var extensionId = insert(DiscoExtensionEntity.of(discoId, data.getFormType()));
             for (final var field : data.getFields()) {

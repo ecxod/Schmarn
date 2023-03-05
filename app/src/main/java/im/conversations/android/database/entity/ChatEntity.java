@@ -1,11 +1,13 @@
 package im.conversations.android.database.entity;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import im.conversations.android.database.model.ChatType;
+import im.conversations.android.database.model.MucState;
 
 @Entity(
         tableName = "chat",
@@ -32,4 +34,7 @@ public class ChatEntity {
     public ChatType type;
 
     public boolean archived;
+
+    @Nullable public MucState mucState;
+    @Nullable public String errorCondition;
 }

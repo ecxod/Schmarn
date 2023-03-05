@@ -12,8 +12,12 @@ import im.conversations.android.xmpp.manager.PresenceManager;
 import im.conversations.android.xmpp.manager.RosterManager;
 import java.util.function.Consumer;
 import org.jxmpp.jid.Jid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BindProcessor extends XmppConnection.Delegate implements Consumer<Jid> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BindProcessor.class);
 
     public BindProcessor(final Context context, final XmppConnection connection) {
         super(context, connection);
@@ -24,7 +28,12 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
         final var account = getAccount();
         final var database = getDatabase();
 
-        database.presenceDao().deletePresences(account.id);
+        // TODO reset errorCondition; mucState in chats
+        database.runInTransaction(
+                () -> {
+                    database.chatDao().resetMucStates();
+                    database.presenceDao().deletePresences(account.id);
+                });
 
         getManager(RosterManager.class).fetch();
 

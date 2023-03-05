@@ -17,4 +17,12 @@ public class Conference extends Extension {
     public String getConferenceName() {
         return this.getAttribute("name");
     }
+
+    public void setAutoJoin(boolean autoJoin) {
+        setAttribute("autojoin", autoJoin);
+    }
+
+    public Nick getNick() {
+        return this.getExtension(Nick.class);
+    }
 }

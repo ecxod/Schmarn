@@ -62,8 +62,8 @@ public class EntityCapabilities2 {
     }
 
     private static String algorithm(final InfoQuery infoQuery) {
-        return features(infoQuery.getExtensions(Feature.class))
-                + identities(infoQuery.getExtensions(Identity.class))
+        return features(infoQuery.getFeatures())
+                + identities(infoQuery.getIdentities())
                 + extensions(infoQuery.getExtensions(Data.class));
     }
 

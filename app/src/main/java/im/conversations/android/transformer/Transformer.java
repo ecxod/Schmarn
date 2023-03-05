@@ -14,7 +14,7 @@ import im.conversations.android.xmpp.model.DeliveryReceipt;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.correction.Replace;
 import im.conversations.android.xmpp.model.markers.Displayed;
-import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
+import im.conversations.android.xmpp.model.muc.user.MucUser;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.reply.Reply;
 import im.conversations.android.xmpp.model.retract.Retract;
@@ -72,7 +72,7 @@ public class Transformer {
             final ConversationsDatabase database, final MessageTransformation transformation) {
         final var remote = transformation.remote;
         final var messageType = transformation.type;
-        final var muc = transformation.getExtension(MultiUserChat.class);
+        final var muc = transformation.getExtension(MucUser.class);
 
         final ChatIdentifier chat =
                 database.chatDao()

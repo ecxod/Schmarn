@@ -14,7 +14,7 @@ import im.conversations.android.xmpp.model.error.Error;
 import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.jabber.Thread;
 import im.conversations.android.xmpp.model.markers.Displayed;
-import im.conversations.android.xmpp.model.muc.user.MultiUserChat;
+import im.conversations.android.xmpp.model.muc.user.MucUser;
 import im.conversations.android.xmpp.model.oob.OutOfBandData;
 import im.conversations.android.xmpp.model.reactions.Reactions;
 import im.conversations.android.xmpp.model.reply.Reply;
@@ -37,7 +37,7 @@ public class MessageTransformation extends Transformation {
                     Encrypted.class,
                     OutOfBandData.class,
                     DeliveryReceipt.class,
-                    MultiUserChat.class,
+                    MucUser.class,
                     Displayed.class,
                     Replace.class,
                     Reactions.class,
