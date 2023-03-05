@@ -228,6 +228,7 @@ public abstract class DiscoDao {
                         entity.getClass().getName()));
     }
 
+    @Transaction
     @Query(
             "SELECT disco_item.discoId,address FROM disco_item JOIN disco_feature ON"
                     + " disco_item.discoId=disco_feature.discoId WHERE feature=:feature AND"
