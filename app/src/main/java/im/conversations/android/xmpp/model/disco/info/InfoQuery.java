@@ -31,4 +31,8 @@ public class InfoQuery extends Extension {
     public Collection<Identity> getIdentities() {
         return this.getExtensions(Identity.class);
     }
+
+    public boolean hasIdentityWithCategory(final String category) {
+        return Iterables.any(getIdentities(), i -> category.equals(i.getCategory()));
+    }
 }

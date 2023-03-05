@@ -63,7 +63,8 @@ public class MultiUserChatManager extends AbstractManager {
     }
 
     private void enterExisting(final MucWithNick mucWithNick, final InfoQuery infoQuery) {
-        if (infoQuery.hasFeature(Namespace.MUC)) {
+        if (infoQuery.hasFeature(Namespace.MUC)
+                && infoQuery.hasIdentityWithCategory("conference")) {
             sendJoinPresence(mucWithNick);
         } else {
             getDatabase().chatDao().setMucState(mucWithNick.chatId, MucState.NOT_A_MUC);
@@ -91,8 +92,6 @@ public class MultiUserChatManager extends AbstractManager {
         final MucUser mucUser = presencePacket.getExtension(MucUser.class);
         Preconditions.checkArgument(
                 mucUser.getStatus().contains(MucUser.STATUS_CODE_SELF_PRESENCE));
-        // TODO flag chat as joined
-        LOGGER.info("Received self presence for {}", presencePacket.getFrom());
         final var database = getDatabase();
         database.runInTransaction(
                 () -> {
@@ -107,7 +106,6 @@ public class MultiUserChatManager extends AbstractManager {
                                 "Available presence received for archived or non existent chat");
                         return;
                     }
-                    // TODO set status codes
                     database.chatDao()
                             .setMucState(
                                     chatIdentifier.id, MucState.AVAILABLE, mucUser.getStatus());
@@ -132,8 +130,11 @@ public class MultiUserChatManager extends AbstractManager {
                     } else if (chatIdentifier.archived) {
                         database.chatDao().setMucState(chatIdentifier.id, null);
                     } else {
-                        // TODO set status codes
-                        database.chatDao().setMucState(chatIdentifier.id, MucState.UNAVAILABLE);
+                        database.chatDao()
+                                .setMucState(
+                                        chatIdentifier.id,
+                                        MucState.UNAVAILABLE,
+                                        mucUser.getStatus());
                     }
                 });
     }

@@ -8,6 +8,7 @@ import androidx.room.Query;
 import androidx.room.Transaction;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
+import com.google.common.util.concurrent.ListenableFuture;
 import im.conversations.android.database.entity.DiscoEntity;
 import im.conversations.android.database.entity.DiscoExtensionEntity;
 import im.conversations.android.database.entity.DiscoExtensionFieldEntity;
@@ -16,6 +17,7 @@ import im.conversations.android.database.entity.DiscoFeatureEntity;
 import im.conversations.android.database.entity.DiscoIdentityEntity;
 import im.conversations.android.database.entity.DiscoItemEntity;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.database.model.DiscoItemWithExtension;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.EntityCapabilities;
 import im.conversations.android.xmpp.EntityCapabilities2;
@@ -24,7 +26,9 @@ import im.conversations.android.xmpp.model.data.Value;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.disco.items.Item;
 import java.util.Collection;
+import java.util.List;
 import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.parts.Resourcepart;
 
@@ -223,4 +227,11 @@ public abstract class DiscoDao {
                         "Discovering features for %s is not implemented",
                         entity.getClass().getName()));
     }
+
+    @Query(
+            "SELECT disco_item.discoId,address FROM disco_item JOIN disco_feature ON"
+                    + " disco_item.discoId=disco_feature.discoId WHERE feature=:feature AND"
+                    + " (address=:address OR parentAddress=:address)")
+    public abstract ListenableFuture<List<DiscoItemWithExtension>> getItemByFeature(
+            DomainBareJid address, final String feature);
 }

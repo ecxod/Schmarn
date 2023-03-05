@@ -13,6 +13,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import im.conversations.android.BuildConfig;
 import im.conversations.android.R;
+import im.conversations.android.database.model.DiscoItemWithExtension;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.EntityCapabilities;
@@ -238,6 +239,13 @@ public class DiscoManager extends AbstractManager {
                     return Futures.allAsList(infoFutures);
                 },
                 MoreExecutors.directExecutor());
+    }
+
+    public ListenableFuture<List<DiscoItemWithExtension>> getServerItemByFeature(
+            final String feature) {
+        return getDatabase()
+                .discoDao()
+                .getItemByFeature(getAccount().address.asDomainBareJid(), feature);
     }
 
     public boolean hasFeature(final Entity entity, final String feature) {

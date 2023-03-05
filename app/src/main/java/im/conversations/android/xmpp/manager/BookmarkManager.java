@@ -17,6 +17,7 @@ import im.conversations.android.xmpp.model.pubsub.event.Retract;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.slf4j.Logger;
@@ -86,7 +87,7 @@ public class BookmarkManager extends AbstractManager {
         }
     }
 
-    public ListenableFuture<Void> publishBookmark(final Jid address, final boolean autoJoin) {
+    public ListenableFuture<Void> publishBookmark(final BareJid address, final boolean autoJoin) {
         return publishBookmark(address, autoJoin, null);
     }
 
