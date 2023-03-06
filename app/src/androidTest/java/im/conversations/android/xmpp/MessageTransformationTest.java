@@ -38,6 +38,7 @@ public class MessageTransformationTest {
 
     private static final BareJid ACCOUNT = JidCreate.bareFromOrThrowUnchecked("user@example.com");
     private static final BareJid REMOTE = JidCreate.bareFromOrThrowUnchecked("juliet@example.com");
+    private static final BareJid REMOTE_2 = JidCreate.bareFromOrThrowUnchecked("romeo@example.com");
 
     private static final String GREETING = "Hi Juliet. How are you?";
 
@@ -550,5 +551,38 @@ public class MessageTransformationTest {
         final var message = Iterables.getOnlyElement(messages);
         Assert.assertEquals(Modification.RETRACTION, message.modification);
         Assert.assertEquals(PartType.RETRACTION, Iterables.getOnlyElement(message.contents).type);
+    }
+
+    @Test
+    public void twoChatThreeMessages() throws XmppStringprepException {
+        final var m1 = new Message();
+        m1.setId("1");
+        m1.setTo(REMOTE);
+        m1.setFrom(JidCreate.fullFrom(ACCOUNT, Resourcepart.from("junit")));
+        m1.addExtension(new Body("Hi. How are you?"));
+
+        this.transformer.transform(
+                MessageTransformation.of(
+                        m1, Instant.now(), REMOTE, null, m1.getFrom().asBareJid(), null));
+
+        final var m2 = new Message();
+        m2.setId("2");
+        m2.setTo(REMOTE);
+        m2.setFrom(JidCreate.fullFrom(ACCOUNT, Resourcepart.from("junit")));
+        m2.addExtension(new Body("Please answer"));
+
+        this.transformer.transform(
+                MessageTransformation.of(
+                        m2, Instant.now(), REMOTE, null, m2.getFrom().asBareJid(), null));
+
+        final var m3 = new Message();
+        m3.setId("3");
+        m3.setTo(REMOTE_2);
+        m3.setFrom(JidCreate.fullFrom(ACCOUNT, Resourcepart.from("junit")));
+        m3.addExtension(new Body("Another message"));
+
+        this.transformer.transform(
+                MessageTransformation.of(
+                        m3, Instant.now(), REMOTE, null, m3.getFrom().asBareJid(), null));
     }
 }

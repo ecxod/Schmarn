@@ -86,7 +86,10 @@ dependencies {
 
     implementation "androidx.room:room-runtime:$rootProject.ext.roomVersion"
     implementation "androidx.room:room-guava:$rootProject.ext.roomVersion"
+    implementation "androidx.room:room-paging:$rootProject.ext.roomVersion"
     annotationProcessor "androidx.room:room-compiler:$rootProject.ext.roomVersion"
+
+    implementation "androidx.paging:paging-runtime:$rootProject.ext.pagingVersion"
 
     implementation "androidx.preference:preference:$rootProject.ext.preferenceVersion"
 

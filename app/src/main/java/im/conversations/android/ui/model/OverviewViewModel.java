@@ -6,12 +6,19 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.Transformations;
+import androidx.lifecycle.ViewModelKt;
+import androidx.paging.Pager;
+import androidx.paging.PagingConfig;
+import androidx.paging.PagingData;
+import androidx.paging.PagingLiveData;
 import im.conversations.android.database.model.AccountIdentifier;
 import im.conversations.android.database.model.ChatFilter;
+import im.conversations.android.database.model.ChatOverviewItem;
 import im.conversations.android.database.model.GroupIdentifier;
 import im.conversations.android.repository.AccountRepository;
 import im.conversations.android.repository.ChatRepository;
 import java.util.List;
+import kotlinx.coroutines.CoroutineScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,5 +71,18 @@ public class OverviewViewModel extends AndroidViewModel {
     public void setChatFilter(final ChatFilter chatFilter) {
         this.chatFilter = chatFilter;
         LOGGER.info("Setting chat filter to {}", chatFilter);
+    }
+
+    public LiveData<PagingData<ChatOverviewItem>> getChats() {
+        final Pager<Integer, ChatOverviewItem> pager =
+                new Pager<>(
+                        new PagingConfig(20),
+                        () -> {
+                            return this.chatRepository.getChatOverview();
+                        });
+
+        LiveData<PagingData<ChatOverviewItem>> foo = PagingLiveData.getLiveData(pager);
+        CoroutineScope viewModelScope = ViewModelKt.getViewModelScope(this);
+        return PagingLiveData.cachedIn(PagingLiveData.getLiveData(pager), viewModelScope);
     }
 }

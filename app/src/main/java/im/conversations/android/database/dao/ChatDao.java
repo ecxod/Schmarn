@@ -1,6 +1,7 @@
 package im.conversations.android.database.dao;
 
 import androidx.lifecycle.LiveData;
+import androidx.paging.PagingSource;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
@@ -10,6 +11,7 @@ import im.conversations.android.database.entity.ChatEntity;
 import im.conversations.android.database.entity.MucStatusCodeEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.ChatIdentifier;
+import im.conversations.android.database.model.ChatOverviewItem;
 import im.conversations.android.database.model.ChatType;
 import im.conversations.android.database.model.GroupIdentifier;
 import im.conversations.android.database.model.MucState;
@@ -129,7 +131,7 @@ public abstract class ChatDao {
     protected abstract List<String> getChatsNotInBookmarks(long account, ChatType chatType);
 
     @Query(
-            "SELECT bookmark.address FROM bookmark WHERE bookmark.accountId=accountId AND"
+            "SELECT bookmark.address FROM bookmark WHERE bookmark.accountId=:account AND"
                     + " bookmark.autoJoin=1 EXCEPT SELECT chat.address FROM chat WHERE"
                     + " chat.accountId=:account AND chat.type=:chatType AND archived=0")
     protected abstract List<Jid> getBookmarksNotInChats(long account, ChatType chatType);
@@ -186,4 +188,25 @@ public abstract class ChatDao {
 
     @Query("DELETE FROM muc_status_code WHERE chatId=:chatId")
     protected abstract void deleteStatusCodes(final long chatId);
+
+    // TODO select vCardPhoto for c.type='MUC_PM'
+    @Transaction
+    @Query(
+            "SELECT c.id,c.accountId,c.address,c.type,m.sentAt,m.outgoing,m.latestVersion as"
+                + " version,m.toBare,m.toResource,m.fromBare,m.fromResource,(SELECT count(id) FROM"
+                + " message WHERE chatId=c.id) as unread,(SELECT name FROM roster WHERE"
+                + " roster.address=c.address) as rosterName,(SELECT nick FROM nick WHERE"
+                + " nick.address=c.address) as nick,(SELECT identity.name FROM disco_item JOIN"
+                + " disco_identity identity ON disco_item.discoId=identity.discoId WHERE"
+                + " disco_item.address=c.address LIMIT 1) as discoIdentityName,(SELECT name FROM"
+                + " bookmark WHERE bookmark.address=c.address) as bookmarkName,(CASE WHEN"
+                + " c.type='MUC' THEN (SELECT vCardPhoto FROM presence WHERE address=c.address AND"
+                + " resource='') WHEN c.type='INDIVIDUAL' THEN (SELECT vCardPhoto FROM presence"
+                + " WHERE address=c.address AND vCardPhoto NOT NULL LIMIT 1) ELSE NULL END) as"
+                + " vCardPhoto,(SELECT thumb_id FROM avatar WHERE avatar.address=c.address) as"
+                + " avatar FROM CHAT c LEFT JOIN message m ON (c.id=m.chatId) LEFT OUTER JOIN"
+                + " message m2 ON (c.id = m2.chatId AND (m.receivedAt < m2.receivedAt OR"
+                + " (m.receivedAt = m2.receivedAt AND m.id < m2.id))) WHERE c.archived=0 AND m2.id"
+                + " IS NULL ORDER by m.receivedAt DESC")
+    public abstract PagingSource<Integer, ChatOverviewItem> getChatOverview();
 }

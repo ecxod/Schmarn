@@ -25,6 +25,8 @@ import im.conversations.android.databinding.FragmentOverviewBinding;
 import im.conversations.android.ui.Intents;
 import im.conversations.android.ui.activity.SettingsActivity;
 import im.conversations.android.ui.activity.SetupActivity;
+import im.conversations.android.ui.adapter.ChatOverviewAdapter;
+import im.conversations.android.ui.adapter.ChatOverviewComparator;
 import im.conversations.android.ui.model.OverviewViewModel;
 import java.util.List;
 import org.slf4j.Logger;
@@ -82,6 +84,15 @@ public class OverviewFragment extends Fragment {
                 .getChatFilterAvailable()
                 .observe(getViewLifecycleOwner(), this::onChatFilterAvailable);
         this.configureDrawerLayoutToCloseOnBackPress();
+        final var chatOverviewAdapter = new ChatOverviewAdapter(new ChatOverviewComparator());
+        binding.chats.setAdapter(chatOverviewAdapter);
+        this.overviewViewModel
+                .getChats()
+                .observe(
+                        getViewLifecycleOwner(),
+                        pagingData -> {
+                            chatOverviewAdapter.submitData(getLifecycle(), pagingData);
+                        });
         return binding.getRoot();
     }
 
