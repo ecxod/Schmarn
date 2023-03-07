@@ -86,6 +86,7 @@ public class AvatarDrawable extends ColorDrawable {
         canvas.getClipBounds(r);
         final int cHeight = r.height();
         final int cWidth = r.width();
+        // TODO if we ever want to do rounded corners we can use drawRoundRect()
         canvas.drawCircle(midX, midY, radius, paint);
         if (letter == null) {
             return;

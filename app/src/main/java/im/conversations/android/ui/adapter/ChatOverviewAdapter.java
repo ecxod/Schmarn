@@ -43,6 +43,7 @@ public class ChatOverviewAdapter
                 chatOverviewItem == null ? null : chatOverviewItem.getAddressWithName();
         final var avatar = chatOverviewItem == null ? null : chatOverviewItem.getAvatar();
         if (avatar != null) {
+            holder.binding.avatar.setVisibility(View.VISIBLE);
             AvatarFetcher.fetchInto(holder.binding.avatar, avatar);
         } else if (addressWithName != null) {
             holder.binding.avatar.setVisibility(View.VISIBLE);

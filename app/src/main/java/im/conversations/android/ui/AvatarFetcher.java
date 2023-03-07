@@ -16,6 +16,7 @@ import im.conversations.android.ui.graphics.drawable.AvatarDrawable;
 import im.conversations.android.xmpp.ConnectionPool;
 import im.conversations.android.xmpp.manager.AvatarManager;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.CancellationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,10 @@ public class AvatarFetcher {
 
         @Override
         public void onFailure(@NonNull final Throwable throwable) {
+            if (throwable instanceof CancellationException) {
+                return;
+            }
+            // TODO on IqTimeout remove tag?
             final var imageView = imageViewWeakReference.get();
             if (imageView == null) {
                 LOGGER.info("ImageView reference was gone after avatar fetch failed");
@@ -79,7 +84,13 @@ public class AvatarFetcher {
     public static void fetchInto(final ImageView imageView, final AvatarWithAccount avatar) {
         final var tag = imageView.getTag();
         if (tag instanceof AvatarFetcher avatarFetcher) {
-            if (avatar.equals(avatarFetcher.avatar)) {
+            if (avatar.equals(avatarFetcher.avatar) && !avatarFetcher.future.isCancelled()) {
+                if (avatarFetcher.future.isDone()) {
+                    Futures.addCallback(
+                            avatarFetcher.future,
+                            new Callback(imageView, avatar.addressWithName),
+                            ContextCompat.getMainExecutor(imageView.getContext()));
+                }
                 return;
             }
             avatarFetcher.future.cancel(true);

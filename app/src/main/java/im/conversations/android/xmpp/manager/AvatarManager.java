@@ -17,6 +17,10 @@ import im.conversations.android.xmpp.model.avatar.Data;
 import im.conversations.android.xmpp.model.avatar.Info;
 import im.conversations.android.xmpp.model.avatar.Metadata;
 import im.conversations.android.xmpp.model.pubsub.Items;
+import im.conversations.android.xmpp.model.stanza.Iq;
+import im.conversations.android.xmpp.model.vcard.BinaryValue;
+import im.conversations.android.xmpp.model.vcard.Photo;
+import im.conversations.android.xmpp.model.vcard.VCard;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -70,7 +74,8 @@ public class AvatarManager extends AbstractManager {
         }
     }
 
-    public ListenableFuture<byte[]> getAvatar(final Jid address, final String id) {
+    public ListenableFuture<byte[]> getAvatar(
+            final Jid address, final AvatarType type, final String id) {
         final var fetch = new Fetch(address, id);
         final SettableFuture<byte[]> future;
         synchronized (avatarFetches) {
@@ -81,7 +86,7 @@ public class AvatarManager extends AbstractManager {
             future = SettableFuture.create();
             avatarFetches.put(fetch, future);
         }
-        future.setFuture(getCachedOrFetch(address, id));
+        future.setFuture(getCachedOrFetch(address, type, id));
         future.addListener(
                 () -> {
                     synchronized (this.avatarFetches) {
@@ -94,15 +99,8 @@ public class AvatarManager extends AbstractManager {
 
     public ListenableFuture<Bitmap> getAvatarBitmap(
             final Jid address, final AvatarType type, final String id) {
-        final ListenableFuture<byte[]> avatar;
-        if (type == AvatarType.PEP) {
-            avatar = getAvatar(address, id);
-        } else {
-            return Futures.immediateFailedFuture(
-                    new Exception(String.format("Can not load type %s avatar", type)));
-        }
         return Futures.transform(
-                avatar,
+                getAvatar(address, type, id),
                 bytes -> {
                     return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 },
@@ -120,26 +118,55 @@ public class AvatarManager extends AbstractManager {
         }
     }
 
-    private ListenableFuture<byte[]> getCachedOrFetch(final Jid address, final String id) {
+    private ListenableFuture<byte[]> getCachedOrFetch(
+            final Jid address, final AvatarType type, final String id) {
         final var cachedFuture =
                 Futures.submit(() -> getCachedAvatar(address, id), FILE_IO_EXECUTOR);
         return Futures.catchingAsync(
                 cachedFuture,
                 Exception.class,
-                exception -> fetchAndCacheAvatar(address, id),
+                exception -> fetchAndCacheAvatar(address, type, id),
                 MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<byte[]> fetchAvatar(final Jid address, final String id) {
+    private ListenableFuture<byte[]> fetchPepAvatar(final Jid address, final String id) {
         return Futures.transform(
                 getManager(PubSubManager.class).fetchItem(address, id, Data.class),
                 Data::asBytes,
                 MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<byte[]> fetchAndCacheAvatar(final Jid address, final String id) {
+    private ListenableFuture<byte[]> fetchVcardAvatar(final Jid address, final String id) {
+        final var iq = new Iq(Iq.Type.GET);
+        iq.setTo(address);
+        iq.addExtension(new VCard());
+        final var iqFuture = connection.sendIqPacket(iq);
         return Futures.transform(
-                fetchAvatar(address, id),
+                iqFuture,
+                result -> {
+                    final var vcard = result.getExtension(VCard.class);
+                    if (vcard == null) {
+                        throw new IllegalStateException("No vCard in response");
+                    }
+                    final var photo = vcard.getExtension(Photo.class);
+                    final var binary = photo == null ? null : photo.getExtension(BinaryValue.class);
+                    if (binary == null) {
+                        throw new IllegalStateException("vCard did not have embedded photo");
+                    }
+                    return binary.asBytes();
+                },
+                MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<byte[]> fetchAndCacheAvatar(
+            final Jid address, final AvatarType avatarType, final String id) {
+        final ListenableFuture<byte[]> avatarFetchFuture =
+                switch (avatarType) {
+                    case PEP -> fetchPepAvatar(address, id);
+                    case VCARD -> fetchVcardAvatar(address, id);
+                };
+        return Futures.transform(
+                avatarFetchFuture,
                 avatar -> {
                     final var sha1Hash = Hashing.sha1().hashBytes(avatar).toString();
                     if (sha1Hash.equalsIgnoreCase(id)) {
