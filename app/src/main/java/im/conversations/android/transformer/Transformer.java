@@ -159,6 +159,10 @@ public class Transformer {
                 } else {
                     messageIdentifier =
                             database.messageDao().getOrCreateMessage(chat, transformation);
+                    if (chat.archived) {
+                        // only for "proper" messages do we want to unarchive chats
+                        database.chatDao().setArchived(chat.id, false);
+                    }
                 }
             } catch (final IllegalStateException e) {
                 LOGGER.warn("Could not get message identifier", e);
