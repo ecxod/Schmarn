@@ -8,20 +8,28 @@
         app:layout_constraintBottom_toBottomOf="@+id/name"
         app:layout_constraintTop_toBottomOf="@+id/name">
 
+        <ImageView
+            android:id="@+id/avatar"
+            android:layout_width="@dimen/avatar_drawable_size"
+            android:layout_height="@dimen/avatar_drawable_size"
+            android:layout_margin="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <TextView
             android:id="@+id/name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:maxLines="1"
             android:text="@{chatOverviewItem.name}"
             android:textAppearance="?textAppearanceTitleMedium"
             app:layout_constraintBottom_toTopOf="@+id/message"
             app:layout_constraintEnd_toStartOf="@+id/sentAt"
-            app:layout_constraintStart_toStartOf="parent"
-
+            app:layout_constraintStart_toEndOf="@+id/avatar"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.45"
+            app:layout_constraintVertical_chainStyle="packed"
             tools:text="The City of Verona" />
 
         <TextView
@@ -29,6 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="4sp"
+            android:maxLines="1"
             android:text="@{chatOverviewItem.sender}"
             android:textAppearance="?textAppearanceBodyMedium"
             android:textColor="?colorTertiary"
@@ -36,10 +45,10 @@
             app:layout_constraintBaseline_toBaselineOf="@+id/message"
             app:layout_constraintEnd_toStartOf="@+id/message"
             app:layout_constraintStart_toStartOf="@+id/name"
-            android:maxLines="1"
             tools:text="You:" />
 
         <TextView
+            android:layout_marginTop="4sp"
             android:id="@+id/message"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -57,7 +66,7 @@
             android:id="@+id/sentAt"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="16dp"
             android:textAppearance="?textAppearanceLabelMedium"
             app:instant="@{chatOverviewItem.sentAt}"
             app:layout_constraintBaseline_toBaselineOf="@+id/name"

@@ -100,8 +100,31 @@ public class ChatOverviewItem {
         return fallbackName();
     }
 
+    public AddressWithName getAddressWithName() {
+        final Jid address = getJidAddress();
+        final String name = name();
+        if (address == null || name == null) {
+            return null;
+        }
+        return new AddressWithName(address, name);
+    }
+
     private Jid getJidAddress() {
         return address == null ? null : JidCreate.fromOrNull(address);
+    }
+
+    public AvatarWithAccount getAvatar() {
+        final var address = getAddressWithName();
+        if (address == null) {
+            return null;
+        }
+        if (this.avatar != null) {
+            return new AvatarWithAccount(accountId, address, AvatarType.PEP, this.avatar);
+        }
+        if (this.vCardPhoto != null) {
+            return new AvatarWithAccount(accountId, address, AvatarType.VCARD, this.vCardPhoto);
+        }
+        return null;
     }
 
     private static boolean notNullNotEmpty(final String value) {

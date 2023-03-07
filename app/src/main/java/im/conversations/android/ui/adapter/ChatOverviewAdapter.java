@@ -1,6 +1,7 @@
 package im.conversations.android.ui.adapter;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
@@ -10,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import im.conversations.android.R;
 import im.conversations.android.database.model.ChatOverviewItem;
 import im.conversations.android.databinding.ItemChatoverviewBinding;
+import im.conversations.android.ui.AvatarFetcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,17 @@ public class ChatOverviewAdapter
     public void onBindViewHolder(@NonNull ChatOverviewViewHolder holder, int position) {
         final var chatOverviewItem = getItem(position);
         holder.binding.setChatOverviewItem(chatOverviewItem);
+        final var addressWithName =
+                chatOverviewItem == null ? null : chatOverviewItem.getAddressWithName();
+        final var avatar = chatOverviewItem == null ? null : chatOverviewItem.getAvatar();
+        if (avatar != null) {
+            AvatarFetcher.fetchInto(holder.binding.avatar, avatar);
+        } else if (addressWithName != null) {
+            holder.binding.avatar.setVisibility(View.VISIBLE);
+            AvatarFetcher.setDefault(holder.binding.avatar, addressWithName);
+        } else {
+            holder.binding.avatar.setVisibility(View.INVISIBLE);
+        }
     }
 
     public static class ChatOverviewViewHolder extends RecyclerView.ViewHolder {

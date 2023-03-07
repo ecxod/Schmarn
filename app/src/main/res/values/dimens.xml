@@ -8,4 +8,5 @@
     <dimen name="in_call_fab_margin">8dp</dimen>
     <dimen name="in_call_fab_margin_center">12dp</dimen>
     <dimen name="publish_avatar_size">96dp</dimen>
+    <dimen name="avatar_drawable_size">40dp</dimen>
 </resources>

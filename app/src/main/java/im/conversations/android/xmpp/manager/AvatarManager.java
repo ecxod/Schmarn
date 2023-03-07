@@ -1,6 +1,8 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
@@ -9,6 +11,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import im.conversations.android.database.model.AvatarType;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.avatar.Data;
 import im.conversations.android.xmpp.model.avatar.Info;
@@ -87,6 +90,23 @@ public class AvatarManager extends AbstractManager {
                 },
                 MoreExecutors.directExecutor());
         return future;
+    }
+
+    public ListenableFuture<Bitmap> getAvatarBitmap(
+            final Jid address, final AvatarType type, final String id) {
+        final ListenableFuture<byte[]> avatar;
+        if (type == AvatarType.PEP) {
+            avatar = getAvatar(address, id);
+        } else {
+            return Futures.immediateFailedFuture(
+                    new Exception(String.format("Can not load type %s avatar", type)));
+        }
+        return Futures.transform(
+                avatar,
+                bytes -> {
+                    return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                },
+                CPU_EXECUTOR);
     }
 
     private byte[] getCachedAvatar(final Jid address, final String id) throws IOException {

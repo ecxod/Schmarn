@@ -22,7 +22,7 @@ import com.google.android.material.color.MaterialColors;
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
 import org.hsluv.HUSLColorConverter;
-import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
 
 public final class ConsistentColorGeneration {
 
@@ -40,7 +40,7 @@ public final class ConsistentColorGeneration {
     @ColorInt
     public static int rgb(final String input) {
         final double[] rgb =
-                HUSLColorConverter.hsluvToRgb(new double[] {angle(input) * 360, 100, 50});
+                HUSLColorConverter.hsluvToRgb(new double[] {angle(input) * 360, 85, 58});
         return rgb(
                 (int) Math.round(rgb[0] * 255),
                 (int) Math.round(rgb[1] * 255),
@@ -52,7 +52,7 @@ public final class ConsistentColorGeneration {
         return MaterialColors.harmonizeWithPrimary(context, rgb(input));
     }
 
-    public static int harmonized(final Context context, final BareJid jid) {
+    public static int harmonized(final Context context, final Jid jid) {
         return harmonized(context, jid.toString());
     }
 
