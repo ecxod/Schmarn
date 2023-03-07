@@ -10,6 +10,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import im.conversations.android.database.entity.ChatEntity;
 import im.conversations.android.database.entity.MucStatusCodeEntity;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.database.model.AccountIdentifier;
+import im.conversations.android.database.model.ChatFilter;
 import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.ChatOverviewItem;
 import im.conversations.android.database.model.ChatType;
@@ -206,7 +208,23 @@ public abstract class ChatDao {
                 + " vCardPhoto,(SELECT thumb_id FROM avatar WHERE avatar.address=c.address) as"
                 + " avatar FROM CHAT c LEFT JOIN message m ON (c.id=m.chatId) LEFT OUTER JOIN"
                 + " message m2 ON (c.id = m2.chatId AND (m.receivedAt < m2.receivedAt OR"
-                + " (m.receivedAt = m2.receivedAt AND m.id < m2.id))) WHERE c.archived=0 AND m2.id"
-                + " IS NULL ORDER by m.receivedAt DESC")
-    public abstract PagingSource<Integer, ChatOverviewItem> getChatOverview();
+                + " (m.receivedAt = m2.receivedAt AND m.id < m2.id))) WHERE (:accountId IS NULL OR"
+                + " c.accountId=:accountId) AND (:groupId IS NULL OR (c.address IN(SELECT"
+                + " roster.address FROM roster JOIN roster_group ON"
+                + " roster.id=roster_group.rosterItemId WHERE roster_group.groupId=:groupId) OR"
+                + " c.address IN(SELECT address FROM bookmark JOIN bookmark_group ON"
+                + " bookmark.id=bookmark_group.bookmarkId WHERE bookmark_group.groupId=:groupId)))"
+                + " AND c.archived=0 AND m2.id IS NULL ORDER by m.receivedAt DESC")
+    public abstract PagingSource<Integer, ChatOverviewItem> getChatOverview(
+            final Long accountId, final Long groupId);
+
+    public PagingSource<Integer, ChatOverviewItem> getChatOverview(final ChatFilter chatFilter) {
+        if (chatFilter instanceof AccountIdentifier account) {
+            return getChatOverview(account.id, null);
+        } else if (chatFilter instanceof GroupIdentifier group) {
+            return getChatOverview(null, group.id);
+        } else {
+            return getChatOverview(null, null);
+        }
+    }
 }

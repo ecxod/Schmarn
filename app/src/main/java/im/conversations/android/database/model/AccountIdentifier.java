@@ -6,7 +6,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.jxmpp.jid.BareJid;
 
-public class AccountIdentifier implements ChatFilter {
+public final class AccountIdentifier implements ChatFilter {
 
     public final long id;
     @NonNull public final BareJid address;

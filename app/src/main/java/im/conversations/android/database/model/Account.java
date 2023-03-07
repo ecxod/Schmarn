@@ -14,14 +14,19 @@ import java.util.UUID;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.parts.Resourcepart;
 
-public class Account extends AccountIdentifier {
+public class Account {
+
+    public final long id;
+    @NonNull public final BareJid address;
 
     @NonNull public final byte[] randomSeed;
 
     public Account(final long id, @NonNull final BareJid address, @NonNull byte[] randomSeed) {
-        super(id, address);
+        Preconditions.checkNotNull(address, "Account can not be instantiated without an address");
         Preconditions.checkArgument(
                 randomSeed.length == 32, "RandomSeed must have exactly 32 bytes");
+        this.id = id;
+        this.address = address;
         this.randomSeed = randomSeed;
     }
 

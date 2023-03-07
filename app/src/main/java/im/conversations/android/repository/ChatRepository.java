@@ -3,6 +3,7 @@ package im.conversations.android.repository;
 import android.content.Context;
 import androidx.lifecycle.LiveData;
 import androidx.paging.PagingSource;
+import im.conversations.android.database.model.ChatFilter;
 import im.conversations.android.database.model.ChatOverviewItem;
 import im.conversations.android.database.model.GroupIdentifier;
 import java.util.List;
@@ -17,7 +18,7 @@ public class ChatRepository extends AbstractRepository {
         return this.database.chatDao().getGroups();
     }
 
-    public PagingSource<Integer, ChatOverviewItem> getChatOverview() {
-        return this.database.chatDao().getChatOverview();
+    public PagingSource<Integer, ChatOverviewItem> getChatOverview(final ChatFilter chatFilter) {
+        return this.database.chatDao().getChatOverview(chatFilter);
     }
 }

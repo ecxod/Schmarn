@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModelKt;
 import androidx.paging.Pager;
@@ -29,10 +30,9 @@ public class OverviewViewModel extends AndroidViewModel {
     private final LiveData<List<AccountIdentifier>> accounts;
     private final LiveData<List<GroupIdentifier>> groups;
     private final MediatorLiveData<Boolean> chatFilterAvailable = new MediatorLiveData<>();
+    private final MutableLiveData<ChatFilter> chatFilter = new MutableLiveData<>(null);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OverviewViewModel.class);
-
-    private ChatFilter chatFilter;
 
     public OverviewViewModel(@NonNull Application application) {
         super(application);
@@ -65,24 +65,28 @@ public class OverviewViewModel extends AndroidViewModel {
     }
 
     public ChatFilter getChatFilter() {
-        return this.chatFilter;
+        return this.chatFilter.getValue();
     }
 
     public void setChatFilter(final ChatFilter chatFilter) {
-        this.chatFilter = chatFilter;
+        this.chatFilter.postValue(chatFilter);
         LOGGER.info("Setting chat filter to {}", chatFilter);
     }
 
     public LiveData<PagingData<ChatOverviewItem>> getChats() {
-        final Pager<Integer, ChatOverviewItem> pager =
-                new Pager<>(
-                        new PagingConfig(20),
-                        () -> {
-                            return this.chatRepository.getChatOverview();
-                        });
+        return Transformations.switchMap(
+                this.chatFilter,
+                input -> {
+                    final Pager<Integer, ChatOverviewItem> pager =
+                            new Pager<>(
+                                    new PagingConfig(20),
+                                    () -> {
+                                        return chatRepository.getChatOverview(input);
+                                    });
 
-        LiveData<PagingData<ChatOverviewItem>> foo = PagingLiveData.getLiveData(pager);
-        CoroutineScope viewModelScope = ViewModelKt.getViewModelScope(this);
-        return PagingLiveData.cachedIn(PagingLiveData.getLiveData(pager), viewModelScope);
+                    CoroutineScope viewModelScope = ViewModelKt.getViewModelScope(this);
+                    return PagingLiveData.cachedIn(
+                            PagingLiveData.getLiveData(pager), viewModelScope);
+                });
     }
 }

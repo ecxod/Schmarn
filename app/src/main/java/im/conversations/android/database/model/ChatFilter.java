@@ -1,3 +1,3 @@
 package im.conversations.android.database.model;
 
-public interface ChatFilter {}
+public sealed interface ChatFilter permits AccountIdentifier, GroupIdentifier {}

@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
-public class GroupIdentifier implements ChatFilter {
+public final class GroupIdentifier implements ChatFilter {
 
     public final long id;
     public final String name;
