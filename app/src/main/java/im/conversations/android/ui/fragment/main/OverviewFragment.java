@@ -14,6 +14,7 @@ import androidx.databinding.DataBindingUtil;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.paging.PagingData;
 import com.google.android.material.elevation.SurfaceColors;
 import com.google.android.material.search.SearchView;
 import im.conversations.android.IDs;
@@ -47,6 +48,7 @@ public class OverviewFragment extends Fragment {
             };
 
     private OverviewViewModel overviewViewModel;
+    private ChatOverviewAdapter chatOverviewAdapter;
 
     @Override
     public View onCreateView(
@@ -84,7 +86,7 @@ public class OverviewFragment extends Fragment {
                 .getChatFilterAvailable()
                 .observe(getViewLifecycleOwner(), this::onChatFilterAvailable);
         this.configureDrawerLayoutToCloseOnBackPress();
-        final var chatOverviewAdapter = new ChatOverviewAdapter(new ChatOverviewComparator());
+        this.chatOverviewAdapter = new ChatOverviewAdapter(new ChatOverviewComparator());
         binding.chats.setAdapter(chatOverviewAdapter);
         this.overviewViewModel
                 .getChats()
@@ -150,6 +152,11 @@ public class OverviewFragment extends Fragment {
     }
 
     private void setChatFilter(final ChatFilter chatFilter) {
+        // this prevents animation between ChatFilter changes
+        // TODO This was added primarily to fix the lack of 'scrolling to top' after filter changes
+        // (if an item was in both); if we find a better solution we might as well bring back
+        // animation
+        chatOverviewAdapter.submitData(getLifecycle(), PagingData.empty());
         overviewViewModel.setChatFilter(chatFilter);
         binding.drawerLayout.close();
     }
