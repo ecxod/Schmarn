@@ -173,9 +173,22 @@ public class DiscoManager extends AbstractManager {
                                 caps2,
                                 EntityCapabilities2.EntityCaps2Hash.class);
                     }
+                    // we want to avoid caching disco info for entities that put variable data (like
+                    // number of occupants in a MUC) into it
+                    final boolean cache =
+                            Objects.nonNull(hash)
+                                    || infoQuery.hasFeature(Namespace.ENTITY_CAPABILITIES)
+                                    || infoQuery.hasFeature(Namespace.ENTITY_CAPABILITIES_2);
                     getDatabase()
                             .discoDao()
-                            .set(getAccount(), entity, node, caps.hash, caps2.hash, infoQuery);
+                            .set(
+                                    getAccount(),
+                                    entity,
+                                    node,
+                                    caps.hash,
+                                    caps2.hash,
+                                    infoQuery,
+                                    cache);
                     return infoQuery;
                 },
                 MoreExecutors.directExecutor());

@@ -147,14 +147,15 @@ public abstract class DiscoDao {
             final String node,
             final byte[] capsHash,
             final byte[] caps2HashSha256,
-            final InfoQuery infoQuery) {
+            final InfoQuery infoQuery,
+            final boolean cache) {
 
         final Long existingDiscoId = getDiscoId(account.id, caps2HashSha256);
         if (existingDiscoId != null) {
             updateDiscoId(account.id, entity, node, existingDiscoId);
             return;
         }
-        final long discoId = insert(DiscoEntity.of(account.id, capsHash, caps2HashSha256));
+        final long discoId = insert(DiscoEntity.of(account.id, capsHash, caps2HashSha256, cache));
 
         insertDiscoIdentities(
                 Collections2.transform(
@@ -176,6 +177,12 @@ public abstract class DiscoDao {
         }
         updateDiscoId(account.id, entity, node, discoId);
     }
+
+    @Query(
+            "DELETE FROM disco WHERE accountId=:account AND cache=0 AND id NOT IN(SELECT discoId"
+                    + " FROM presence WHERE discoId IS NOT NULL) AND id NOT IN(SELECT discoId FROM"
+                    + " disco_item WHERE discoId IS NOT NULL)")
+    public abstract void deleteUnused(long account);
 
     @Query("SELECT id FROM disco WHERE accountId=:accountId AND caps2HashSha256=:caps2HashSha256")
     protected abstract Long getDiscoId(final long accountId, final byte[] caps2HashSha256);

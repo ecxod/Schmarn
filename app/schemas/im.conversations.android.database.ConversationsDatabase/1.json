@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "414be5ac9e68ecf9063dddbcc1cf993a",
+    "identityHash": "1780dce1d6aca78c94a2c5c497d158c5",
     "entities": [
       {
         "tableName": "account",
@@ -1088,7 +1088,7 @@
       },
       {
         "tableName": "disco",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `capsHash` BLOB, `caps2HashSha256` BLOB, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `capsHash` BLOB, `caps2HashSha256` BLOB, `cache` INTEGER NOT NULL, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1113,6 +1113,12 @@
             "columnName": "caps2HashSha256",
             "affinity": "BLOB",
             "notNull": false
+          },
+          {
+            "fieldPath": "cache",
+            "columnName": "cache",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -2594,7 +2600,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '414be5ac9e68ecf9063dddbcc1cf993a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1780dce1d6aca78c94a2c5c497d158c5')"
     ]
   }
 }

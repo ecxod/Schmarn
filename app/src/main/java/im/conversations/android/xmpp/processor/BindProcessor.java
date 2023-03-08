@@ -37,6 +37,7 @@ public class BindProcessor extends XmppConnection.Delegate implements Consumer<J
                 () -> {
                     database.chatDao().resetMucStates();
                     database.presenceDao().deletePresences(account.id);
+                    database.discoDao().deleteUnused(account.id);
                 });
 
         getManager(RosterManager.class).fetch();

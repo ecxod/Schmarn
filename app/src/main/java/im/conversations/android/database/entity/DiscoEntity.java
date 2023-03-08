@@ -30,12 +30,18 @@ public class DiscoEntity {
     public byte[] capsHash;
     public byte[] caps2HashSha256;
 
+    public boolean cache;
+
     public static DiscoEntity of(
-            final long accountId, final byte[] capsHash, final byte[] caps2HashSha256) {
+            final long accountId,
+            final byte[] capsHash,
+            final byte[] caps2HashSha256,
+            final boolean cache) {
         final var entity = new DiscoEntity();
         entity.accountId = accountId;
         entity.capsHash = capsHash;
         entity.caps2HashSha256 = caps2HashSha256;
+        entity.cache = cache;
         return entity;
     }
 }
