@@ -10,9 +10,10 @@
 
         <ImageView
             android:id="@+id/avatar"
-            android:layout_width="@dimen/avatar_drawable_size"
-            android:layout_height="@dimen/avatar_drawable_size"
-            android:layout_margin="16dp"
+            android:layout_width="@dimen/avatar_chat_overview_size"
+            android:layout_height="@dimen/avatar_chat_overview_size"
+            android:layout_marginStart="16dp"
+            android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

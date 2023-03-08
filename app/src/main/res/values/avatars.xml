@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="avatar_chat_overview_size">40dp</dimen>
+    <bool name="avatar_chat_overview_circular">false</bool>
+    <dimen name="avatar_chat_overview_radius">10dp</dimen>
+</resources>

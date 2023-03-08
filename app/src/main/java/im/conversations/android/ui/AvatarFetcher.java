@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import im.conversations.android.R;
 import im.conversations.android.database.model.AddressWithName;
 import im.conversations.android.database.model.AvatarWithAccount;
 import im.conversations.android.ui.graphics.drawable.AvatarDrawable;
@@ -59,9 +60,18 @@ public class AvatarFetcher {
                 LOGGER.info("ImageView reference was gone after fetching avatar");
                 return;
             }
+            final var resources = imageView.getResources();
             final var roundedBitmapDrawable =
-                    RoundedBitmapDrawableFactory.create(imageView.getResources(), result);
-            roundedBitmapDrawable.setCircular(true);
+                    RoundedBitmapDrawableFactory.create(resources, result);
+            final boolean circular = resources.getBoolean(R.bool.avatar_chat_overview_circular);
+            if (circular) {
+                roundedBitmapDrawable.setCircular(true);
+            } else {
+                final float radius =
+                        resources.getDimension(R.dimen.avatar_chat_overview_radius)
+                                / resources.getDimension(R.dimen.avatar_chat_overview_size);
+                roundedBitmapDrawable.setCornerRadius(result.getWidth() * radius);
+            }
             imageView.setImageDrawable(roundedBitmapDrawable);
         }
 

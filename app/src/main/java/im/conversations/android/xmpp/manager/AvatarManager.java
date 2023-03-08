@@ -3,6 +3,7 @@ package im.conversations.android.xmpp.manager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.ThumbnailUtils;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
@@ -102,7 +103,12 @@ public class AvatarManager extends AbstractManager {
         return Futures.transform(
                 getAvatar(address, type, id),
                 bytes -> {
-                    return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    final var sourceBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    final var size = Math.min(sourceBitmap.getHeight(), sourceBitmap.getWidth());
+                    // return a square version of the avatar. we are not displaying the rest and can
+                    // save the bytes plus the corner radius calculation in AvatarFetcher requires a
+                    // square
+                    return ThumbnailUtils.extractThumbnail(sourceBitmap, size, size);
                 },
                 CPU_EXECUTOR);
     }

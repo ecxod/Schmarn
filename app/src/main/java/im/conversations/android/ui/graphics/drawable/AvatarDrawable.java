@@ -20,6 +20,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import com.google.android.material.elevation.SurfaceColors;
@@ -44,17 +45,22 @@ public class AvatarDrawable extends ColorDrawable {
     private final int intrinsicWidth;
 
     private final Context context;
+    private final boolean circular;
+    private final int roundedCornerRadius;
 
     public AvatarDrawable(final Context context, final AddressWithName addressWithName) {
         this.context = context;
         final String name = addressWithName.name;
-        final Jid key = addressWithName.address;
         this.paint = getPaint(addressWithName.address);
         this.textPaint = getTextPaint();
         final Matcher matcher = LETTER_PATTERN.matcher(Strings.nullToEmpty(name));
         this.letter = matcher.find() ? matcher.group().toUpperCase(Locale.ROOT) : null;
+        final var resources = context.getResources();
         final int avatarDrawableSize =
-                context.getResources().getDimensionPixelSize(R.dimen.avatar_drawable_size);
+                resources.getDimensionPixelSize(R.dimen.avatar_chat_overview_size);
+        this.circular = resources.getBoolean(R.bool.avatar_chat_overview_circular);
+        this.roundedCornerRadius =
+                resources.getDimensionPixelSize(R.dimen.avatar_chat_overview_radius);
         this.intrinsicHeight = avatarDrawableSize;
         this.intrinsicWidth = avatarDrawableSize;
     }
@@ -78,16 +84,25 @@ public class AvatarDrawable extends ColorDrawable {
 
     @Override
     public void draw(final Canvas canvas) {
-        final float midX = getBounds().width() / 2.0f;
-        final float midY = getBounds().height() / 2.0f;
         final float radius = Math.min(getBounds().width(), getBounds().height()) / 2.0f;
-        textPaint.setTextSize(radius);
+        this.textPaint.setTextSize(radius);
         final Rect r = new Rect();
         canvas.getClipBounds(r);
         final int cHeight = r.height();
         final int cWidth = r.width();
-        // TODO if we ever want to do rounded corners we can use drawRoundRect()
-        canvas.drawCircle(midX, midY, radius, paint);
+        final var roundedSquareRadius =
+                context.getResources().getDimensionPixelSize(R.dimen.avatar_chat_overview_radius);
+        if (this.circular) {
+            final float midX = getBounds().width() / 2.0f;
+            final float midY = getBounds().height() / 2.0f;
+            canvas.drawCircle(midX, midY, radius, paint);
+        } else {
+            canvas.drawRoundRect(
+                    new RectF(0, 0, getBounds().width(), getBounds().height()),
+                    roundedSquareRadius,
+                    roundedSquareRadius,
+                    paint);
+        }
         if (letter == null) {
             return;
         }
