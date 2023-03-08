@@ -1,7 +1,6 @@
 package im.conversations.android.database.model;
 
 import androidx.annotation.NonNull;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
@@ -10,11 +9,12 @@ import com.google.common.primitives.Ints;
 import im.conversations.android.IDs;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.parts.Resourcepart;
 
-public class Account {
+public final class Account {
 
     public final long id;
     @NonNull public final BareJid address;
@@ -28,21 +28,6 @@ public class Account {
         this.id = id;
         this.address = address;
         this.randomSeed = randomSeed;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        Account account = (Account) o;
-        return Arrays.equals(randomSeed, account.randomSeed);
-    }
-
-    @Override
-    public int hashCode() {
-        // careful with hashCode and equals for byte arrays
-        return Objects.hashCode(super.hashCode(), Arrays.hashCode(randomSeed));
     }
 
     public boolean isOnion() {
@@ -84,5 +69,22 @@ public class Account {
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Account account = (Account) o;
+        return id == account.id
+                && address.equals(account.address)
+                && Arrays.equals(randomSeed, account.randomSeed);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(id, address);
+        result = 31 * result + Arrays.hashCode(randomSeed);
+        return result;
     }
 }
