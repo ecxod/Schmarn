@@ -1047,5 +1047,6 @@
     <string name="trust_certificate_warning">The server certificate is not trustworthy. If you don’t know what this means it’s best to go back!</string>
     <string name="trust_cerficate">Trust certificate</string>
     <string name="you">You</string>
+    <string name="check_your_internet_connection">Check your Internet connection</string>
 
 </resources>

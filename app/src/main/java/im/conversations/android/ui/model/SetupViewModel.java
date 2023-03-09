@@ -1,6 +1,9 @@
 package im.conversations.android.ui.model;
 
 import android.app.Application;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -340,7 +343,14 @@ public class SetupViewModel extends AndroidViewModel {
     private void decideNextStep(
             final Target current, final ConnectionException connectionException) {
         final var state = connectionException.getConnectionState();
-        LOGGER.info("Deciding next step for {}", state);
+        final var isNetworkDown = isNetworkDown();
+        LOGGER.info("Deciding next step for {} isNetworkDown {}", state, isNetworkDown);
+        if (state == ConnectionState.SERVER_NOT_FOUND && isNetworkDown) {
+            this.genericErrorEvent.postValue(
+                    new Event<>(
+                            getApplication().getString(R.string.check_your_internet_connection)));
+            return;
+        }
         if (Arrays.asList(ConnectionState.UNAUTHORIZED, ConnectionState.TEMPORARY_AUTH_FAILURE)
                 .contains(state)) {
             if (this.redirectIfNecessary(current, Target.ENTER_PASSWORD)) {
@@ -471,6 +481,15 @@ public class SetupViewModel extends AndroidViewModel {
         LOGGER.info("Clearing view model");
         this.unregisterTrustDecisionCallback();
         super.onCleared();
+    }
+
+    private boolean isNetworkDown() {
+        final ConnectivityManager cm = getApplication().getSystemService(ConnectivityManager.class);
+        final Network activeNetwork = cm == null ? null : cm.getActiveNetwork();
+        final NetworkCapabilities capabilities =
+                activeNetwork == null ? null : cm.getNetworkCapabilities(activeNetwork);
+        return capabilities == null
+                || !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 
     public enum Target {
