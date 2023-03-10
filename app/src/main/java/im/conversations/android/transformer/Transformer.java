@@ -1,7 +1,9 @@
 package im.conversations.android.transformer;
 
 import android.content.Context;
+import androidx.annotation.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import im.conversations.android.axolotl.AxolotlDecryptionException;
 import im.conversations.android.axolotl.AxolotlService;
 import im.conversations.android.database.ConversationsDatabase;
@@ -10,6 +12,9 @@ import im.conversations.android.database.model.ChatIdentifier;
 import im.conversations.android.database.model.MessageIdentifier;
 import im.conversations.android.database.model.MessageState;
 import im.conversations.android.database.model.Modification;
+import im.conversations.android.database.model.StanzaId;
+import im.conversations.android.xmpp.Range;
+import im.conversations.android.xmpp.manager.ArchiveManager;
 import im.conversations.android.xmpp.model.DeliveryReceipt;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.correction.Replace;
@@ -21,6 +26,7 @@ import im.conversations.android.xmpp.model.retract.Retract;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.util.Arrays;
 import java.util.Objects;
+import org.jxmpp.jid.Jid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,12 +59,42 @@ public class Transformer {
         this.axolotlService = axolotlService;
     }
 
+    @VisibleForTesting
     public boolean transform(final MessageTransformation transformation) {
+        return this.transform(transformation, null);
+    }
+
+    public boolean transform(final MessageTransformation transformation, final StanzaId stanzaId) {
         return database.runInTransaction(
                 () -> {
                     final var sendDeliveryReceipts = transform(database, transformation);
                     axolotlService.executePostDecryptionHook();
+                    if (stanzaId != null) {
+                        database.archiveDao().setLivePageStanzaId(account, stanzaId);
+                    }
                     return sendDeliveryReceipts;
+                });
+    }
+
+    public void transform(
+            ImmutableList<MessageTransformation> messageTransformations,
+            final Jid archive,
+            Range queryRange,
+            ArchiveManager.QueryResult queryResult,
+            final boolean reachedMaxPagesReversing) {
+        database.runInTransaction(
+                () -> {
+                    for (final MessageTransformation transformation : messageTransformations) {
+                        transform(database, transformation);
+                    }
+                    database.archiveDao()
+                            .submitPage(
+                                    account,
+                                    archive,
+                                    queryRange,
+                                    queryResult,
+                                    reachedMaxPagesReversing);
+                    axolotlService.executePostDecryptionHook();
                 });
     }
 

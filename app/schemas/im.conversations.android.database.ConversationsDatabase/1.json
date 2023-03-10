@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "1780dce1d6aca78c94a2c5c497d158c5",
+    "identityHash": "cc15c6de66482506c7f895ccaff971b4",
     "entities": [
       {
         "tableName": "account",
@@ -117,6 +117,86 @@
           }
         ],
         "foreignKeys": []
+      },
+      {
+        "tableName": "archive_page",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `accountId` INTEGER NOT NULL, `archive` TEXT NOT NULL, `type` TEXT NOT NULL, `start` TEXT NOT NULL, `end` TEXT NOT NULL, `reachedMaxPages` INTEGER NOT NULL, FOREIGN KEY(`accountId`) REFERENCES `account`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "accountId",
+            "columnName": "accountId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archive",
+            "columnName": "archive",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "start",
+            "columnName": "start",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "end",
+            "columnName": "end",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reachedMaxPages",
+            "columnName": "reachedMaxPages",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_archive_page_accountId_archive_type",
+            "unique": true,
+            "columnNames": [
+              "accountId",
+              "archive",
+              "type"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_archive_page_accountId_archive_type` ON `${TABLE_NAME}` (`accountId`, `archive`, `type`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "account",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "accountId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       },
       {
         "tableName": "avatar_additional",
@@ -1710,15 +1790,6 @@
         },
         "indices": [
           {
-            "name": "index_message_chatId",
-            "unique": false,
-            "columnNames": [
-              "chatId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_message_chatId` ON `${TABLE_NAME}` (`chatId`)"
-          },
-          {
             "name": "index_message_latestVersion",
             "unique": false,
             "columnNames": [
@@ -1735,6 +1806,16 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_message_inReplyToMessageEntityId` ON `${TABLE_NAME}` (`inReplyToMessageEntityId`)"
+          },
+          {
+            "name": "index_message_chatId_receivedAt",
+            "unique": false,
+            "columnNames": [
+              "chatId",
+              "receivedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_message_chatId_receivedAt` ON `${TABLE_NAME}` (`chatId`, `receivedAt`)"
           }
         ],
         "foreignKeys": [
@@ -2600,7 +2681,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1780dce1d6aca78c94a2c5c497d158c5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cc15c6de66482506c7f895ccaff971b4')"
     ]
   }
 }

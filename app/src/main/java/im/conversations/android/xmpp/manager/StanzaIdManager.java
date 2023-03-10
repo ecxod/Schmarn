@@ -1,11 +1,11 @@
 package im.conversations.android.xmpp.manager;
 
 import android.content.Context;
+import im.conversations.android.database.model.StanzaId;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.stanza.Message;
-import im.conversations.android.xmpp.model.unique.StanzaId;
 import org.jxmpp.jid.Jid;
 
 public class StanzaIdManager extends AbstractManager {
@@ -14,7 +14,7 @@ public class StanzaIdManager extends AbstractManager {
         super(context, connection);
     }
 
-    public String getStanzaId(final Message message) {
+    public StanzaId getStanzaId(final Message message) {
         final Jid by;
         if (message.getType() == Message.Type.GROUPCHAT) {
             final var from = message.getFrom();
@@ -25,7 +25,7 @@ public class StanzaIdManager extends AbstractManager {
         } else {
             by = connection.getBoundAddress().asBareJid();
         }
-        if (message.hasExtension(StanzaId.class)
+        if (message.hasExtension(im.conversations.android.xmpp.model.unique.StanzaId.class)
                 && getManager(DiscoManager.class)
                         .hasFeature(Entity.discoItem(by), Namespace.STANZA_IDS)) {
             return getStanzaIdBy(message, by);
@@ -34,11 +34,12 @@ public class StanzaIdManager extends AbstractManager {
         }
     }
 
-    private static String getStanzaIdBy(final Message message, final Jid by) {
-        for (final StanzaId stanzaId : message.getExtensions(StanzaId.class)) {
+    private static StanzaId getStanzaIdBy(final Message message, final Jid by) {
+        for (final var stanzaId :
+                message.getExtensions(im.conversations.android.xmpp.model.unique.StanzaId.class)) {
             final var id = stanzaId.getId();
             if (by.equals(stanzaId.getBy()) && id != null) {
-                return id;
+                return new StanzaId(id, by);
             }
         }
         return null;

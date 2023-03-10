@@ -6,6 +6,7 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 import im.conversations.android.database.dao.AccountDao;
+import im.conversations.android.database.dao.ArchiveDao;
 import im.conversations.android.database.dao.AvatarDao;
 import im.conversations.android.database.dao.AxolotlDao;
 import im.conversations.android.database.dao.BlockingDao;
@@ -19,6 +20,7 @@ import im.conversations.android.database.dao.PresenceDao;
 import im.conversations.android.database.dao.RosterDao;
 import im.conversations.android.database.dao.ServiceRecordDao;
 import im.conversations.android.database.entity.AccountEntity;
+import im.conversations.android.database.entity.ArchivePageEntity;
 import im.conversations.android.database.entity.AvatarAdditionalEntity;
 import im.conversations.android.database.entity.AvatarEntity;
 import im.conversations.android.database.entity.AxolotlDeviceListEntity;
@@ -56,6 +58,7 @@ import im.conversations.android.database.entity.ServiceRecordCacheEntity;
 @Database(
         entities = {
             AccountEntity.class,
+            ArchivePageEntity.class,
             AvatarAdditionalEntity.class,
             AvatarEntity.class,
             AxolotlDeviceListEntity.class,
@@ -113,6 +116,8 @@ public abstract class ConversationsDatabase extends RoomDatabase {
     }
 
     public abstract AccountDao accountDao();
+
+    public abstract ArchiveDao archiveDao();
 
     public abstract AvatarDao avatarDao();
 

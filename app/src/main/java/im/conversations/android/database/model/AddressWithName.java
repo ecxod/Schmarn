@@ -1,5 +1,7 @@
 package im.conversations.android.database.model;
 
+import androidx.annotation.NonNull;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import org.jxmpp.jid.Jid;
 
@@ -24,5 +26,14 @@ public class AddressWithName {
     @Override
     public int hashCode() {
         return Objects.hashCode(address, name);
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("address", address)
+                .add("name", name)
+                .toString();
     }
 }

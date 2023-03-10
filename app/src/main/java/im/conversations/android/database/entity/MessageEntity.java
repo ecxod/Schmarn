@@ -32,9 +32,9 @@ import org.jxmpp.jid.parts.Resourcepart;
                     onDelete = ForeignKey.SET_NULL),
         },
         indices = {
-            @Index(value = "chatId"),
             @Index(value = "latestVersion"),
-            @Index("inReplyToMessageEntityId")
+            @Index("inReplyToMessageEntityId"),
+            @Index(value = {"chatId", "receivedAt"}),
         })
 public class MessageEntity {
 

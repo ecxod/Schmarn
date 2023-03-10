@@ -14,6 +14,7 @@ import im.conversations.android.database.model.MucWithNick;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.IqErrorException;
+import im.conversations.android.xmpp.Range;
 import im.conversations.android.xmpp.XmppConnection;
 import im.conversations.android.xmpp.model.disco.info.InfoQuery;
 import im.conversations.android.xmpp.model.error.Condition;
@@ -65,7 +66,12 @@ public class MultiUserChatManager extends AbstractManager {
     private void enterExisting(final MucWithNick mucWithNick, final InfoQuery infoQuery) {
         if (infoQuery.hasFeature(Namespace.MUC)
                 && infoQuery.hasIdentityWithCategory("conference")) {
+            // TODO check if server has MAM support
+            final var archive = mucWithNick.address;
+            final List<Range> queryRanges =
+                    getDatabase().archiveDao().resetLivePage(getAccount(), archive);
             sendJoinPresence(mucWithNick);
+            getManager(ArchiveManager.class).query(archive, queryRanges);
         } else {
             getDatabase().chatDao().setMucState(mucWithNick.chatId, MucState.NOT_A_MUC);
         }

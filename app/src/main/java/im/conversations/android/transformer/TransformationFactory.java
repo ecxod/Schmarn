@@ -1,6 +1,7 @@
 package im.conversations.android.transformer;
 
 import android.content.Context;
+import im.conversations.android.database.model.StanzaId;
 import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.XmppConnection;
@@ -17,8 +18,8 @@ public class TransformationFactory extends XmppConnection.Delegate {
         super(context, connection);
     }
 
-    public MessageTransformation create(final Message message, final String stanzaId) {
-        return create(message, stanzaId, Instant.now());
+    public MessageTransformation create(final Message message, final StanzaId stanzaId) {
+        return create(message, stanzaId == null ? null : stanzaId.id, Instant.now());
     }
 
     public MessageTransformation create(
@@ -49,7 +50,7 @@ public class TransformationFactory extends XmppConnection.Delegate {
         if (message.getType() == Message.Type.GROUPCHAT) {
             senderIdentity = null; // TODO discover real jid
         } else {
-            senderIdentity = from == null ? null : from.asBareJid();
+            senderIdentity = from == null ? boundAddress : from.asBareJid();
         }
         return MessageTransformation.of(
                 message, receivedAt, remote, stanzaId, senderIdentity, occupantId);

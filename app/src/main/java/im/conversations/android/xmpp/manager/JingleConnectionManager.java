@@ -243,9 +243,9 @@ public class JingleConnectionManager extends AbstractManager {
 
     public void handle(final Message message) {
         final String id = message.getId();
-        final String stanzaId = getManager(StanzaIdManager.class).getStanzaId(message);
+        final var stanzaId = getManager(StanzaIdManager.class).getStanzaId(message);
         final JingleMessage jingleMessage = message.getExtension(JingleMessage.class);
-        this.deliverMessage(message.getTo(), message.getFrom(), jingleMessage, id, stanzaId);
+        this.deliverMessage(message.getTo(), message.getFrom(), jingleMessage, id, stanzaId.id);
     }
 
     private void deliverMessage(

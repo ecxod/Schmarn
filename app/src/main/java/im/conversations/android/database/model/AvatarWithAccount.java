@@ -1,5 +1,7 @@
 package im.conversations.android.database.model;
 
+import androidx.annotation.NonNull;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 public class AvatarWithAccount {
@@ -9,6 +11,17 @@ public class AvatarWithAccount {
     public final AddressWithName addressWithName;
     public final AvatarType avatarType;
     public final String hash;
+
+    @NonNull
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("account", account)
+                .add("addressWithName", addressWithName)
+                .add("avatarType", avatarType)
+                .add("hash", hash)
+                .toString();
+    }
 
     public AvatarWithAccount(
             long account,

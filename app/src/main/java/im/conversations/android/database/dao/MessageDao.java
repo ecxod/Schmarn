@@ -454,14 +454,14 @@ public abstract class MessageDao {
                 + " inReplyToMessageId=null,inReplyToStanzaId=:stanzaId,inReplyToMessageEntityId=:inReplyToMessageEntityId"
                 + " WHERE id=:id")
     protected abstract void setInReplyToStanzaId(
-            final long id, String stanzaId, long inReplyToMessageEntityId);
+            final long id, String stanzaId, Long inReplyToMessageEntityId);
 
     @Query(
             "UPDATE message SET"
                 + " inReplyToMessageId=:messageId,inReplyToStanzaId=null,inReplyToMessageEntityId=:inReplyToMessageEntityId"
                 + " WHERE id=:id")
     protected abstract void setInReplyToMessageId(
-            final long id, String messageId, long inReplyToMessageEntityId);
+            final long id, String messageId, Long inReplyToMessageEntityId);
 
     @Query(
             "SELECT id FROM message WHERE chatId=:chatId AND fromBare=:fromBare AND"

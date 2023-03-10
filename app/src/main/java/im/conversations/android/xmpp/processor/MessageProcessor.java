@@ -87,7 +87,7 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
             final var axolotlService =
                     connection.getManager(AxolotlManager.class).getAxolotlService();
             final var transformer = new Transformer(getAccount(), database, axolotlService);
-            sendReceipts = transformer.transform(transformation);
+            sendReceipts = transformer.transform(transformation, stanzaId);
         } else {
             sendReceipts = true;
         }

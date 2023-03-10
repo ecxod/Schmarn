@@ -1,6 +1,7 @@
 package im.conversations.android.database.model;
 
 import androidx.room.Relation;
+import com.google.common.base.Objects;
 import com.google.common.collect.Iterables;
 import im.conversations.android.database.entity.MessageContentEntity;
 import java.time.Instant;
@@ -129,6 +130,56 @@ public class ChatOverviewItem {
 
     private static boolean notNullNotEmpty(final String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChatOverviewItem that = (ChatOverviewItem) o;
+        return id == that.id
+                && accountId == that.accountId
+                && outgoing == that.outgoing
+                && version == that.version
+                && unread == that.unread
+                && Objects.equal(address, that.address)
+                && type == that.type
+                && Objects.equal(sentAt, that.sentAt)
+                && Objects.equal(toBare, that.toBare)
+                && Objects.equal(toResource, that.toResource)
+                && Objects.equal(fromBare, that.fromBare)
+                && Objects.equal(fromResource, that.fromResource)
+                && Objects.equal(rosterName, that.rosterName)
+                && Objects.equal(nick, that.nick)
+                && Objects.equal(discoIdentityName, that.discoIdentityName)
+                && Objects.equal(bookmarkName, that.bookmarkName)
+                && Objects.equal(vCardPhoto, that.vCardPhoto)
+                && Objects.equal(avatar, that.avatar)
+                && Objects.equal(contents, that.contents);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(
+                id,
+                accountId,
+                address,
+                type,
+                sentAt,
+                outgoing,
+                toBare,
+                toResource,
+                fromBare,
+                fromResource,
+                version,
+                rosterName,
+                nick,
+                discoIdentityName,
+                bookmarkName,
+                vCardPhoto,
+                avatar,
+                unread,
+                contents);
     }
 
     public sealed interface Sender permits SenderYou, SenderName {}
