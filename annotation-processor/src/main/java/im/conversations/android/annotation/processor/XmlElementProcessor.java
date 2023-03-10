@@ -23,7 +23,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 
 @AutoService(Processor.class)
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
 @SupportedAnnotationTypes("im.conversations.android.annotation.XmlElement")
 public class XmlElementProcessor extends AbstractProcessor {
 
@@ -31,10 +31,9 @@ public class XmlElementProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         final Set<? extends Element> elements =
                 roundEnvironment.getElementsAnnotatedWith(XmlElement.class);
-        final ImmutableMap.Builder<Id, String> builder = ImmutableMap.<Id, String>builder();
+        final ImmutableMap.Builder<Id, String> builder = ImmutableMap.builder();
         for (final Element element : elements) {
-            if (element instanceof TypeElement) {
-                final TypeElement typeElement = (TypeElement) element;
+            if (element instanceof final TypeElement typeElement) {
                 final Id id = of(typeElement);
                 builder.put(id, typeElement.getQualifiedName().toString());
             }
