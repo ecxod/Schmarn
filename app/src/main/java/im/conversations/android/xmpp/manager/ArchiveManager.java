@@ -251,7 +251,7 @@ public class ArchiveManager extends AbstractManager {
         }
     }
 
-    public final class QueryResult {
+    public static final class QueryResult {
         public final boolean isComplete;
         public final Page page;
 

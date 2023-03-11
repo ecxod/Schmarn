@@ -137,6 +137,7 @@ public abstract class ArchiveDao extends BaseDao {
             final var existingLivePage = getPage(account.id, archive, ArchivePageEntity.Type.LIVE);
             if (existingLivePage != null) {
                 existingLivePage.start = page.last;
+                insert(existingLivePage);
             } else {
                 insert(
                         ArchivePageEntity.of(

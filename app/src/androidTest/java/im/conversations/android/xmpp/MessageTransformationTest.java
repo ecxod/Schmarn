@@ -1,19 +1,12 @@
 package im.conversations.android.xmpp;
 
-import android.content.Context;
-import androidx.room.Room;
-import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.common.collect.Iterables;
-import im.conversations.android.IDs;
-import im.conversations.android.database.ConversationsDatabase;
-import im.conversations.android.database.entity.AccountEntity;
 import im.conversations.android.database.model.Encryption;
 import im.conversations.android.database.model.MessageEmbedded;
 import im.conversations.android.database.model.Modification;
 import im.conversations.android.database.model.PartType;
 import im.conversations.android.transformer.MessageTransformation;
-import im.conversations.android.transformer.Transformer;
 import im.conversations.android.xmpp.model.correction.Replace;
 import im.conversations.android.xmpp.model.jabber.Body;
 import im.conversations.android.xmpp.model.reactions.Reaction;
@@ -23,42 +16,15 @@ import im.conversations.android.xmpp.model.reply.Reply;
 import im.conversations.android.xmpp.model.retract.Retract;
 import im.conversations.android.xmpp.model.stanza.Message;
 import java.time.Instant;
-import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 @RunWith(AndroidJUnit4.class)
-public class MessageTransformationTest {
-
-    private static final BareJid ACCOUNT = JidCreate.bareFromOrThrowUnchecked("user@example.com");
-    private static final BareJid REMOTE = JidCreate.bareFromOrThrowUnchecked("juliet@example.com");
-    private static final BareJid REMOTE_2 = JidCreate.bareFromOrThrowUnchecked("romeo@example.com");
-
-    private static final String GREETING = "Hi Juliet. How are you?";
-
-    private ConversationsDatabase database;
-    private Transformer transformer;
-
-    @Before
-    public void setupTransformer() throws ExecutionException, InterruptedException {
-        final Context context = ApplicationProvider.getApplicationContext();
-        this.database = Room.inMemoryDatabaseBuilder(context, ConversationsDatabase.class).build();
-        final var account = new AccountEntity();
-        account.address = ACCOUNT;
-        account.enabled = true;
-        account.randomSeed = IDs.seed();
-        final long id = database.accountDao().insert(account);
-
-        this.transformer =
-                new Transformer(
-                        database.accountDao().getEnabledAccount(id).get(), context, database);
-    }
+public class MessageTransformationTest extends BaseTransformationTest {
 
     @Test
     public void reactionBeforeOriginal() throws XmppStringprepException {
