@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import im.conversations.android.database.entity.ArchivePageEntity;
 import im.conversations.android.database.model.Account;
 import im.conversations.android.database.model.StanzaId;
+import im.conversations.android.xml.Namespace;
 import im.conversations.android.xmpp.Range;
 import im.conversations.android.xmpp.manager.ArchiveManager;
 import java.util.List;
@@ -19,12 +20,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Dao
-public abstract class ArchiveDao {
+public abstract class ArchiveDao extends BaseDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ArchiveDao.class);
 
     @Transaction
     public List<Range> resetLivePage(final Account account, final Jid archive) {
+        // if the server support extended MAM or catch-up query from (live)page.end to now can use
+        // after-id reverse towards that (this means newer messages will be fetched earlier); if and
+        // when we support this we also need a new page type called END that will eventually be
+        // deleted once we need page.end
+        final boolean emitRangeAfter =
+                hasDiscoItemFeature(
+                        account.id, archive, Namespace.MESSAGE_ARCHIVE_MANAGEMENT_EXTENDED);
         final var page =
                 getPage(
                         account.id,

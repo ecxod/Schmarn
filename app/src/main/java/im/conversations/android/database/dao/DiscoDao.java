@@ -33,7 +33,7 @@ import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.parts.Resourcepart;
 
 @Dao
-public abstract class DiscoDao {
+public abstract class DiscoDao extends BaseDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     protected abstract void insertDiscoItems(Collection<DiscoItemEntity> items);
@@ -189,13 +189,6 @@ public abstract class DiscoDao {
 
     @Query("SELECT id FROM disco WHERE accountId=:accountId AND capsHash=:capsHash")
     protected abstract Long getDiscoIdByCapsHash(final long accountId, final byte[] capsHash);
-
-    @Query(
-            "SELECT EXISTS (SELECT disco_item.id FROM disco_item JOIN disco_feature on"
-                    + " disco_item.discoId=disco_feature.discoId WHERE accountId=:account AND"
-                    + " address=:entity AND feature=:feature)")
-    protected abstract boolean hasDiscoItemFeature(
-            final long account, final Jid entity, final String feature);
 
     @Query(
             "SELECT EXISTS (SELECT presence.id FROM presence JOIN disco_feature on"

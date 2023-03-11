@@ -68,6 +68,8 @@ public final class Namespace {
     public static final String JINGLE_TRANSPORT_ICE_UDP = "urn:xmpp:jingle:transports:ice-udp:1";
     public static final String LAST_MESSAGE_CORRECTION = "urn:xmpp:message-correct:0";
     public static final String MESSAGE_ARCHIVE_MANAGEMENT = "urn:xmpp:mam:2";
+    public static final String MESSAGE_ARCHIVE_MANAGEMENT_EXTENDED =
+            MESSAGE_ARCHIVE_MANAGEMENT + "#extended";
     public static final String MUC = "http://jabber.org/protocol/muc";
     public static final String MUC_USER = MUC + "#user";
     public static final String NICK = "http://jabber.org/protocol/nick";
