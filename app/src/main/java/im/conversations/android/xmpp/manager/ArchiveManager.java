@@ -17,13 +17,17 @@ import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.transformer.MessageTransformation;
 import im.conversations.android.transformer.TransformationFactory;
 import im.conversations.android.transformer.Transformer;
+import im.conversations.android.xml.Namespace;
+import im.conversations.android.xmpp.Entity;
 import im.conversations.android.xmpp.Page;
 import im.conversations.android.xmpp.Range;
 import im.conversations.android.xmpp.XmppConnection;
+import im.conversations.android.xmpp.model.Extension;
 import im.conversations.android.xmpp.model.delay.Delay;
 import im.conversations.android.xmpp.model.mam.Fin;
 import im.conversations.android.xmpp.model.mam.Query;
 import im.conversations.android.xmpp.model.mam.Result;
+import im.conversations.android.xmpp.model.muc.user.MucUser;
 import im.conversations.android.xmpp.model.rsm.Set;
 import im.conversations.android.xmpp.model.stanza.Iq;
 import im.conversations.android.xmpp.model.stanza.Message;
@@ -47,7 +51,8 @@ public class ArchiveManager extends AbstractManager {
 
     public ArchiveManager(Context context, XmppConnection connection) {
         super(context, connection);
-        this.transformationFactory = new TransformationFactory(context, connection);
+        this.transformationFactory =
+                new TransformationFactory(context, connection, TransformationFactory.Mode.ARCHIVE);
     }
 
     public void handle(final Message message) {
@@ -78,8 +83,20 @@ public class ArchiveManager extends AbstractManager {
             return;
         }
 
+        final ImmutableList.Builder<Extension> privilegedExtensionBuilder =
+                new ImmutableList.Builder<>();
+        if (forwardedMessage.getType() == Message.Type.GROUPCHAT) {
+            final var mucUser = forwardedMessage.getExtension(MucUser.class);
+            if (mucUser != null
+                    && getManager(DiscoManager.class)
+                            .hasFeature(Entity.discoItem(archive), Namespace.MUC)) {
+                privilegedExtensionBuilder.add(mucUser);
+            }
+        }
+
         final var transformation =
-                this.transformationFactory.create(forwardedMessage, stanzaId, receivedAt);
+                this.transformationFactory.create(
+                        forwardedMessage, stanzaId, receivedAt, privilegedExtensionBuilder.build());
         // TODO only when there is something to transform
         runningQuery.addTransformation(transformation);
     }

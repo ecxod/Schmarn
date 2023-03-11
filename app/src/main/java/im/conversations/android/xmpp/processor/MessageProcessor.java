@@ -39,7 +39,8 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
             final Context context, final XmppConnection connection, final Level level) {
         super(context, connection);
         this.level = level;
-        this.transformationFactory = new TransformationFactory(context, connection);
+        this.transformationFactory =
+                new TransformationFactory(context, connection, TransformationFactory.Mode.LIVE);
     }
 
     @Override
