@@ -4,7 +4,6 @@ import android.content.Context;
 import androidx.annotation.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import im.conversations.android.axolotl.AxolotlDecryptionException;
 import im.conversations.android.axolotl.AxolotlService;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
@@ -131,18 +130,13 @@ public class Transformer {
         final Encrypted encrypted = transformation.getExtension(Encrypted.class);
         final MessageContentWrapper contents;
         if (encrypted != null) {
-            try {
-                final var payload =
-                        axolotlService.decrypt(transformation.senderIdentity(), encrypted);
-                if (payload.hasPayload()) {
-                    contents = MessageContentWrapper.ofAxolotl(payload);
-                } else {
-                    return true;
-                }
-            } catch (final AxolotlDecryptionException e) {
-                LOGGER.error("Could not decrypt message", e);
-                // TODO if message had payload create error message entry
-                return false;
+            if (encrypted.hasPayload()) {
+                contents =
+                        axolotlService.decryptToMessageContent(
+                                transformation.senderIdentity(), encrypted);
+            } else {
+                return axolotlService.decryptEmptyMessage(
+                        transformation.senderIdentity(), encrypted);
             }
         } else {
             // TODO we need to remove fallbacks for reactions, retractions and potentially other

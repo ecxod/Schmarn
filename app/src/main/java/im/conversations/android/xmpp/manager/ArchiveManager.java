@@ -97,8 +97,9 @@ public class ArchiveManager extends AbstractManager {
         final var transformation =
                 this.transformationFactory.create(
                         forwardedMessage, stanzaId, receivedAt, privilegedExtensionBuilder.build());
-        // TODO only when there is something to transform
-        runningQuery.addTransformation(transformation);
+        if (transformation.isAnythingToTransform()) {
+            runningQuery.addTransformation(transformation);
+        }
     }
 
     private ListenableFuture<Metadata> fetchMetadata(final Jid archive) {

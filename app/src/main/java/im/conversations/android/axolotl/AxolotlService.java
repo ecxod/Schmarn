@@ -3,6 +3,7 @@ package im.conversations.android.axolotl;
 import android.content.Context;
 import android.os.Build;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -12,6 +13,7 @@ import im.conversations.android.AbstractAccountService;
 import im.conversations.android.database.AxolotlDatabaseStore;
 import im.conversations.android.database.ConversationsDatabase;
 import im.conversations.android.database.model.Account;
+import im.conversations.android.transformer.MessageContentWrapper;
 import im.conversations.android.xmpp.model.axolotl.Encrypted;
 import im.conversations.android.xmpp.model.axolotl.Header;
 import im.conversations.android.xmpp.model.axolotl.Key;
@@ -109,6 +111,27 @@ public class AxolotlService extends AbstractAccountService {
         return session;
     }
 
+    public boolean decryptEmptyMessage(final BareJid from, final Encrypted encrypted) {
+        Preconditions.checkArgument(
+                !encrypted.hasPayload(), "Use decryptToMessageContent to decrypt payload messages");
+        try {
+            final var payload = decrypt(from, encrypted);
+            return !payload.hasPayload();
+        } catch (final AxolotlDecryptionException e) {
+            return false;
+        }
+    }
+
+    public MessageContentWrapper decryptToMessageContent(
+            final BareJid from, final Encrypted encrypted) {
+        Preconditions.checkArgument(encrypted.hasPayload());
+        try {
+            return MessageContentWrapper.ofAxolotl(decrypt(from, encrypted));
+        } catch (final AxolotlDecryptionException e) {
+            return MessageContentWrapper.ofAxolotlException(e);
+        }
+    }
+
     public AxolotlPayload decrypt(final Jid from, final Encrypted encrypted)
             throws AxolotlDecryptionException {
         final AxolotlPayload axolotlPayload;
@@ -150,10 +173,6 @@ public class AxolotlService extends AbstractAccountService {
         final Header header = encrypted.getHeader();
         final Key ourKey = header.getKey(signalProtocolStore.getLocalRegistrationId());
         if (ourKey == null) {
-            LOGGER.info(
-                    "looking for {} in {}",
-                    signalProtocolStore.getLocalRegistrationId(),
-                    header.getKeys());
             throw new NotEncryptedForThisDeviceException();
         }
         final byte[] keyWithAuthTag;

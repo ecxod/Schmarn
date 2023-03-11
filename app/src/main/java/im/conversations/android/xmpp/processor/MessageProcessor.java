@@ -20,6 +20,7 @@ import im.conversations.android.xmpp.model.mam.Result;
 import im.conversations.android.xmpp.model.pubsub.event.Event;
 import im.conversations.android.xmpp.model.stanza.Message;
 import im.conversations.android.xmpp.model.state.ChatStateNotification;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,12 +72,6 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
             return;
         }
 
-        LOGGER.debug(
-                "Message from {} with {} in level {}",
-                message.getFrom(),
-                message.getExtensionIds(),
-                this.level);
-
         final var from = message.getFrom();
 
         final var id = message.getId();
@@ -92,7 +87,9 @@ public class MessageProcessor extends XmppConnection.Delegate implements Consume
         } else {
             sendReceipts = true;
         }
-        if (sendReceipts) {
+        if (sendReceipts
+                && Arrays.asList(Message.Type.CHAT, Message.Type.NORMAL)
+                        .contains(message.getType())) {
             getManager(ReceiptManager.class)
                     .received(from, id, transformation.deliveryReceiptRequests);
         }
