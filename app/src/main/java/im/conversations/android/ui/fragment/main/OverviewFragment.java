@@ -29,7 +29,9 @@ import im.conversations.android.ui.activity.SetupActivity;
 import im.conversations.android.ui.adapter.ChatOverviewAdapter;
 import im.conversations.android.ui.adapter.ChatOverviewComparator;
 import im.conversations.android.ui.model.OverviewViewModel;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,13 @@ public class OverviewFragment extends Fragment {
                 @Override
                 public void handleOnBackPressed() {
                     binding.drawerLayout.close();
+                }
+            };
+    final OnBackPressedCallback searchViewOnBackPressedCallback =
+            new OnBackPressedCallback(false) {
+                @Override
+                public void handleOnBackPressed() {
+                    binding.searchView.hide();
                 }
             };
 
@@ -73,6 +82,11 @@ public class OverviewFragment extends Fragment {
                     } else {
                         window.setStatusBarColor(SurfaceColors.SURFACE_0.getColor(activity));
                     }
+                    searchViewOnBackPressedCallback.setEnabled(
+                            Arrays.asList(
+                                            SearchView.TransitionState.SHOWN,
+                                            SearchView.TransitionState.SHOWING)
+                                    .contains(newState));
                 });
         binding.navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
         if (this.overviewViewModel.getChatFilter() == null) {
@@ -95,6 +109,9 @@ public class OverviewFragment extends Fragment {
                         pagingData -> {
                             chatOverviewAdapter.submitData(getLifecycle(), pagingData);
                         });
+        requireActivity()
+                .getOnBackPressedDispatcher()
+                .addCallback(getViewLifecycleOwner(), this.searchViewOnBackPressedCallback);
         return binding.getRoot();
     }
 
@@ -104,6 +121,7 @@ public class OverviewFragment extends Fragment {
         // after rotation (or similar) the drawer layout might get opened in restoreInstanceState
         // therefor we need to check again if we need to enable the callback
         this.drawerLayoutOnBackPressedCallback.setEnabled(this.binding.drawerLayout.isOpen());
+        this.searchViewOnBackPressedCallback.setEnabled(this.binding.searchView.isShowing());
     }
 
     private void configureDrawerLayoutToCloseOnBackPress() {
