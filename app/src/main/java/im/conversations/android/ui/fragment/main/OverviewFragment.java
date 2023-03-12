@@ -170,6 +170,11 @@ public class OverviewFragment extends Fragment {
     }
 
     private void setChatFilter(final ChatFilter chatFilter) {
+        if (Objects.equals(overviewViewModel.getChatFilter(), chatFilter)) {
+            LOGGER.debug("Chat filter is already in correct state");
+            binding.drawerLayout.close();
+            return;
+        }
         // this prevents animation between ChatFilter changes
         // TODO This was added primarily to fix the lack of 'scrolling to top' after filter changes
         // (if an item was in both); if we find a better solution we might as well bring back
