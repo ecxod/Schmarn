@@ -1,0 +1,30 @@
+name: Build and release Android app
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up JDK and Android SDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11'
+
+    - name: Build APK
+      run: |
+        mkdir release/
+        ./gradlew assembleRelease -d release/
+
+    - name: Upload APK as release artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: schmarn.apk
+        path: release/schmarn.apk
+
